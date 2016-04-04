@@ -1,6 +1,6 @@
-=================
+========================
 django-oscar-cybersource
-=================
+========================
 
 This package is to handle integration between django-oscar based e-commerce sites and the `CCH Sales Tax Office <http://www.salestax.com/products/calculations-solutions/sales-tax-office.html>`_ SOAP API.
 
