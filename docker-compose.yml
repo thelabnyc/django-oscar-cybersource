@@ -1,0 +1,17 @@
+db:
+  image: postgres:9.4
+
+test:
+  build: .
+  command: env
+  links:
+    - db
+  volumes:
+    - .:/code
+  environment:
+    - CYBERSOURCE_PROFILE
+    - CYBERSOURCE_ACCESS
+    - CYBERSOURCE_SECRET
+    - CYBERSOURCE_MERCHANT_ID
+    - CYBERSOURCE_ORG_ID
+    - CYBERSOURCE_ENDPOINT_PAY

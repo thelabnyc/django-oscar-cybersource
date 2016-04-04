@@ -1,0 +1,5 @@
+CHECKOUT_BASKET_ID = 'checkout_basket_id'
+CHECKOUT_ORDER_ID = 'checkout_order_id'
+CHECKOUT_ORDER_NUM = 'checkout_order_num'
+CHECKOUT_SHIPPING_CODE = 'checkout_shipping_code'
+CHECKOUT_FINGERPRINT_SESSION_ID = 'cybersource_fingerprint_session_id'
