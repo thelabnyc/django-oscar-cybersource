@@ -1,11 +1,11 @@
-db:
+postgres:
   image: postgres:9.4
 
 test:
   build: .
   command: env
   links:
-    - db
+    - postgres
   volumes:
     - .:/code
   environment:
