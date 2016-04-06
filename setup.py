@@ -10,13 +10,16 @@ packages = [
     'cybersource.migrations',
 ]
 
+setup_requires = [
+    'versiontag>=1.0.3',
+]
+
 requires = [
     'Django>=1.8.11',
     'djangorestframework>=3.3.2',
     'django-oscar>=1.1.1',
     'django-oscar-api>=1.0.1',
     'django-statsd-mozilla>=0.3.16',
-    'versiontag>=1.0.1',
 ]
 
 def fpath(name):
@@ -52,5 +55,6 @@ setup(
     url='https://gitlab.com/thelabnyc/django-oscar-cybersource',
     license='ISC',
     packages=packages,
-    install_requires=requires
+    install_requires=requires,
+    setup_requires=setup_requires
 )

@@ -46,11 +46,9 @@ logger = logging.getLogger(__name__)
 
 
 class FingerprintRedirectView(generic.View):
-    protocol = settings.FINGERPRINT_PROTOCOL
-    host = settings.FINGERPRINT_HOST
     url_types = {
         'img-1': '%(protocol)s://%(host)s/fp/clear.png?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s&m=1',
-        'img-2': '%(protocol)s://%(host)s/fp/clear.png?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s&m-2',
+        'img-2': '%(protocol)s://%(host)s/fp/clear.png?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s&m=2',
         'flash': '%(protocol)s://%(host)s/fp/fp.swf?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s',
         'js': '%(protocol)s://%(host)s/fp/check.js?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s',
     }
@@ -65,8 +63,8 @@ class FingerprintRedirectView(generic.View):
             request.session[CHECKOUT_FINGERPRINT_SESSION_ID] = sessid
 
         data = {
-            'protocol': self.protocol,
-            'host': self.host,
+            'protocol': settings.FINGERPRINT_PROTOCOL,
+            'host': settings.FINGERPRINT_HOST,
             'org_id': settings.ORG_ID,
             'merchant_id': settings.MERCHANT_ID,
             'session_id': sessid,
