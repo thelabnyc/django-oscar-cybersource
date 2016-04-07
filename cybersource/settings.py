@@ -1,21 +1,22 @@
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 def overridable(name, default=None, required=False):
     if required:
         if not hasattr(settings, name) or not getattr(settings, name):
-            raise AttributeError("Attribute %s must be defined in Django settings" % name)
+            raise ImproperlyConfigured("%s must be defined in Django settings" % name)
     return getattr(settings, name, default)
 
 
 DEFAULT_CURRENCY = overridable('OSCAR_DEFAULT_CURRENCY', required=True)
 ORDER_STATUS_SUCCESS = overridable('CYBERSOURCE_ORDER_STATUS_SUCCESS', required=True)
 
-PROFILE = overridable('CYBERSOURCE_PROFILE')
-ACCESS = overridable('CYBERSOURCE_ACCESS')
-SECRET = overridable('CYBERSOURCE_SECRET')
+PROFILE = overridable('CYBERSOURCE_PROFILE', required=True)
+ACCESS = overridable('CYBERSOURCE_ACCESS', required=True)
+SECRET = overridable('CYBERSOURCE_SECRET', required=True)
 
-ORG_ID = overridable('CYBERSOURCE_ORG_ID')
-MERCHANT_ID = overridable('CYBERSOURCE_MERCHANT_ID')
+ORG_ID = overridable('CYBERSOURCE_ORG_ID', required=True)
+MERCHANT_ID = overridable('CYBERSOURCE_MERCHANT_ID', required=True)
 
 REDIRECT_SUCCESS = overridable('CYBERSOURCE_REDIRECT_SUCCESS', required=True)
 REDIRECT_FAIL = overridable('CYBERSOURCE_REDIRECT_FAIL', required=True)
