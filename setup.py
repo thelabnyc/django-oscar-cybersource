@@ -18,7 +18,7 @@ requires = [
     'Django>=1.8.11',
     'djangorestframework>=3.3.2',
     'django-oscar>=1.1.1',
-    'django-oscar-api>=1.0.1',
+    'django-oscar-api>=1.0.4',
     'django-statsd-mozilla>=0.3.16',
 ]
 

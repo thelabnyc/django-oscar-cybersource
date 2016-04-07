@@ -19,7 +19,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
-    'compressor',
     'widget_tweaks',
     'oscarapi',
     'cybersource',

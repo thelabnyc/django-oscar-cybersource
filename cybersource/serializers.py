@@ -8,12 +8,6 @@ BillingAddress = get_model('order', 'BillingAddress')
 class CheckoutSerializer(OscarCheckoutSerializer):
     order_number = None
 
-    def validate(self, attrs):
-        attrs = super().validate(attrs)
-        if attrs['basket'].num_items <= 0:
-            raise serializers.ValidationError('Cannot checkout with empty basket')
-        return attrs
-
     def create(self, validated_data):
         if not isinstance(validated_data['billing_address'], BillingAddress):
             validated_data['billing_address'] = BillingAddress(**validated_data['billing_address'])
