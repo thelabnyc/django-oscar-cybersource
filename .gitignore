@@ -1,4 +1,6 @@
 *.env
+sandbox/public/static/*
+sandbox/public/media/*
 
 # Created by https://www.gitignore.io/api/osx,python,linux,sublimetext
 

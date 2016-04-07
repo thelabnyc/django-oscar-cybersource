@@ -2,8 +2,7 @@ from oscar.defaults import *  # noqa
 from oscar import OSCAR_MAIN_TEMPLATE_DIR, get_core_apps
 import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DEBUG = True
 SECRET_KEY = 'li0$-gnv)76g$yf7p@(cg-^_q7j6df5cx$o-gsef5hd68phj!4'
