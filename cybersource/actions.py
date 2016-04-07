@@ -1,3 +1,4 @@
+from django.core.exceptions import ImproperlyConfigured
 from datetime import datetime
 from . import settings, signature
 import random
@@ -14,7 +15,6 @@ class SecureAcceptanceAction(object):
     signed_field_names = set()
     transaction_type = ''
     unsigned_field_names = set()
-
 
     def fields(self):
         names = self.signed_field_names | self.unsigned_field_names
@@ -34,6 +34,8 @@ class SecureAcceptanceAction(object):
         return fields
 
     def build_request_data(self):
+        if not self.profile_id:
+            raise ImproperlyConfigured("Cybersource Profile is not set")
         data = {
             'access_key': self.access_key,
             'currency': self.currency,
