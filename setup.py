@@ -8,6 +8,7 @@ from versiontag import get_version, cache_git_tag
 packages = [
     'cybersource',
     'cybersource.migrations',
+    'cybersource.tests',
 ]
 
 setup_requires = [
