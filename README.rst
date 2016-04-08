@@ -433,6 +433,12 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+1.0.3
+------------------
+- Make profile, access, and secret mandatory
+- Upgrade to `django-oscar-api>=1.0.4` to get rid of the need for our custom empty basket check
+- Make test coverage much more expansive
+
 1.0.2
 ------------------
 - README Updates
