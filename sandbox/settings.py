@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.flatpages',
     'widget_tweaks',
     'oscarapi',
+    'cch',
     'cybersource',
 ] + get_core_apps([
     'payment',

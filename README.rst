@@ -2,6 +2,8 @@
 django-oscar-cybersource
 ========================
 
+|  |license| |kit| |format| |downloads|
+
 This package is to handle integration between django-oscar based e-commerce sites and `Cybersource Secure Acceptance Silent Order POST <http://apps.cybersource.com/library/documentation/dev_guides/Secure_Acceptance_SOP/Secure_Acceptance_SOP.pdf>`_.
 
 
@@ -83,8 +85,8 @@ Installation
 
 5. Create and run migrations for the `payment` app.::
 
-    $ python managy.py makemigrations payment
-    $ python managy.py migrate
+    $ python manage.py makemigrations payment
+    $ python manage.py migrate
 
 
 6. Add `cybersource.urls` to your URL config.::
@@ -452,3 +454,14 @@ Changelog
 1.0.0 (2016-01-25)
 ------------------
 - Initial release.
+
+
+
+.. |license| image:: https://img.shields.io/pypi/l/django-oscar-cybersource.svg
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
+.. |kit| image:: https://badge.fury.io/py/django-oscar-cybersource.svg
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
+.. |format| image:: https://img.shields.io/pypi/format/django-oscar-cybersource.svg
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
+.. |downloads| image:: https://img.shields.io/pypi/dm/django-oscar-cybersource.svg?maxAge=2592000
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
