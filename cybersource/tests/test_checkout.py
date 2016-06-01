@@ -1,6 +1,4 @@
 from bs4 import BeautifulSoup
-from cybersource.constants import CHECKOUT_BASKET_ID, CHECKOUT_ORDER_NUM, CHECKOUT_SHIPPING_CODE, CHECKOUT_ORDER_ID
-from cybersource.tests import factories as cs_factories
 from decimal import Decimal as D
 from django.core import mail
 from django.core.urlresolvers import reverse
@@ -10,7 +8,10 @@ from oscar.test import factories
 from random import randrange
 from rest_framework.test import APITestCase
 import datetime
-import requests # Needed for external calls!
+import requests  # Needed for external calls
+
+from ..constants import CHECKOUT_BASKET_ID, CHECKOUT_ORDER_NUM, CHECKOUT_SHIPPING_CODE, CHECKOUT_ORDER_ID
+from . import factories as cs_factories
 
 Basket = get_model('basket', 'Basket')
 Product = get_model('catalogue', 'Product')

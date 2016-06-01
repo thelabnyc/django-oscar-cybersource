@@ -1,6 +1,6 @@
-from cybersource.signature import SecureAcceptanceSigner
 from django.test import TestCase
 from django.test.client import RequestFactory
+from ..signature import SecureAcceptanceSigner
 
 
 class SignerTest(TestCase):

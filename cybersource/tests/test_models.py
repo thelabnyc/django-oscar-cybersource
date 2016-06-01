@@ -1,6 +1,7 @@
-from cybersource.models import CyberSourceReply, PaymentToken
-from cybersource.tests.factories import build_accepted_reply_data
 from django.test import TestCase
+
+from ..models import CyberSourceReply, PaymentToken
+from .factories import build_accepted_reply_data
 
 
 class PaymentTokenTest(TestCase):

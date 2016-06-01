@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd sandbox
-python3 manage.py test
+python3 manage.py test cybersource.tests
