@@ -1,11 +1,14 @@
-# Test reqs
+# Packages maintained by thelab
+versiontag==1.0.3
+
+# Test Reqs
 beautifulsoup4==4.4.1
+flake8===2.5.4
 psycopg2==2.6.1
 pyyaml==3.11
 requests==2.9.1
-versiontag==1.0.1
 
-# Pkg reqs
+# Pkg Reqs
 Django==1.8.11
 django-oscar==1.2.1
 django-oscar-api==1.0.4
