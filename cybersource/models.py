@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
@@ -76,14 +77,18 @@ class PaymentToken(ReplyLogMixin, models.Model):
 
 
 class TransactionMixin(ReplyLogMixin, models.Model):
-    log = models.ForeignKey(CyberSourceReply, related_name='transactions')
+    log = models.ForeignKey(CyberSourceReply,
+        related_name='transactions',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL)
     token = models.ForeignKey(PaymentToken,
         related_name='transactions',
         null=True,
         blank=True,
         on_delete=models.SET_NULL)
-    request_token = models.CharField(max_length=200)
-    processed_datetime = models.DateTimeField()
+    request_token = models.CharField(max_length=200, null=True, blank=True)
+    processed_datetime = models.DateTimeField(default=datetime.now)
 
     class Meta:
         abstract = True
