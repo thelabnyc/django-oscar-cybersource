@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('data', django.contrib.postgres.fields.hstore.HStoreField()),
                 ('date_modified', models.DateTimeField(auto_now=True, verbose_name='Date Modified')),
                 ('date_created', models.DateTimeField(auto_now_add=True, verbose_name='Date Received')),
-                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, related_name='cybersource_replies', on_delete=django.db.models.deletion.SET_NULL, null=True)),
+                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, related_name='cybersource_replies', on_delete=django.db.models.deletion.SET_NULL, null=True)),  # NOQA
             ],
         ),
         migrations.CreateModel(

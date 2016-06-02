@@ -39,6 +39,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transaction',
             name='token',
-            field=models.ForeignKey(null=True, related_name='transactions', on_delete=django.db.models.deletion.SET_NULL, blank=True, to='cybersource.PaymentToken'),
+            field=models.ForeignKey(null=True, related_name='transactions', on_delete=django.db.models.deletion.SET_NULL, blank=True, to='cybersource.PaymentToken'),  # NOQA
         ),
     ]

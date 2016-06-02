@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
+
 def overridable(name, default=None, required=False):
     if required:
         if not hasattr(settings, name) or not getattr(settings, name):
@@ -9,7 +10,6 @@ def overridable(name, default=None, required=False):
 
 
 DEFAULT_CURRENCY = overridable('OSCAR_DEFAULT_CURRENCY', required=True)
-ORDER_STATUS_SUCCESS = overridable('CYBERSOURCE_ORDER_STATUS_SUCCESS', required=True)
 
 PROFILE = overridable('CYBERSOURCE_PROFILE', required=True)
 ACCESS = overridable('CYBERSOURCE_ACCESS', required=True)

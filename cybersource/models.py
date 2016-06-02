@@ -15,7 +15,7 @@ class CyberSourceReply(models.Model):
 
 
 class ReplyLogMixin(object):
-    def log_field(self, key, default = ''):
+    def log_field(self, key, default=''):
         return self.log.data.get(key, default)
 
 

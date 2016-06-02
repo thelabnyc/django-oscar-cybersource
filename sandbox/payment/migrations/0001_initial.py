@@ -57,7 +57,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=128, verbose_name='Name')),
-                ('code', oscar.models.fields.autoslugfield.AutoSlugField(populate_from='name', unique=True, verbose_name='Code', editable=False, max_length=128, help_text='This is used within forms to identify this source type', blank=True)),
+                ('code', oscar.models.fields.autoslugfield.AutoSlugField(populate_from='name', unique=True, verbose_name='Code', editable=False, max_length=128, help_text='This is used within forms to identify this source type', blank=True)),  # NOQA
             ],
             options={
                 'verbose_name_plural': 'Source Types',

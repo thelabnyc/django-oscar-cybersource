@@ -3,6 +3,7 @@ from random import randrange
 from ..signature import SecureAcceptanceSigner
 import uuid
 
+
 def build_accepted_reply_data(order_number):
     data = {
         "auth_amount": "99.99",
