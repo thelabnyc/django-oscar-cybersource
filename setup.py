@@ -17,11 +17,9 @@ setup_requires = [
 
 requires = [
     'Django>=1.8.11',
-    'djangorestframework>=3.3.2',
     'django-oscar>=1.1.1',
     'django-oscar-api>=1.0.4',
-    'django-oscar-api-checkout>=0.1.0',
-    'django-statsd-mozilla>=0.3.16',
+    'django-oscar-api-checkout>=0.1.2',
 ]
 
 def fpath(name):

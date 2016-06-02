@@ -1,11 +1,12 @@
+# Test reqs
 beautifulsoup4==4.4.1
-Django==1.8.11
-djangorestframework==3.3.2
-django-statsd-mozilla==0.3.16
-django-oscar==1.2.1
-django-oscar-api==1.0.4
-django-oscar-api-checkout==0.1.2
 psycopg2==2.6.1
 pyyaml==3.11
 requests==2.9.1
 versiontag==1.0.1
+
+# Pkg reqs
+Django==1.8.11
+django-oscar==1.2.1
+django-oscar-api==1.0.4
+django-oscar-api-checkout==0.1.2
