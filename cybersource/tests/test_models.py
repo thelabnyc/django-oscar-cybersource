@@ -1,12 +1,12 @@
 from django.test import TestCase
 
 from ..models import CyberSourceReply, PaymentToken
-from .factories import build_accepted_reply_data
+from .factories import build_accepted_token_reply_data
 
 
 class PaymentTokenTest(TestCase):
     def test_log_data_parsing(self):
-        data = build_accepted_reply_data('S123456789')
+        data = build_accepted_token_reply_data('S123456789')
         log = CyberSourceReply.objects.create(data=data)
         token = PaymentToken.objects.create(
             log=log,

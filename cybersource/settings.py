@@ -18,6 +18,7 @@ SECRET = overridable('CYBERSOURCE_SECRET', required=True)
 ORG_ID = overridable('CYBERSOURCE_ORG_ID', required=True)
 MERCHANT_ID = overridable('CYBERSOURCE_MERCHANT_ID', required=True)
 
+REDIRECT_PENDING = overridable('CYBERSOURCE_REDIRECT_PENDING', required=True)
 REDIRECT_SUCCESS = overridable('CYBERSOURCE_REDIRECT_SUCCESS', required=True)
 REDIRECT_FAIL = overridable('CYBERSOURCE_REDIRECT_FAIL', required=True)
 

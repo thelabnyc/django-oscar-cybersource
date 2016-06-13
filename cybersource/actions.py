@@ -11,9 +11,26 @@ class SecureAcceptanceAction(object):
     date_format = settings.DATE_FORMAT
     locale = settings.LOCALE
     profile_id = settings.PROFILE
-    signed_field_names = set()
     transaction_type = ''
-    unsigned_field_names = set()
+
+
+    @property
+    def signed_field_names(self):
+        return set([
+            'access_key',
+            'profile_id',
+            'transaction_uuid',
+            'signed_field_names',
+            'unsigned_field_names',
+            'signed_date_time',
+            'locale',
+            'transaction_type',
+        ])
+
+
+    @property
+    def unsigned_field_names(self):
+        return set([])
 
 
     def fields(self):
@@ -59,59 +76,112 @@ class SecureAcceptanceAction(object):
         return '%s%s' % (int(time.time()), random.randrange(0, 100))
 
 
-class CreateAndAuthorizePaymentToken(SecureAcceptanceAction):
-    signed_field_names = set([
-        'access_key',
-        'profile_id',
-        'transaction_uuid',
-        'signed_field_names',
-        'unsigned_field_names',
-        'signed_date_time',
-        'locale',
-        'transaction_type',
-        'reference_number',
-        'customer_ip_address',
-        'device_fingerprint_id',
-        'payment_method',
-        'ship_to_forename',
-        'ship_to_surname',
-        'ship_to_address_line1',
-        'ship_to_address_line2',
-        'ship_to_address_city',
-        'ship_to_address_state',
-        'ship_to_address_country',
-        'ship_to_address_postal_code',
-        'ship_to_phone',
-        'currency',
-        'amount',
-        'line_item_count',
-    ])
-    unsigned_field_names = set([
-        'bill_to_forename',
-        'bill_to_surname',
-        'bill_to_address_line1',
-        'bill_to_address_line2',
-        'bill_to_address_city',
-        'bill_to_address_state',
-        'bill_to_address_postal_code',
-        'bill_to_address_country',
-        'bill_to_phone',
-        'bill_to_email',
-        'card_type',
-        'card_number',
-        'card_expiry_date',
-        'card_cvn',
-    ])
-    transaction_type = 'authorization,create_payment_token'
-    url = settings.ENDPOINT_PAY
+
+class ShippingAddressMixin(object):
+    def _get_shipping_signed_fields(self):
+        return set([
+            'ship_to_forename',
+            'ship_to_surname',
+            'ship_to_address_line1',
+            'ship_to_address_line2',
+            'ship_to_address_city',
+            'ship_to_address_state',
+            'ship_to_address_postal_code',
+            'ship_to_address_country',
+            'ship_to_phone'
+        ])
+
+    def _get_shipping_unsigned_fields(self):
+        return set([])
+
+    def _get_shipping_data(self):
+        if not self.order.shipping_address:
+            return {}
+        return {
+            'ship_to_forename': self.order.shipping_address.first_name,
+            'ship_to_surname': self.order.shipping_address.last_name,
+            'ship_to_address_line1': self.order.shipping_address.line1,
+            'ship_to_address_line2': self.order.shipping_address.line2,
+            'ship_to_address_city': self.order.shipping_address.line4,
+            'ship_to_address_state': self.order.shipping_address.state,
+            'ship_to_address_postal_code': self.order.shipping_address.postcode,
+            'ship_to_address_country': self.order.shipping_address.country.code,
+            'ship_to_phone': re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966),
+        }
 
 
+
+class BillingAddressMixin(object):
+    def _get_billing_signed_fields(self):
+        return set([
+            'bill_to_forename',
+            'bill_to_surname',
+            'bill_to_address_line1',
+            'bill_to_address_line2',
+            'bill_to_address_city',
+            'bill_to_address_state',
+            'bill_to_address_postal_code',
+            'bill_to_address_country',
+            'bill_to_email',
+        ])
+
+    def _get_billing_unsigned_fields(self):
+        return set([
+            # Oscar doesn't track phone number for billing addresses. Set this as unsigned to that the client JS can specify it if they want.
+            'bill_to_phone',
+        ])
+
+    def _get_billing_data(self):
+        data = {
+            'bill_to_email': self.order.email,
+        }
+        if self.order.billing_address:
+            data['bill_to_forename'] = self.order.billing_address.first_name
+            data['bill_to_surname'] = self.order.billing_address.last_name
+            data['bill_to_address_line1'] = self.order.billing_address.line1
+            data['bill_to_address_line2'] = self.order.billing_address.line2
+            data['bill_to_address_city'] = self.order.billing_address.line4
+            data['bill_to_address_state'] = self.order.billing_address.state
+            data['bill_to_address_postal_code'] = self.order.billing_address.postcode
+            data['bill_to_address_country'] = self.order.billing_address.country.code
+        return data
+
+
+class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMixin):
+    """
+    Abstract SecureAcceptanceAction for action's related to orders.
+    """
     def __init__(self, order, amount, **kwargs):
         self.order = order
         self.amount = amount
         self.customer_ip_address = kwargs.get('customer_ip_address')
         self.device_fingerprint_id = kwargs.get('fingerprint_session_id')
         self.extra_fields = kwargs.get('extra_fields')
+
+
+    @property
+    def signed_field_names(self):
+        fields = super().signed_field_names
+        fields = fields | self._get_shipping_signed_fields()
+        fields = fields | self._get_billing_signed_fields()
+        fields = fields | set([
+            'payment_method',
+            'reference_number',
+            'currency',
+            'amount',
+            'line_item_count',
+            'customer_ip_address',
+            'device_fingerprint_id',
+        ])
+        return fields
+
+
+    @property
+    def unsigned_field_names(self):
+        fields = super().unsigned_field_names
+        fields = fields | self._get_shipping_unsigned_fields()
+        fields = fields | self._get_billing_unsigned_fields()
+        return fields
 
 
     def build_signed_data(self):
@@ -124,26 +194,8 @@ class CreateAndAuthorizePaymentToken(SecureAcceptanceAction):
         data['amount'] = str(self.amount)
 
         # Add shipping and billing info
-        if self.order.shipping_address:
-            data['ship_to_forename'] = self.order.shipping_address.first_name
-            data['ship_to_surname'] = self.order.shipping_address.last_name
-            data['ship_to_address_line1'] = self.order.shipping_address.line1
-            data['ship_to_address_line2'] = self.order.shipping_address.line2
-            data['ship_to_address_city'] = self.order.shipping_address.line4
-            data['ship_to_address_state'] = self.order.shipping_address.state
-            data['ship_to_address_postal_code'] = self.order.shipping_address.postcode
-            data['ship_to_phone'] = re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966)
-            data['ship_to_address_country'] = self.order.shipping_address.country.code
-
-        if self.order.billing_address:
-            data['bill_to_forename'] = self.order.billing_address.first_name
-            data['bill_to_surname'] = self.order.billing_address.last_name
-            data['bill_to_address_line1'] = self.order.billing_address.line1
-            data['bill_to_address_line2'] = self.order.billing_address.line2
-            data['bill_to_address_city'] = self.order.billing_address.line4
-            data['bill_to_address_state'] = self.order.billing_address.state
-            data['bill_to_address_postal_code'] = self.order.billing_address.postcode
-            data['bill_to_address_country'] = self.order.billing_address.country.code
+        data.update(self._get_shipping_data())
+        data.update(self._get_billing_data())
 
         # Add line item info
         i = 0
@@ -162,4 +214,45 @@ class CreateAndAuthorizePaymentToken(SecureAcceptanceAction):
                 data[field] = value
         data.update(self.extra_fields)
 
+        return data
+
+
+class CreatePaymentToken(OrderAction):
+    transaction_type = 'create_payment_token'
+    url = settings.ENDPOINT_PAY
+
+    @property
+    def unsigned_field_names(self):
+        fields = super().unsigned_field_names
+        fields = fields | set([
+            # There are unsigned as the server should *never* know them. The client JS must fill them in.
+            'card_type',
+            'card_number',
+            'card_expiry_date',
+            'card_cvn',
+        ])
+        return fields
+
+
+class AuthorizePaymentToken(OrderAction):
+    transaction_type = 'authorization'
+    url = settings.ENDPOINT_PAY
+
+    def __init__(self, token_string, order, amount, **kwargs):
+        self.token_string = token_string
+        super().__init__(order, amount, **kwargs)
+
+
+    @property
+    def signed_field_names(self):
+        fields = super().signed_field_names
+        fields = fields | set([
+            'payment_token',
+        ])
+        return fields
+
+
+    def build_signed_data(self):
+        data = super().build_signed_data()
+        data['payment_token'] = self.token_string
         return data

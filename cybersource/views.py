@@ -10,7 +10,7 @@ from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT
 from .methods import Cybersource
 from .models import CyberSourceReply
 import uuid
@@ -71,9 +71,6 @@ class CyberSourceReplyView(APIView):
     """
     authentication_classes = (CSRFExemptSessionAuthentication, )
 
-    # Default code for the email to send after successful checkout
-    DECISION_ACCEPT = 'ACCEPT'
-
 
     def post(self, request, format=None):
         if not self.is_request_valid(request):
@@ -104,11 +101,29 @@ class CyberSourceReplyView(APIView):
 
     def get_handler_fn(self, trans_type):
         handlers = {
-            actions.CreateAndAuthorizePaymentToken.transaction_type: self.record_authorization,
+            actions.CreatePaymentToken.transaction_type: self.record_token,
+            actions.AuthorizePaymentToken.transaction_type: self.record_authorization,
         }
         if trans_type not in handlers:
             raise SuspiciousOperation("Couldn't find handler for %s" % trans_type)
         return handlers[trans_type]
+
+
+    def record_token(self, request, format, reply_log_entry):
+        # Fetch the related order
+        order = self._get_order(request)
+
+        # Check if the payment token was actually created or not.
+        if request.data.get('decision') != DECISION_ACCEPT:
+            messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
+            amount = Decimal(request.data.get('req_amount', '0.00'))
+            utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
+            return redirect(settings.REDIRECT_FAIL)
+
+        # Token creation was successful, so log it and move on to authorization.
+        new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, request.data)
+        utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+        return redirect(settings.REDIRECT_PENDING)
 
 
     def record_authorization(self, request, format, reply_log_entry):
@@ -118,13 +133,10 @@ class CyberSourceReplyView(APIView):
             return redirect(settings.REDIRECT_SUCCESS)
 
         # Fetch the related order
-        try:
-            order = Order.objects.get(number=request.data.get('req_reference_number'))
-        except Order.DoesNotExist:
-            raise SuspiciousOperation("Order not found.")
+        order = self._get_order(request)
 
         # Check if the authorization was declined
-        if request.data.get('decision') != self.DECISION_ACCEPT:
+        if request.data.get('decision') != DECISION_ACCEPT:
             messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
             amount = Decimal(request.data.get('req_amount', '0.00'))
             utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
@@ -134,3 +146,11 @@ class CyberSourceReplyView(APIView):
         new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
         utils.update_payment_method_state(order, request, Cybersource.code, new_state)
         return redirect(settings.REDIRECT_SUCCESS)
+
+
+    def _get_order(self, request):
+        try:
+            order = Order.objects.get(number=request.data.get('req_reference_number'))
+        except Order.DoesNotExist:
+            raise SuspiciousOperation("Order not found.")
+        return order

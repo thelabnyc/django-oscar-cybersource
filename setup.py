@@ -19,7 +19,7 @@ requires = [
     'Django>=1.8.11',
     'django-oscar>=1.1.1',
     'django-oscar-api>=1.0.4',
-    'django-oscar-api-checkout>=0.1.2',
+    'django-oscar-api-checkout>=0.1.5',
 ]
 
 def fpath(name):

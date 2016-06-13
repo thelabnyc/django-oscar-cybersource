@@ -12,4 +12,4 @@ requests==2.9.1
 Django==1.8.11
 django-oscar==1.2.1
 django-oscar-api==1.0.4
-django-oscar-api-checkout==0.1.2
+django-oscar-api-checkout==0.1.5
