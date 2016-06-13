@@ -80,6 +80,7 @@ class Cybersource(PaymentMethod):
         signals.pre_build_auth_request.send(
             sender=self.__class__,
             extra_fields=extra_fields,
+            request=request,
             order=order,
             token=token)
 
