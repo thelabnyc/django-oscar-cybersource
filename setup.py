@@ -16,7 +16,7 @@ setup_requires = [
 ]
 
 requires = [
-    'Django>=1.8.11',
+    'Django>=1.9.6',
     'django-oscar>=1.1.1',
     'django-oscar-api>=1.0.4',
     'django-oscar-api-checkout>=0.1.5',

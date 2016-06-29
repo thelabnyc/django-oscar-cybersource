@@ -94,6 +94,7 @@ class CyberSourceReplyView(APIView):
     def log_response(self, request):
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated() else None,
+            order=self._get_order(request),
             data=request.data)
         log.save()
         return log
@@ -138,8 +139,8 @@ class CyberSourceReplyView(APIView):
         # Check if the authorization was declined
         if request.data.get('decision') != DECISION_ACCEPT:
             messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
-            amount = Decimal(request.data.get('req_amount', '0.00'))
-            utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
+            new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
+            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
             return redirect(settings.REDIRECT_FAIL)
 
         # Authorization was successful, so log it and redirect to the success page.

@@ -9,7 +9,7 @@ pyyaml==3.11
 requests==2.9.1
 
 # Pkg Reqs
-Django==1.8.11
+Django==1.9.6
 django-oscar==1.2.1
 django-oscar-api==1.0.4
 django-oscar-api-checkout==0.1.5

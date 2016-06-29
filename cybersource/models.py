@@ -7,6 +7,7 @@ from oscar.core.compat import AUTH_USER_MODEL
 class CyberSourceReply(models.Model):
     user = models.ForeignKey(AUTH_USER_MODEL,
         related_name='cybersource_replies', null=True, blank=True, on_delete=models.SET_NULL)
+    order = models.ForeignKey('order.Order', related_name='cybersource_replies', null=True, on_delete=models.SET_NULL)
     data = HStoreField()
     date_modified = models.DateTimeField("Date Modified", auto_now=True)
     date_created = models.DateTimeField("Date Received", auto_now_add=True)

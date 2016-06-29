@@ -154,8 +154,11 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(transactions[0].amount, order.total_incl_tax)
         self.assertEqual(transactions[0].status, 'ACCEPT')
 
+        self.assertEqual(transactions[0].log.order, order)
         self.assertEqual(transactions[0].log_field('req_reference_number'), order.number)
         self.assertEqual(transactions[0].token.card_last4, '1111')
+        self.assertEqual(transactions[0].token.log.order, order)
+        self.assertEqual(transactions[0].token.log_field('req_reference_number'), order.number)
 
         self.assertEqual(len(mail.outbox), 1)
 
