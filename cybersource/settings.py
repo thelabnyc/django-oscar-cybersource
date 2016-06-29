@@ -30,5 +30,5 @@ LOCALE = overridable('CYBERSOURCE_LOCALE', 'en')
 FINGERPRINT_PROTOCOL = overridable('CYBERSOURCE_FINGERPRINT_PROTOCOL', 'https')
 FINGERPRINT_HOST = overridable('CYBERSOURCE_FINGERPRINT_HOST', 'h.online-metrix.net')
 
-SOURCE_TYPE = overridable('CYBERSOURCE_SOURCE_TYPE', 'CyberSource Secure Acceptance')
+SOURCE_TYPE = overridable('CYBERSOURCE_SOURCE_TYPE', 'Cybersource Secure Acceptance')
 CARD_REJECT_ERROR = overridable('CYBERSOURCE_CARD_REJECT_ERROR', 'Card was declined by the issuing bank. Please try a different card.')

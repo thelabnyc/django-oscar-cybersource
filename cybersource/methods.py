@@ -17,7 +17,7 @@ class Cybersource(PaymentMethod):
     status initially that requires the client app to make a form post, which in-turn
     redirects back to us. This is a common pattern in PCI SAQ A-EP ecommerce sites.
     """
-    name = 'Cybersource Secure Acceptance'
+    name = settings.SOURCE_TYPE
     code = 'cybersource'
     serializer_class = PaymentMethodSerializer
 

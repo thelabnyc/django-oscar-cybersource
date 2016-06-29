@@ -14,6 +14,6 @@ class PaymentTokenAdmin(admin.ModelAdmin):
 @admin.register(models.CyberSourceReply)
 class CyberSourceReplyAdmin(admin.ModelAdmin):
     list_filter = ['date_modified', 'date_created']
-    list_display = ['date_created', 'user', 'date_modified']
-    fields = ['user', 'data', 'date_modified', 'date_created']
+    list_display = ['date_created', 'user', 'order', 'date_modified']
+    fields = ['user', 'order', 'data', 'date_modified', 'date_created']
     readonly_fields = fields

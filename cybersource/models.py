@@ -2,6 +2,7 @@ from datetime import datetime
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
+import dateutil.parser
 
 
 class CyberSourceReply(models.Model):
@@ -12,8 +13,18 @@ class CyberSourceReply(models.Model):
     date_modified = models.DateTimeField("Date Modified", auto_now=True)
     date_created = models.DateTimeField("Date Received", auto_now_add=True)
 
+    class Meta:
+        ordering = ('date_created', )
+
     def __str__(self):
         return 'CyberSource Reply %s' % self.date_created
+
+    @property
+    def signed_date_time(self):
+        try:
+            return dateutil.parser.parse(self.data['signed_date_time'])
+        except (AttributeError, ValueError):
+            return None
 
 
 class ReplyLogMixin(object):
