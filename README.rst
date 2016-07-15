@@ -446,6 +446,22 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.0.4
+------------------
+- Fix exception from typo in record_declined_authorization.
+
+3.0.3
+------------------
+- Fix case-mismatch of payment source types.
+
+3.0.2
+------------------
+- Add data migration to populate `CyberSourceReply.order` on rows from before 3.0.1.
+
+3.0.1
+------------------
+- Added foreign key from `cybersource.CyberSourceReply` from `order.Order`.
+
 3.0.0
 ------------------
 - Change to two step SOP method with discrete get_token and authorization steps. This works around a bug in Cybersource's code which will leave a pending authorization on a user's card, even if the address verification or decision manager rejects the transaction. By doing the transaction in two phases, we can catch most AVN / DM rejections before the authorization is placed on the credit card. The downside is that the client must now perform 2 separate form posts to Cybersource.
