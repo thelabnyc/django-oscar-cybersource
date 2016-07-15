@@ -155,7 +155,7 @@ class Cybersource(PaymentMethod):
         transaction = Transaction()
         transaction.log = reply_log_entry
         transaction.source = self.get_source(order, transaction_id)
-        transaction.token = PaymentToken.objects.first(token=token_string)
+        transaction.token = PaymentToken.objects.filter(token=token_string).first()
         transaction.txn_type = Transaction.AUTHORISE
         transaction.amount = req_amount
         transaction.reference = transaction_id

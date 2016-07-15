@@ -509,6 +509,30 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
     @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    def test_declined_auth(self, order_payment_authorized):
+        """Declined auth should should result in redirect to failure page"""
+        order_number = self.prepare_order()
+
+        data = cs_factories.build_accepted_token_reply_data(order_number)
+        data = cs_factories.sign_reply_data(data)
+        url = reverse('cybersource-reply')
+        resp = self.client.post(url, data)
+
+        self.assertRedirects(resp, reverse('checkout:index'), fetch_redirect_response=False)
+        self.assertEqual(order_payment_authorized.call_count, 0, 'Should not trigger signal')
+        self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Pending')
+
+        data = cs_factories.build_declined_auth_reply_data(order_number)
+        data = cs_factories.sign_reply_data(data)
+        url = reverse('cybersource-reply')
+        resp = self.client.post(url, data)
+
+        self.assertRedirects(resp, reverse('checkout:index'), fetch_redirect_response=False)
+        self.assertEqual(order_payment_authorized.call_count, 0, 'Should not trigger signal')
+        self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Payment Declined')
+
+
+    @patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_success(self, order_payment_authorized):
         """Successful authorization should create an order and redirect to the success page"""
         order_number = self.prepare_order()
