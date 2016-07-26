@@ -146,7 +146,7 @@ class Cybersource(PaymentMethod):
     # Payment Declined in Step 3: Record a failed authorization.
     def record_declined_authorization(self, reply_log_entry, order, data):
         token_string = data.get('req_payment_token')
-        transaction_id = data.get('transaction_id')
+        transaction_id = data.get('transaction_id', '')
         decision = data.get('decision')
         request_token = data.get('request_token')
         signed_date_time = data.get('signed_date_time')
