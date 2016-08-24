@@ -1,18 +1,25 @@
+from datetime import timedelta
 from decimal import Decimal
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.views import generic
+from lxml import etree
+from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
+from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
 from .methods import Cybersource
 from .models import CyberSourceReply
+from .signals import received_decision_manager_update
+import dateutil.parser
 import uuid
 import logging
 
@@ -172,3 +179,95 @@ class CyberSourceReplyView(APIView):
         except Order.DoesNotExist:
             raise SuspiciousOperation("Order not found.")
         return order
+
+
+
+class DecisionManagerNotificationView(APIView):
+    """
+    Handle a CyberSource reply.
+    """
+    authentication_classes = (CSRFExemptSessionAuthentication, )
+
+
+    def post(self, request, format=None):
+        xml = request.data.get('content').encode()
+        root = etree.fromstring(xml)
+        # Loop through order updates
+        for update in root.xpath("*[local-name()='Update']"):
+            try:
+                self._handle_update(update)
+            except Http404:
+                pass
+        return Response(status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def _handle_update(self, update):
+        order = self._get_order(update)
+        transaction = self._get_transaction(order, update)
+
+        # Save any notes attached to the order in DM
+        for note_elem in update.xpath("*[local-name()='Notes']/*[local-name()='Note']"):
+            self._save_order_note(order, note_elem)
+
+        # Update order status
+        self._update_decision(order, transaction, update)
+
+        # Send signal to notify other parts of the app that should know
+        received_decision_manager_update.send_robust(self.__class__,
+            order=order, transaction=transaction, update=update)
+
+
+    def _get_order(self, update):
+        order_number = update.attrib['MerchantReferenceNumber']
+        return get_object_or_404(Order, number=order_number)
+
+
+    def _get_transaction(self, order, update):
+        transaction_id = update.attrib['RequestID']
+        try:
+            transaction = Transaction.objects.filter(source__order=order).get(reference=transaction_id)
+        except Transaction.DoesNotExist:
+            raise Http404()
+        return transaction
+
+
+    def _save_order_note(self, order, note_elem):
+        author = note_elem.attrib['AddedBy']
+        comment = note_elem.attrib['Comment']
+        date = dateutil.parser.parse(note_elem.attrib['Date'])
+
+        message_prefix = '[Decision Manager %s]' % date.strftime('%c')
+        note = order.notes.filter(note_type=OrderNote.SYSTEM, message__startswith=message_prefix).first()
+        if not note:
+            note = OrderNote(order=order, note_type=OrderNote.SYSTEM, message='')
+
+        note.message += '%s %s added comment: %s\n' % (message_prefix, author, comment)
+        note.save()
+
+        return note
+
+
+    def _update_decision(self, order, transaction, update):
+        elems = update.xpath("*[local-name()='NewDecision']")
+        if len(elems) <= 0:
+            return
+        new_decision = elems[0].text
+
+        elems = update.xpath("*[local-name()='Reviewer']")
+        reviewer = elems[0].text if len(elems) else ''
+
+        elems = update.xpath("*[local-name()='ReviewerComments']")
+        comments = elems[0].text if len(elems) else ''
+
+        note = OrderNote()
+        note.order = order
+        note.note_type = OrderNote.SYSTEM
+        note.message = '[Decision Manager] %s changed decision from %s to %s.\n\nComments: %s' % (
+            reviewer, transaction.status, new_decision, comments)
+        note.save()
+
+        if new_decision != DECISION_ACCEPT:
+            order.set_status(ORDER_STATUS_PAYMENT_DECLINED)
+
+        transaction.status = new_decision
+        transaction.save()

@@ -99,7 +99,7 @@ Installation
     )
     ...
 
-7. In the Cybersource Secure Acceptance dashboard, set the customer response page to https://www.my-host.com/api/cybersource/cybersource-reply/.
+7. In the Cybersource Secure Acceptance dashboard, set the customer response page to https://www.my-host.com/api/cybersource/cybersource-reply/. If using Decision Manager, set its notification URL to https://www.my-host.com/api/cybersource/decision-manager-review-notification/.
 
 8. Include the device fingerprint code in your checkout interface.::
 
@@ -135,11 +135,11 @@ Once a user has added items to his or her basket, your client-side application m
     6. If the decision was to decline the authorization:
         1. Add a message to the session using the text in `CYBERSOURCE_CARD_REJECT_ERROR`
         2. Mark the order as payment declined.
-        2. Unfreeze the basket so that it is editable again.
-        3. Redirect the user to `CYBERSOURCE_REDIRECT_FAIL`
+        3. Unfreeze the basket so that it is editable again.
+        4. Redirect the user to `CYBERSOURCE_REDIRECT_FAIL`
     7. Create the related `cybersource.PaymentToken`, `payment.SourceType`, `payment.Source`, `payment.Transaction`, `order.PaymentEvent`, and `order.PaymentEventQuantity` models.
-    9. Save the order ID to the session so that the `CYBERSOURCE_REDIRECT_SUCCESS` view can access it.
-    10. Redirect the user to `CYBERSOURCE_REDIRECT_SUCCESS`.
+    8. Save the order ID to the session so that the `CYBERSOURCE_REDIRECT_SUCCESS` view can access it.
+    9. Redirect the user to `CYBERSOURCE_REDIRECT_SUCCESS`.
 
 While the flow described above is somewhat complex, it avoid payment information ever touching the server, thereby significantly lessening the weight of PCI compliance.
 
