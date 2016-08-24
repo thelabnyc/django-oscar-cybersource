@@ -104,17 +104,17 @@ Installation
 8. Include the device fingerprint code in your checkout interface.::
 
     {# One Pixel Image Code #}
-    <p style="background:url({% url 'fingerprint-redirect' url_type='img-1' %})"></p>
-    <img src="{% url 'fingerprint-redirect' url_type='img-2' %}" alt="">
+    <p style="background:url({% url 'cybersource-fingerprint-redirect' url_type='img-1' %})"></p>
+    <img src="{% url 'cybersource-fingerprint-redirect' url_type='img-2' %}" alt="">
 
     {# Flash Code #}
-    <object type="application/x-shockwave-flash" data="{% url 'fingerprint-redirect' url_type='flash' %}" width="1" height="1" id="thm_fp">
-        <param name="movie" value="{% url 'fingerprint-redirect' url_type='flash' %}" />
+    <object type="application/x-shockwave-flash" data="{% url 'cybersource-fingerprint-redirect' url_type='flash' %}" width="1" height="1" id="thm_fp">
+        <param name="movie" value="{% url 'cybersource-fingerprint-redirect' url_type='flash' %}" />
         <div></div>
     </object>
 
     {# JS Code #}
-    <script src="{% url 'fingerprint-redirect' url_type='js' %}" type="text/javascript"></script>
+    <script src="{% url 'cybersource-fingerprint-redirect' url_type='js' %}" type="text/javascript"></script>
 
 
 Usage
@@ -445,6 +445,10 @@ The Javascript app should loop through the fields in the above response and fill
 
 Changelog
 =========
+
+3.0.5
+------------------
+- Fix IntegrityError sometimes thrown when processing a declined payment.
 
 3.0.4
 ------------------
