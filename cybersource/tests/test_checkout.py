@@ -593,7 +593,8 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(order.notes.count(), 1, 'Should save OrderNote')
         note = order.notes.first()
         self.assertEqual(note.note_type, 'System')
-        self.assertEqual(note.message, 'Transaction %s is currently under review. Use Decision Manager to either accept or reject the transaction.' % transaction.reference)
+        self.assertEqual(note.message,
+            'Transaction %s is currently under review. Use Decision Manager to either accept or reject the transaction.' % transaction.reference)
 
 
     @patch('oscarapicheckout.signals.order_payment_authorized.send')

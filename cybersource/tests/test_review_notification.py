@@ -13,7 +13,12 @@ Source = get_model('payment', 'Source')
 ADDED_NOTE = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE CaseManagementOrderStatus
   SYSTEM 'https://ebctest.cybersource.com/ebctest/reports/dtd/cmorderstatus_1_1.dtd'>
-<CaseManagementOrderStatus Date="2016-08-24 16:28:33 GMT" MerchantID="somemerchant" Name="Case Management Order Status" Version="1.1" xmlns="http://reports.cybersource.com/reports/cmos/1.0">
+<CaseManagementOrderStatus
+        Date="2016-08-24 16:28:33 GMT"
+        MerchantID="somemerchant"
+        Name="Case Management Order Status"
+        Version="1.1"
+        xmlns="http://reports.cybersource.com/reports/cmos/1.0">
     <Update MerchantReferenceNumber="117037850784" RequestID="4720554329436778504102">
         <OriginalDecision>REVIEW</OriginalDecision>
         <Reviewer>Bill</Reviewer>
@@ -31,7 +36,12 @@ ADDED_NOTE = """<?xml version="1.0" encoding="UTF-8"?>
 ACCEPTED = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE CaseManagementOrderStatus
   SYSTEM 'https://ebctest.cybersource.com/ebctest/reports/dtd/cmorderstatus_1_1.dtd'>
-<CaseManagementOrderStatus Date="2016-08-24 16:29:47 GMT" MerchantID="somemerchant" Name="Case Management Order Status" Version="1.1" xmlns="http://reports.cybersource.com/reports/cmos/1.0">
+<CaseManagementOrderStatus
+        Date="2016-08-24 16:29:47 GMT"
+        MerchantID="somemerchant"
+        Name="Case Management Order Status"
+        Version="1.1"
+        xmlns="http://reports.cybersource.com/reports/cmos/1.0">
     <Update MerchantReferenceNumber="117037850784" RequestID="4720554329436778504102">
         <OriginalDecision>REVIEW</OriginalDecision>
         <NewDecision>ACCEPT</NewDecision>
@@ -51,7 +61,12 @@ ACCEPTED = """<?xml version="1.0" encoding="UTF-8"?>
 REJECTED = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE CaseManagementOrderStatus
   SYSTEM 'https://ebctest.cybersource.com/ebctest/reports/dtd/cmorderstatus_1_1.dtd'>
-<CaseManagementOrderStatus Date="2016-08-24 16:31:26 GMT" MerchantID="somemerchant" Name="Case Management Order Status" Version="1.1" xmlns="http://reports.cybersource.com/reports/cmos/1.0">
+<CaseManagementOrderStatus
+        Date="2016-08-24 16:31:26 GMT"
+        MerchantID="somemerchant"
+        Name="Case Management Order Status"
+        Version="1.1"
+        xmlns="http://reports.cybersource.com/reports/cmos/1.0">
     <Update MerchantReferenceNumber="117037850784" RequestID="4720554329436778504102">
         <OriginalDecision>REVIEW</OriginalDecision>
         <NewDecision>REJECT</NewDecision>

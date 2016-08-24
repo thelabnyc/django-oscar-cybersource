@@ -1,4 +1,3 @@
-from datetime import timedelta
 from decimal import Decimal
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
@@ -154,7 +153,10 @@ class CyberSourceReplyView(APIView):
 
             # If the order is under review, add a note explaining why
             if is_under_review:
-                msg = 'Transaction %s is currently under review. Use Decision Manager to either accept or reject the transaction.' % request.data.get('transaction_id')
+                msg = (
+                    'Transaction %s is currently under review. '
+                    'Use Decision Manager to either accept or reject the transaction.'
+                ) % request.data.get('transaction_id')
                 self._create_order_note(order, msg)
 
             return redirect(settings.REDIRECT_SUCCESS)
