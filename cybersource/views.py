@@ -10,7 +10,7 @@ from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
 from .methods import Cybersource
 from .models import CyberSourceReply
 import uuid
@@ -24,6 +24,7 @@ Basket = get_model('basket', 'Basket')
 BillingAddress = get_model('order', 'BillingAddress')
 Country = get_model('address', 'Country')
 Order = get_model('order', 'Order')
+OrderNote = get_model('order', 'OrderNote')
 PaymentEventType = get_model('order', 'PaymentEventType')
 PaymentEvent = get_model('order', 'PaymentEvent')
 PaymentEventQuantity = get_model('order', 'PaymentEventQuantity')
@@ -136,17 +137,33 @@ class CyberSourceReplyView(APIView):
         # Fetch the related order
         order = self._get_order(request)
 
-        # Check if the authorization was declined
-        if request.data.get('decision') != DECISION_ACCEPT:
-            messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
-            new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
-            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
-            return redirect(settings.REDIRECT_FAIL)
+        is_accept = request.data.get('decision') == DECISION_ACCEPT
+        is_under_review = request.data.get('decision') == DECISION_REVIEW
 
-        # Authorization was successful, so log it and redirect to the success page.
-        new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
+        # If authorization was successful, log it and redirect to the success page.
+        if is_accept or is_under_review:
+            new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
+            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+
+            # If the order is under review, add a note explaining why
+            if is_under_review:
+                msg = 'Transaction %s is currently under review. Use Decision Manager to either accept or reject the transaction.' % request.data.get('transaction_id')
+                self._create_order_note(order, msg)
+
+            return redirect(settings.REDIRECT_SUCCESS)
+
+        # Authorization was declined. Show a message to the user.
+        messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
+        new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
         utils.update_payment_method_state(order, request, Cybersource.code, new_state)
-        return redirect(settings.REDIRECT_SUCCESS)
+        return redirect(settings.REDIRECT_FAIL)
+
+
+    def _create_order_note(self, order, msg):
+        return OrderNote.objects.create(
+            note_type=OrderNote.SYSTEM,
+            order=order,
+            message=msg)
 
 
     def _get_order(self, request):

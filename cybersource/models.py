@@ -2,6 +2,7 @@ from datetime import datetime
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
+from .constants import DECISION_REVIEW
 import dateutil.parser
 
 
@@ -104,3 +105,7 @@ class TransactionMixin(ReplyLogMixin, models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def is_pending_review(self):
+        return self.status == DECISION_REVIEW

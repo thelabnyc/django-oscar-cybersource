@@ -533,6 +533,70 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
     @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    def test_decision_manager_review_auth(self, order_payment_authorized):
+        """Reviewed auth should create an order and redirect to the success page, but flag the transaction as under review."""
+        """Successful authorization should create an order and redirect to the success page"""
+        order_number = self.prepare_order()
+
+        data = cs_factories.build_accepted_token_reply_data(order_number)
+        data = cs_factories.sign_reply_data(data)
+        url = reverse('cybersource-reply')
+        self.assertEqual(order_payment_authorized.call_count, 0)
+        resp = self.client.post(url, data)
+
+        data = cs_factories.build_dmreview_auth_reply_data(order_number)
+        data = cs_factories.sign_reply_data(data)
+        url = reverse('cybersource-reply')
+        self.assertEqual(order_payment_authorized.call_count, 0)
+        resp = self.client.post(url, data)
+
+        self.assertRedirects(resp, reverse('checkout:thank-you'))
+
+        self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Authorized')
+        self.assertEqual(order_payment_authorized.call_count, 1, 'Should trigger order_payment_authorized signal')
+
+        order = order_payment_authorized.call_args[1]['order']
+        self.assertEqual(order.status, 'Authorized', 'Should set order status')
+        self.assertEqual(order.number, order_number, 'Should use order number from CS request')
+
+        session = self.client.session
+        self.assertEquals(session[CHECKOUT_ORDER_ID], order.id, 'Should save order_id in session')
+
+        self.assertEqual(order.sources.count(), 1, 'Should save PaymentSource')
+        source = order.sources.first()
+        self.assertEqual(source.currency, 'USD')
+        self.assertEqual(source.amount_allocated, D('99.99'))
+        self.assertEqual(source.amount_refunded, D('0.00'))
+        self.assertEqual(source.amount_debited, D('0.00'))
+
+        self.assertEqual(source.transactions.count(), 1, 'Should save Transaction')
+        transaction = source.transactions.first()
+        self.assertEqual(transaction.token.masked_card_number, 'xxxxxxxxxxxx1111')
+        self.assertEqual(transaction.token.card_type, '001')
+        self.assertEqual(transaction.txn_type, 'Authorise')
+        self.assertEqual(transaction.amount, D('99.99'))
+        self.assertEqual(transaction.reference, data['transaction_id'])
+        self.assertEqual(transaction.status, 'REVIEW')
+        self.assertEqual(transaction.request_token, data['request_token'])
+
+        self.assertEqual(order.payment_events.count(), 1, 'Should save PaymentEvent')
+        event = order.payment_events.first()
+        self.assertEqual(event.amount, D('99.99'))
+        self.assertEqual(event.reference, data['transaction_id'])
+        self.assertEqual(event.event_type.name, 'Authorise')
+
+        self.assertEqual(event.line_quantities.count(), 1, 'Should save PaymentEventQuantity')
+        lq = event.line_quantities.first()
+        self.assertEqual(lq.line, order.lines.first())
+        self.assertEqual(lq.quantity, 1)
+
+        self.assertEqual(order.notes.count(), 1, 'Should save OrderNote')
+        note = order.notes.first()
+        self.assertEqual(note.note_type, 'System')
+        self.assertEqual(note.message, 'Transaction %s is currently under review. Use Decision Manager to either accept or reject the transaction.' % transaction.reference)
+
+
+    @patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_success(self, order_payment_authorized):
         """Successful authorization should create an order and redirect to the success page"""
         order_number = self.prepare_order()

@@ -446,6 +446,13 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.1.0
+------------------
+- Support flagging authorizations for review with Decision Manager
+    - Transactions under review are marked with status `REVIEW`.
+    - Adds new boolean property to payment.Transaction model: `transaction.is_pending_review`.
+    - When handling an authorization that is pending review in Decision Manager, a note is added to the order.
+
 3.0.5
 ------------------
 - Fix IntegrityError sometimes thrown when processing a declined payment.
