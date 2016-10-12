@@ -446,6 +446,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.1.1
+------------------
+- Make sure amounts sent to Cybersource are always properly quantized
+
 3.1.0
 ------------------
 - Support flagging authorizations for review with Decision Manager
