@@ -1,8 +1,11 @@
+from decimal import Decimal
 from datetime import datetime
 from . import settings, signature
 import random
 import time
 import re
+
+PRECISION = Decimal('0.01')
 
 
 class SecureAcceptanceAction(object):
@@ -191,7 +194,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
         data['payment_method'] = 'card'
         data['reference_number'] = str(self.order.number)
         data['currency'] = self.order.currency
-        data['amount'] = str(self.amount)
+        data['amount'] = str(self.amount.quantize(PRECISION))
 
         # Add shipping and billing info
         data.update(self._get_shipping_data())
@@ -203,7 +206,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
             data['item_%s_name' % i] = line.product.title
             data['item_%s_sku' % i] = line.partner_sku
             data['item_%s_quantity' % i] = str(line.quantity)
-            data['item_%s_unit_price' % i] = str(line.unit_price_incl_tax)
+            data['item_%s_unit_price' % i] = str(line.unit_price_incl_tax.quantize(PRECISION))
             i += 1
         data['line_item_count'] = str(i)
 
