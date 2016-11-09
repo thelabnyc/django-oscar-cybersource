@@ -446,6 +446,14 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.1.2
+------------------
+- Make ``DecisionManagerNotificationView`` directly set order status instead of relying on the ``set_status`` method. This avoids issues with order status pipelines.
+- Add optional ``CYBERSOURCE_DECISION_MANAGER_KEYS`` keys setting to allow token-based authentication on the decision manager web hook endpoint.
+    - Default is disabled, which equates to disabled authentication.
+    - To enable authentication, set it to a list of valid authentication keys/tokens.
+    - When enabled, the ``DecisionManagerNotificationView`` view will inspect the ``key`` query parameter on incoming requests and compare it to the predefined keys in the setting. If it doesn't match one of the keys, the request is aborted.
+
 3.1.1
 ------------------
 - Make sure amounts sent to Cybersource are always properly quantized
