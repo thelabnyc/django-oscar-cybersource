@@ -269,7 +269,8 @@ class DecisionManagerNotificationView(APIView):
         note.save()
 
         if new_decision != DECISION_ACCEPT:
-            order.set_status(ORDER_STATUS_PAYMENT_DECLINED)
+            order.status = ORDER_STATUS_PAYMENT_DECLINED
+            order.save()
 
         transaction.status = new_decision
         transaction.save()
