@@ -192,6 +192,7 @@ class DecisionManagerNotificationView(APIView):
 
 
     def post(self, request, format=None):
+        self._check_auth_token(request)
         xml = request.data.get('content').encode()
         root = etree.fromstring(xml)
         # Loop through order updates
@@ -201,6 +202,18 @@ class DecisionManagerNotificationView(APIView):
             except Http404:
                 pass
         return Response(status=status.HTTP_200_OK)
+
+
+    def _check_auth_token(self, request):
+        # TODO: This is kind-of lousy to home roll web-hook authentication this way. We should investigate
+        # better ways of doing this and, if necessary, make it into it's own package.
+        auth_keys = settings.DECISION_MANAGER_KEYS
+        if len(auth_keys) == 0:
+            return
+        auth_key = request.GET.get('key', '').strip()
+        if auth_key not in auth_keys:
+            raise SuspiciousOperation('Invalid decision manager key')
+
 
     @transaction.atomic
     def _handle_update(self, update):
