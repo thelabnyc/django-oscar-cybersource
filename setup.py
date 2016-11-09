@@ -18,9 +18,9 @@ setup_requires = [
 requires = [
     'python-dateutil>=2.5.3',
     'Django>=1.9.6',
-    'django-oscar>=1.1.1',
-    'django-oscar-api>=1.0.4',
-    'django-oscar-api-checkout>=0.1.5',
+    'django-oscar>=1.3',
+    'django-oscar-api>=1.0.9',
+    'django-oscar-api-checkout>=0.2.1',
     'lxml>=3.6.4',
 ]
 
