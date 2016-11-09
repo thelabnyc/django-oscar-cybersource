@@ -6,6 +6,8 @@ WORKDIR /code
 ENV PYTHONPATH /code
 
 ADD requirements.txt /code/
+RUN pip install versiontag==1.1.1
 RUN pip install -r requirements.txt
+RUN pip install -e .
 
 ADD . /code/
