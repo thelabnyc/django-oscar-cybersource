@@ -1,34 +1,42 @@
 #!/usr/bin/env python
+from setuptools import setup, find_packages, Distribution
 import codecs
 import os.path
-from setuptools import setup
-from versiontag import get_version, cache_git_tag
+
+# Make sure versiontag exists before going any further
+Distribution().fetch_build_eggs('versiontag>=1.2.0')
+
+from versiontag import get_version, cache_git_tag  # NOQA
 
 
-packages = [
-    'cybersource',
-    'cybersource.migrations',
-    'cybersource.tests',
-]
+packages = find_packages()
 
-setup_requires = [
-    'versiontag>=1.1.0',
-]
-
-requires = [
-    'python-dateutil>=2.5.3',
-    'Django>=1.9.9',
+install_requires = [
+    'django-oscar-api-checkout>=0.2.4',
+    'django-oscar-api>=1.0.10post1',
     'django-oscar>=1.3',
-    'django-oscar-api>=1.0.9',
-    'django-oscar-api-checkout>=0.2.1',
-    'lxml>=3.6.4',
+    'djangorestframework>=3.1.0,<3.5.0',
+    'lxml>=3.7.2',
 ]
+
+extras_require = {
+    'development': [
+        'beautifulsoup4>=4.5.3',
+        'flake8>=3.2.1',
+        'psycopg2>=2.6.2',
+        'PyYAML>=3.12',
+        'requests>=2.13.0',
+    ],
+}
+
 
 def fpath(name):
     return os.path.join(os.path.dirname(__file__), name)
 
+
 def read(fname):
     return codecs.open(fpath(fname), encoding='utf-8').read()
+
 
 cache_git_tag()
 
@@ -57,6 +65,6 @@ setup(
     url='https://gitlab.com/thelabnyc/django-oscar-cybersource',
     license='ISC',
     packages=packages,
-    install_requires=requires,
-    setup_requires=setup_requires
+    install_requires=install_requires,
+    extras_require=extras_require,
 )

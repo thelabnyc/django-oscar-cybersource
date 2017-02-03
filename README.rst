@@ -446,6 +446,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.1.3
+------------------
+- Upgrade dependencies.
+
 3.1.2
 ------------------
 - Make ``DecisionManagerNotificationView`` directly set order status instead of relying on the ``set_status`` method. This avoids issues with order status pipelines.
