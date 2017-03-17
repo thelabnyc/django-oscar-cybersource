@@ -9,13 +9,12 @@ Distribution().fetch_build_eggs('versiontag>=1.2.0')
 from versiontag import get_version, cache_git_tag  # NOQA
 
 
-packages = find_packages()
+packages = find_packages('src')
 
 install_requires = [
-    'django-oscar-api-checkout>=0.2.4',
-    'django-oscar-api>=1.0.10post1',
     'django-oscar>=1.3',
-    'djangorestframework>=3.1.0,<3.5.0',
+    'django-oscar-api>=1.0.10post1',
+    'django-oscar-api-checkout>=0.2.4',
     'lxml>=3.7.2',
 ]
 
@@ -26,6 +25,9 @@ extras_require = {
         'psycopg2>=2.6.2',
         'PyYAML>=3.12',
         'requests>=2.13.0',
+        'sphinx>=1.5.2',
+        'tox>=2.6.0',
+        'versiontag>=1.2.0',
     ],
 }
 
@@ -49,22 +51,24 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
-        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.9',
+        'Framework :: Django :: 1.10',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: ISC License (ISCL)',
         'Operating System :: Unix',
-        'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     author='Craig Weber',
     author_email='crgwbr@gmail.com',
     url='https://gitlab.com/thelabnyc/django-oscar-cybersource',
     license='ISC',
+    package_dir={'': 'src'},
     packages=packages,
+    include_package_data=True,
     install_requires=install_requires,
     extras_require=extras_require,
 )

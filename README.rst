@@ -446,6 +446,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.1.4
+------------------
+- Improve testing with tox.
+
 3.1.3
 ------------------
 - Upgrade dependencies.
