@@ -446,6 +446,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.1.5
+------------------
+- Add support for Django 1.11 and Oscar 1.5
+
 3.1.4
 ------------------
 - Improve testing with tox.
