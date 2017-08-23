@@ -757,7 +757,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEquals(data['ship_to_phone'], '17174671111')
         self.assertEquals(data['ship_to_surname'], 'Schmoe')
         self.assertEquals(data['transaction_type'], 'create_payment_token')
-        self.assertEquals(data['shipping_method_code'], 'free-shipping')
+        self.assertEquals(data['shipping_method'], 'none')
 
 
         # Move onto step 2, authorize
@@ -815,5 +815,5 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEquals(data['ship_to_phone'], '17174671111')
         self.assertEquals(data['ship_to_surname'], 'Schmoe')
         self.assertEquals(data['transaction_type'], 'authorization')
-        self.assertEquals(data['shipping_method_code'], 'free-shipping')
+        self.assertEquals(data['shipping_method'], 'none')
         self.assertIsNotNone(data['payment_token'])

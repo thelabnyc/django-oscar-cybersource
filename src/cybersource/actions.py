@@ -92,11 +92,24 @@ class ShippingAddressMixin(object):
             'ship_to_address_postal_code',
             'ship_to_address_country',
             'ship_to_phone',
-            'shipping_method_code'
+            'shipping_method'
         ])
 
     def _get_shipping_unsigned_fields(self):
         return set([])
+
+    def _get_shipping_method_name(self, shipping_code):
+        # Returns cybersource accepetd shipping method name, set default to 'none'
+        shipping_name = 'none'
+        if shipping_code == 'free-shipping':
+            shipping_name = 'none'
+        elif shipping_code == 'ups-ground':
+            shipping_name = 'other'
+        elif shipping_code == 'ups-next-day':
+            shipping_name = 'oneday'
+        elif shipping_code == 'ups-2-day':
+            shipping_code = 'twoday'
+        return shipping_name
 
     def _get_shipping_data(self):
         if not self.order.shipping_address:
@@ -111,7 +124,7 @@ class ShippingAddressMixin(object):
             'ship_to_address_postal_code': self.order.shipping_address.postcode,
             'ship_to_address_country': self.order.shipping_address.country.code,
             'ship_to_phone': re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966),
-            'shipping_method_code': str(self.order.shipping_code)
+            'shipping_method': self._get_shipping_method_name(str(self.order.shipping_code))
         }
 
 
