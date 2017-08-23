@@ -91,7 +91,8 @@ class ShippingAddressMixin(object):
             'ship_to_address_state',
             'ship_to_address_postal_code',
             'ship_to_address_country',
-            'ship_to_phone'
+            'ship_to_phone',
+            'shipping_method_code'
         ])
 
     def _get_shipping_unsigned_fields(self):
@@ -110,6 +111,7 @@ class ShippingAddressMixin(object):
             'ship_to_address_postal_code': self.order.shipping_address.postcode,
             'ship_to_address_country': self.order.shipping_address.country.code,
             'ship_to_phone': re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966),
+            'shipping_method_code': str(self.order.shipping_code)
         }
 
 

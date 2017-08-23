@@ -163,7 +163,6 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
 
 
-
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout"""
 
@@ -201,6 +200,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'authorize')
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
+
         resp = self.do_cs_auth(action['url'], action['fields'])
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
 
@@ -757,6 +757,8 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEquals(data['ship_to_phone'], '17174671111')
         self.assertEquals(data['ship_to_surname'], 'Schmoe')
         self.assertEquals(data['transaction_type'], 'create_payment_token')
+        self.assertEquals(data['shipping_method_code'], 'free-shipping')
+
 
         # Move onto step 2, authorize
         data['card_cvn'] = '123'
@@ -813,4 +815,5 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEquals(data['ship_to_phone'], '17174671111')
         self.assertEquals(data['ship_to_surname'], 'Schmoe')
         self.assertEquals(data['transaction_type'], 'authorization')
+        self.assertEquals(data['shipping_method_code'], 'free-shipping')
         self.assertIsNotNone(data['payment_token'])
