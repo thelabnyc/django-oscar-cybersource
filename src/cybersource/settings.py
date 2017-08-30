@@ -34,3 +34,11 @@ SOURCE_TYPE = overridable('CYBERSOURCE_SOURCE_TYPE', 'Cybersource Secure Accepta
 CARD_REJECT_ERROR = overridable('CYBERSOURCE_CARD_REJECT_ERROR', 'Card was declined by the issuing bank. Please try a different card.')
 
 DECISION_MANAGER_KEYS = overridable('CYBERSOURCE_DECISION_MANAGER_KEYS', [])
+
+SHIPPING_METHOD_DEFAULT = overridable('CYBERSOURCE_SHIPPING_METHOD_DEFAULT', 'none')
+SHIPPING_METHOD_MAPPING = overridable('CYBERSOURCE_SHIPPING_METHOD_MAPPING', {
+    'free-shipping': 'none',
+    'ups-ground': 'other',
+    'ups-next-day': 'oneday',
+    'ups-2-day': 'twoday'
+})
