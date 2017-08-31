@@ -149,3 +149,10 @@ API_ENABLED_PAYMENT_METHODS = [
         'permission': 'oscarapicheckout.permissions.Public',
     },
 ]
+
+CYBERSOURCE_SHIPPING_METHOD_MAPPING = {
+    'free-shipping': 'none',
+    'ups-ground': 'other',
+    'ups-next-day': 'oneday',
+    'ups-2-day': 'twoday'
+}

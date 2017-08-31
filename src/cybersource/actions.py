@@ -112,7 +112,7 @@ class ShippingAddressMixin(object):
             'ship_to_address_postal_code': self.order.shipping_address.postcode,
             'ship_to_address_country': self.order.shipping_address.country.code,
             'ship_to_phone': re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966),
-            'shipping_method': settings.SHIPPING_METHOD_MAPPING[str(self.order.shipping_code)]
+            'shipping_method': settings.SHIPPING_METHOD_MAPPING.get(str(self.order.shipping_code), settings.SHIPPING_METHOD_DEFAULT)
         }
 
 

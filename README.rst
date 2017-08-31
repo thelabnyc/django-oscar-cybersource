@@ -65,6 +65,14 @@ Installation
     # Upon declined authorization of the user's credit card, where should we send the user?
     # Enter the name of view where they can try again.
     CYBERSOURCE_REDIRECT_FAIL = 'checkout:index'
+    
+    # Enter the mapping from project specific shipping methods code to cybersource expected names. 
+    CYBERSOURCE_SHIPPING_METHOD_MAPPING =  {
+        'free-shipping': 'none',
+        'ups-ground': 'other',
+        'ups-next-day': 'oneday',
+        'ups-2-day': 'twoday'
+    }
 
 
 4. Install extra fields on payment.models.Transaction (see also `How to fork Oscar apps <https://django-oscar.readthedocs.org/en/releases-1.1/topics/customisation.html#fork-the-oscar-app>`_).::

@@ -37,8 +37,5 @@ DECISION_MANAGER_KEYS = overridable('CYBERSOURCE_DECISION_MANAGER_KEYS', [])
 
 SHIPPING_METHOD_DEFAULT = overridable('CYBERSOURCE_SHIPPING_METHOD_DEFAULT', 'none')
 SHIPPING_METHOD_MAPPING = overridable('CYBERSOURCE_SHIPPING_METHOD_MAPPING', {
-    'free-shipping': 'none',
-    'ups-ground': 'other',
-    'ups-next-day': 'oneday',
-    'ups-2-day': 'twoday'
+    'free-shipping': 'none'
 })
