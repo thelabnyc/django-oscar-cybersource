@@ -151,8 +151,8 @@ API_ENABLED_PAYMENT_METHODS = [
 ]
 
 CYBERSOURCE_SHIPPING_METHOD_MAPPING = {
-    'free-shipping': 'none',
-    'ups-ground': 'other',
+    'free-shipping': 'lowcost',
+    'ups-ground': 'threeday',
+    'ups-2-day': 'twoday',
     'ups-next-day': 'oneday',
-    'ups-2-day': 'twoday'
 }

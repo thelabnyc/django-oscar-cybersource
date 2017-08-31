@@ -100,20 +100,24 @@ class ShippingAddressMixin(object):
 
 
     def _get_shipping_data(self):
-        if not self.order.shipping_address:
-            return {}
-        return {
-            'ship_to_forename': self.order.shipping_address.first_name,
-            'ship_to_surname': self.order.shipping_address.last_name,
-            'ship_to_address_line1': self.order.shipping_address.line1,
-            'ship_to_address_line2': self.order.shipping_address.line2,
-            'ship_to_address_city': self.order.shipping_address.line4,
-            'ship_to_address_state': self.order.shipping_address.state,
-            'ship_to_address_postal_code': self.order.shipping_address.postcode,
-            'ship_to_address_country': self.order.shipping_address.country.code,
-            'ship_to_phone': re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966),
-            'shipping_method': settings.SHIPPING_METHOD_MAPPING.get(str(self.order.shipping_code), settings.SHIPPING_METHOD_DEFAULT)
+        order_shipping_code = str(self.order.shipping_code)
+        cs_shipping_code = settings.SHIPPING_METHOD_MAPPING.get(order_shipping_code, settings.SHIPPING_METHOD_DEFAULT)
+        shipping_data = {
+            'shipping_method': cs_shipping_code
         }
+
+        if self.order.shipping_address:
+            shipping_data['ship_to_forename'] = self.order.shipping_address.first_name
+            shipping_data['ship_to_surname'] = self.order.shipping_address.last_name
+            shipping_data['ship_to_address_line1'] = self.order.shipping_address.line1
+            shipping_data['ship_to_address_line2'] = self.order.shipping_address.line2
+            shipping_data['ship_to_address_city'] = self.order.shipping_address.line4
+            shipping_data['ship_to_address_state'] = self.order.shipping_address.state
+            shipping_data['ship_to_address_postal_code'] = self.order.shipping_address.postcode
+            shipping_data['ship_to_address_country'] = self.order.shipping_address.country.code
+            shipping_data['ship_to_phone'] = re.sub('[^0-9]', '', self.order.shipping_address.phone_number.as_rfc3966)
+
+        return shipping_data
 
 
 class BillingAddressMixin(object):
