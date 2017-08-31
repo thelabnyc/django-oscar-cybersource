@@ -22,6 +22,7 @@ import dateutil.parser
 import uuid
 import logging
 
+InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 OrderPlacementMixin = get_class('checkout.mixins', 'OrderPlacementMixin')
 OrderTotalCalculator = get_class('checkout.calculators', 'OrderTotalCalculator')
@@ -164,7 +165,13 @@ class CyberSourceReplyView(APIView):
         # Authorization was declined. Show a message to the user.
         messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
         new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
-        utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+        try:
+            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+        except InvalidOrderStatus:
+            logger.exception((
+                "Failed to set Order {} to payment declined. Order is current in status {}. "
+                "Examine CyberSourceReply[{}]"
+            ).format(order.number, order.status, reply_log_entry.pk))
         return redirect(settings.REDIRECT_FAIL)
 
 
