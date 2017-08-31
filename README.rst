@@ -65,13 +65,22 @@ Installation
     # Upon declined authorization of the user's credit card, where should we send the user?
     # Enter the name of view where they can try again.
     CYBERSOURCE_REDIRECT_FAIL = 'checkout:index'
-    
-    # Enter the mapping from project specific shipping methods code to cybersource expected names. 
-    CYBERSOURCE_SHIPPING_METHOD_MAPPING =  {
-        'free-shipping': 'none',
-        'ups-ground': 'other',
-        'ups-next-day': 'oneday',
+
+    # Enter the mapping from project specific shipping methods code to Cybersource expected names. Valid Cybersource values are:
+    # - "sameday": courier or same-day service
+    # - "oneday": next day or overnight service
+    # - "twoday": two-day service
+    # - "threeday": three-day service
+    # - "lowcost": lowest-cost service
+    # - "pickup": store pick-up
+    # - "other": other shipping method
+    # - "none": no shipping method
+    CYBERSOURCE_SHIPPING_METHOD_DEFAULT = 'none'
+    CYBERSOURCE_SHIPPING_METHOD_MAPPING = {
+        'free-shipping': 'lowcost',
+        'ups-ground': 'threeday',
         'ups-2-day': 'twoday'
+        'ups-next-day': 'oneday',
     }
 
 
@@ -453,6 +462,22 @@ The Javascript app should loop through the fields in the above response and fill
 
 Changelog
 =========
+
+3.2.0
+------------------
+- Adds an order's shipping method into calls to Cybersource. This field can then be used by decision manager to help make decision regarding order fraud.
+    - Cybersource expects to receive one of the following values:
+        - `sameday`: courier or same-day service
+        - `oneday`: next day or overnight service
+        - `twoday`: two-day service
+        - `threeday`: three-day service
+        - `lowcost`: lowest-cost service
+        - `pickup`: store pick-up
+        - `other`: other shipping method
+        - `none`: no shipping method
+    - You can configure the mapping of Oscar shipping method code to Cybersource shipping method codes using the ``CYBERSOURCE_SHIPPING_METHOD_DEFAULT`` and ``CYBERSOURCE_SHIPPING_METHOD_MAPPING`` Django settings.
+- Added exception handling and logging for bug sometimes occurring in the Cybersource reply handler.
+
 
 3.1.5
 ------------------
