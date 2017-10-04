@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'oscarapicheckout',
     'cybersource',
 ] + get_core_apps([
+    'order',
     'payment',
 ])
 
