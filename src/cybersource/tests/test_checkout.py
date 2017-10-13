@@ -11,6 +11,7 @@ import datetime
 import requests  # Needed for external calls
 
 from ..constants import CHECKOUT_ORDER_ID
+from .utils import retry
 from . import factories as cs_factories
 
 Basket = get_model('basket', 'Basket')
@@ -166,6 +167,7 @@ class BaseCheckoutTest(APITestCase):
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout"""
 
+    @retry(AssertionError)
     def test_checkout_process(self):
         """Full checkout process using minimal api calls"""
         product = self.create_product()
@@ -214,6 +216,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.check_finished_order(order_number, product.id)
 
 
+    @retry(AssertionError)
     def test_add_product_during_auth(self):
         """Test attempting to add a product during the authorize flow"""
         product = self.create_product()
@@ -268,6 +271,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(basket2, basket3)
 
 
+    @retry(AssertionError)
     def test_pay_for_nothing(self):
         """Test attempting to pay for an empty basket"""
         resp = self.do_get_basket()
@@ -278,6 +282,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
 
+    @retry(AssertionError)
     def test_manipulate_total_pre_auth(self):
         """Test attempting to manipulate basket price when requesting an auth form"""
         product = self.create_product()
@@ -296,6 +301,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
 
+    @retry(AssertionError)
     def test_manipulate_total_during_auth(self):
         """Test attempting to manipulate basket price when requesting auth from CyberSource"""
         product = self.create_product()
@@ -355,6 +361,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
 
 
+    @retry(AssertionError)
     def test_free_product(self):
         """Full checkout process using minimal api calls"""
         product = self.create_product(price=D('0.00'))
