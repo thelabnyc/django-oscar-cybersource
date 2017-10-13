@@ -2,7 +2,7 @@
 django-oscar-cybersource
 ========================
 
-|  |license| |kit| |format| |downloads|
+|  |license| |kit| |format|
 
 This package is to handle integration between django-oscar based e-commerce sites and `Cybersource Secure Acceptance Silent Order POST <http://apps.cybersource.com/library/documentation/dev_guides/Secure_Acceptance_SOP/Secure_Acceptance_SOP.pdf>`_.
 
@@ -463,6 +463,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.2.1
+------------------
+- Add better error handling to the Cybersource response view. Prevents exceptions when a customer refreshes and resends one of the payment POST requests.
+
 3.2.0
 ------------------
 - Adds an order's shipping method into calls to Cybersource. This field can then be used by decision manager to help make decision regarding order fraud.
@@ -565,6 +569,4 @@ Changelog
 .. |kit| image:: https://badge.fury.io/py/django-oscar-cybersource.svg
     :target: https://pypi.python.org/pypi/django-oscar-cybersource
 .. |format| image:: https://img.shields.io/pypi/format/django-oscar-cybersource.svg
-    :target: https://pypi.python.org/pypi/django-oscar-cybersource
-.. |downloads| image:: https://img.shields.io/pypi/dm/django-oscar-cybersource.svg?maxAge=2592000
     :target: https://pypi.python.org/pypi/django-oscar-cybersource
