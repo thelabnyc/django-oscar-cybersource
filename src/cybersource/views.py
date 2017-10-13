@@ -14,7 +14,7 @@ from oscarapicheckout import utils
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW, DECISION_ERROR
 from .methods import Cybersource
 from .models import CyberSourceReply
 from .signals import received_decision_manager_update
@@ -122,17 +122,35 @@ class CyberSourceReplyView(APIView):
         # Fetch the related order
         order = self._get_order(request)
 
-        # Check if the payment token was actually created or not.
-        if request.data.get('decision') != DECISION_ACCEPT:
-            messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
-            amount = Decimal(request.data.get('req_amount', '0.00'))
-            utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
-            return redirect(settings.REDIRECT_FAIL)
+        # Figure out what status the order is in.
+        is_accept = request.data.get('decision') == DECISION_ACCEPT
+        is_under_review = request.data.get('decision') == DECISION_REVIEW
+        is_error = request.data.get('decision') == DECISION_ERROR
 
-        # Token creation was successful, so log it and move on to authorization.
-        new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, request.data)
-        utils.update_payment_method_state(order, request, Cybersource.code, new_state)
-        return redirect(settings.REDIRECT_PENDING)
+        # Check in an error occurred
+        if is_error:
+            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
+            if order.status == ORDER_STATUS_PAYMENT_DECLINED:
+                return redirect(settings.REDIRECT_FAIL)
+            return redirect(settings.REDIRECT_PENDING)
+
+        # Check if the payment token was actually created or not.
+        if is_accept or is_under_review:
+            new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, request.data)
+            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+            return redirect(settings.REDIRECT_PENDING)
+
+        # Must be a payment decline
+        messages.add_message(request._request, messages.ERROR, settings.CARD_REJECT_ERROR)
+        amount = Decimal(request.data.get('req_amount', '0.00'))
+        try:
+            utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
+        except InvalidOrderStatus:
+            logger.exception((
+                "Failed to set Order {} to payment declined. Order is current in status {}. "
+                "Examine CyberSourceReply[{}]"
+            ).format(order.number, order.status, reply_log_entry.pk))
+        return redirect(settings.REDIRECT_FAIL)
 
 
     def record_authorization(self, request, format, reply_log_entry):
@@ -144,8 +162,19 @@ class CyberSourceReplyView(APIView):
         # Fetch the related order
         order = self._get_order(request)
 
+        # Figure out what status the order is in.
         is_accept = request.data.get('decision') == DECISION_ACCEPT
         is_under_review = request.data.get('decision') == DECISION_REVIEW
+        is_error = request.data.get('decision') == DECISION_ERROR
+
+        # If an error occurred, log it and redirect as a failure. This normally occurs when the customer
+        # somehow refreshes / resends and authorization POST. Cybersource sends back an error because the
+        # transaction_uuid is a duplicate.
+        if is_error:
+            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
+            if order.status == ORDER_STATUS_PAYMENT_DECLINED:
+                return redirect(settings.REDIRECT_FAIL)
+            return redirect(settings.REDIRECT_SUCCESS)
 
         # If authorization was successful, log it and redirect to the success page.
         if is_accept or is_under_review:
