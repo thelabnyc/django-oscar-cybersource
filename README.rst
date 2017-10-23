@@ -463,6 +463,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.2.2
+------------------
+- Make it possible to use a placeholder (``{order_number}``) in ``settings.CARD_REJECT_ERROR``.
+
 3.2.1
 ------------------
 - Add better error handling to the Cybersource response view. Prevents exceptions when a customer refreshes and resends one of the payment POST requests.
