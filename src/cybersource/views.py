@@ -141,7 +141,7 @@ class CyberSourceReplyView(APIView):
             return redirect(settings.REDIRECT_PENDING)
 
         # Must be a payment decline
-        messages.add_message(request._request, messages.ERROR, self._get_reject_order_num(order))
+        messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         amount = Decimal(request.data.get('req_amount', '0.00'))
         try:
             utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
@@ -192,7 +192,7 @@ class CyberSourceReplyView(APIView):
             return redirect(settings.REDIRECT_SUCCESS)
 
         # Authorization was declined. Show a message to the user.
-        messages.add_message(request._request, messages.ERROR, self._get_reject_order_num(order))
+        messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
         try:
             utils.update_payment_method_state(order, request, Cybersource.code, new_state)
@@ -219,7 +219,7 @@ class CyberSourceReplyView(APIView):
         return order
 
 
-    def _get_reject_order_num(self, order):
+    def _get_card_reject_error(self, order):
         return settings.CARD_REJECT_ERROR.format(order_number=order.number)
 
 
