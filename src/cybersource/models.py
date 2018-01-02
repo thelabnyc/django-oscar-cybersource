@@ -2,7 +2,7 @@ from datetime import datetime
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
-from .constants import DECISION_REVIEW
+from .constants import DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR
 import dateutil.parser
 
 
@@ -26,6 +26,39 @@ class CyberSourceReply(models.Model):
             return dateutil.parser.parse(self.data['signed_date_time'])
         except (AttributeError, ValueError):
             return None
+
+
+    def get_decision(self):
+        # Extract the reply's decision data
+        decision = self.data.get('decision') or DECISION_ERROR
+        try:
+            decision_reason_code = int(self.data.get('reason_code') or '')
+        except ValueError:
+            decision_reason_code = None
+
+        # Accept
+        if decision_reason_code in (100, ):
+            return DECISION_ACCEPT
+
+        # Review
+        if decision_reason_code in (201, 480):
+            return DECISION_REVIEW
+
+        # Rejections
+        if decision_reason_code in (110, 200, 202, 203, 204, 205, 207, 208, 210, 211, 221, 222, 230, 231, 232, 233, 234, 400, 481, 520):
+            return DECISION_DECLINE
+
+        # Errors
+        if decision_reason_code in (101, 102, 104, 150, 151, 152, 236, 240):
+            return DECISION_ERROR
+
+        # If we don't recognize the reason code, go by the decision field
+        if decision in (DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR):
+            return decision
+
+        # Last ditch catch-all
+        return DECISION_ERROR
+
 
 
 class ReplyLogMixin(object):

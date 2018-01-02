@@ -123,19 +123,17 @@ class CyberSourceReplyView(APIView):
         order = self._get_order(request)
 
         # Figure out what status the order is in.
-        is_accept = request.data.get('decision') == DECISION_ACCEPT
-        is_under_review = request.data.get('decision') == DECISION_REVIEW
-        is_error = request.data.get('decision') == DECISION_ERROR
+        decision = reply_log_entry.get_decision()
 
         # Check in an error occurred
-        if is_error:
+        if decision == DECISION_ERROR:
             messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
             if order.status == ORDER_STATUS_PAYMENT_DECLINED:
                 return redirect(settings.REDIRECT_FAIL)
             return redirect(settings.REDIRECT_PENDING)
 
         # Check if the payment token was actually created or not.
-        if is_accept or is_under_review:
+        if decision in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, request.data)
             utils.update_payment_method_state(order, request, Cybersource.code, new_state)
             return redirect(settings.REDIRECT_PENDING)
@@ -163,26 +161,24 @@ class CyberSourceReplyView(APIView):
         order = self._get_order(request)
 
         # Figure out what status the order is in.
-        is_accept = request.data.get('decision') == DECISION_ACCEPT
-        is_under_review = request.data.get('decision') == DECISION_REVIEW
-        is_error = request.data.get('decision') == DECISION_ERROR
+        decision = reply_log_entry.get_decision()
 
         # If an error occurred, log it and redirect as a failure. This normally occurs when the customer
         # somehow refreshes / resends and authorization POST. Cybersource sends back an error because the
         # transaction_uuid is a duplicate.
-        if is_error:
+        if decision == DECISION_ERROR:
             messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
             if order.status == ORDER_STATUS_PAYMENT_DECLINED:
                 return redirect(settings.REDIRECT_FAIL)
             return redirect(settings.REDIRECT_SUCCESS)
 
         # If authorization was successful, log it and redirect to the success page.
-        if is_accept or is_under_review:
+        if decision in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
             utils.update_payment_method_state(order, request, Cybersource.code, new_state)
 
             # If the order is under review, add a note explaining why
-            if is_under_review:
+            if decision == DECISION_REVIEW:
                 msg = (
                     'Transaction %s is currently under review. '
                     'Use Decision Manager to either accept or reject the transaction.'

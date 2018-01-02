@@ -109,7 +109,7 @@ class Cybersource(PaymentMethod):
     def record_successful_authorization(self, reply_log_entry, order, data):
         token_string = data.get('req_payment_token')
         transaction_id = data.get('transaction_id')
-        decision = data.get('decision')
+        decision = reply_log_entry.get_decision()
         request_token = data.get('request_token')
         signed_date_time = data.get('signed_date_time')
         auth_amount = Decimal(data.get('auth_amount', '0'))
@@ -147,7 +147,7 @@ class Cybersource(PaymentMethod):
     def record_declined_authorization(self, reply_log_entry, order, data):
         token_string = data.get('req_payment_token')
         transaction_id = data.get('transaction_id', '')
-        decision = data.get('decision')
+        decision = reply_log_entry.get_decision()
         request_token = data.get('request_token')
         signed_date_time = data.get('signed_date_time')
         req_amount = Decimal(data.get('req_amount', '0'))
