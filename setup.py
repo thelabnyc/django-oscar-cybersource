@@ -12,19 +12,19 @@ from versiontag import get_version, cache_git_tag  # NOQA
 packages = find_packages('src')
 
 install_requires = [
-    'django-oscar>=1.3',
-    'django-oscar-api>=1.0.10post1',
-    'django-oscar-api-checkout>=0.2.4',
-    'lxml>=3.7.2',
+    'django-oscar>=1.5',
+    'django-oscar-api>=1.2.1',
+    'django-oscar-api-checkout>=0.3.3',
+    'lxml>=4.1.1',
 ]
 
 extras_require = {
     'development': [
-        'beautifulsoup4>=4.5.3',
-        'flake8>=3.2.1',
-        'psycopg2>=2.6.2',
+        'beautifulsoup4>=4.6.0',
+        'flake8>=3.5.0',
+        'psycopg2>=2.7.3.2',
         'PyYAML>=3.12',
-        'requests>=2.13.0',
+        'requests>=2.18.4',
         'sphinx>=1.5.2',
         'tox>=2.6.0',
         'versiontag>=1.2.0',
@@ -51,8 +51,7 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
-        'Framework :: Django :: 1.9',
-        'Framework :: Django :: 1.10',
+        'Framework :: Django :: 1.11',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: ISC License (ISCL)',
         'Operating System :: Unix',
