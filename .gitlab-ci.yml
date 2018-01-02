@@ -4,7 +4,6 @@ variables:
   POSTGRES_PASSWORD: ""
 
 stages:
-  - lint
   - test
 
 services:
