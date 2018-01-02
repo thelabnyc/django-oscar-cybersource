@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                 ('token', models.CharField(unique=True, max_length=100)),
                 ('masked_card_number', models.CharField(max_length=25)),
                 ('card_type', models.CharField(max_length=10)),
-                ('log', models.ForeignKey(related_name='tokens', to='cybersource.CyberSourceReply')),
+                ('log', models.ForeignKey(related_name='tokens', to='cybersource.CyberSourceReply', on_delete=models.CASCADE)),
             ],
             bases=(cybersource.models.ReplyLogMixin, models.Model),
         ),

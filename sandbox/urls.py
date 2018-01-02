@@ -7,11 +7,11 @@ from cybersource.app import application as cybersource
 
 urlpatterns = [
     url(r'^i18n/', include('django.conf.urls.i18n')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
 
-    url(r'^api/cybersource/', include(cybersource.urls)),
-    url(r'^api/', include(oscar_api_checkout.urls)),
-    url(r'^api/', include(api.urls)),
+    url(r'^api/cybersource/', cybersource.urls),
+    url(r'^api/', oscar_api_checkout.urls),
+    url(r'^api/', api.urls),
 
-    url(r'', include(application.urls)),
+    url(r'', application.urls),
 ]

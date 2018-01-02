@@ -101,7 +101,7 @@ class CyberSourceReplyView(APIView):
 
     def log_response(self, request):
         log = CyberSourceReply(
-            user=request.user if request.user.is_authenticated() else None,
+            user=request.user if request.user.is_authenticated else None,
             order=self._get_order(request),
             data=request.data)
         log.save()

@@ -14,9 +14,9 @@ class PaymentTokenTest(TestCase):
             masked_card_number=data['req_card_number'],
             card_type=data['req_card_type'])
 
-        self.assertEquals(token.card_type_name, 'Visa')
-        self.assertEquals(token.billing_zip_code, '10001')
-        self.assertEquals(token.expiry_month, '12')
-        self.assertEquals(token.expiry_year, '2020')
-        self.assertEquals(token.card_last4, '1111')
-        self.assertEquals(token.card_holder, 'Bob Smith')
+        self.assertEqual(token.card_type_name, 'Visa')
+        self.assertEqual(token.billing_zip_code, '10001')
+        self.assertEqual(token.expiry_month, '12')
+        self.assertEqual(token.expiry_year, '2020')
+        self.assertEqual(token.card_last4, '1111')
+        self.assertEqual(token.card_holder, 'Bob Smith')

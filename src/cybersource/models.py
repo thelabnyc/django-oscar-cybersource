@@ -56,7 +56,7 @@ class PaymentToken(ReplyLogMixin, models.Model):
         '054': 'ELO',
     }
 
-    log = models.ForeignKey(CyberSourceReply, related_name='tokens')
+    log = models.ForeignKey(CyberSourceReply, related_name='tokens', on_delete=models.CASCADE)
     token = models.CharField(max_length=100, unique=True)
     masked_card_number = models.CharField(max_length=25)
     card_type = models.CharField(max_length=10)

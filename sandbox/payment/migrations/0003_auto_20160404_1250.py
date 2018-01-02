@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transaction',
             name='log',
-            field=models.ForeignKey(related_name='transactions', default=0, to='cybersource.CyberSourceReply'),
+            field=models.ForeignKey(related_name='transactions', default=0, to='cybersource.CyberSourceReply', on_delete=models.CASCADE),
             preserve_default=False,
         ),
         migrations.AddField(
