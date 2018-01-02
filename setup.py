@@ -16,6 +16,7 @@ install_requires = [
     'django-oscar-api>=1.2.1',
     'django-oscar-api-checkout>=0.3.3',
     'lxml>=4.1.1',
+    'phonenumbers>=8.8.8',
 ]
 
 extras_require = {
