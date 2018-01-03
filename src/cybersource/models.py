@@ -2,8 +2,34 @@ from datetime import datetime
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
+from fernet_fields import EncryptedTextField
 from .constants import DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR
 import dateutil.parser
+
+
+class SecureAcceptanceProfile(models.Model):
+    hostname = models.CharField("Hostname", max_length=100, blank=True, unique=True,
+        help_text="When the request matches this hostname, this profile will be used.")
+    profile_id = models.CharField("Profile ID", max_length=50, unique=True)
+    access_key = models.CharField("Access Key", max_length=50)
+    secret_key = EncryptedTextField("Secret Key")
+    is_default = models.BooleanField("Is Default Profile?", default=False,
+        help_text="If no profile can be found for a request's hostname, the default profile will be used.")
+
+
+    @classmethod
+    def get_profile(cls, hostname):
+        profile = cls.objects.filter(hostname__iexact=hostname).first()
+        if profile:
+            return profile
+        return cls.objects.get(is_default=True)
+
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            self.__class__._default_manager.filter(is_default=True).update(is_default=False)
+        return super().save(*args, **kwargs)
+
 
 
 class CyberSourceReply(models.Model):

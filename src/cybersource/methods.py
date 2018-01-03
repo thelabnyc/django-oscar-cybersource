@@ -40,6 +40,7 @@ class Cybersource(PaymentMethod):
         operation = actions.CreatePaymentToken(
             order=order,
             amount=amount_to_allocate,
+            server_hostname=request.META.get('SERVER_NAME', ''),
             customer_ip_address=request.META['REMOTE_ADDR'],
             fingerprint_session_id=request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID),
             extra_fields=extra_fields)
@@ -89,6 +90,7 @@ class Cybersource(PaymentMethod):
             token_string=token_string,
             order=order,
             amount=req_amount,
+            server_hostname=request.META.get('SERVER_NAME', ''),
             customer_ip_address=request.META['REMOTE_ADDR'],
             fingerprint_session_id=request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID),
             extra_fields=extra_fields)

@@ -1,12 +1,13 @@
 from django.core.exceptions import SuspiciousOperation
-from . import settings
 import hashlib
 import hmac
 import base64
 
 
 class SecureAcceptanceSigner(object):
-    secret_key = settings.SECRET
+
+    def __init__(self, secret_key):
+        self.secret_key = secret_key
 
     def sign(self, data, signed_fields):
         key = self.secret_key.encode('utf-8')

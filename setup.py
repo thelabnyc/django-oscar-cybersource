@@ -12,6 +12,7 @@ from versiontag import get_version, cache_git_tag  # NOQA
 packages = find_packages('src')
 
 install_requires = [
+    'django-fernet-fields>=0.5',
     'django-oscar>=1.5',
     'django-oscar-api>=1.2.1',
     'django-oscar-api-checkout>=0.3.3',

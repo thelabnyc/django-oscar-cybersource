@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+import warnings
 
 
 def overridable(name, default=None, required=False):
@@ -11,9 +12,15 @@ def overridable(name, default=None, required=False):
 
 DEFAULT_CURRENCY = overridable('OSCAR_DEFAULT_CURRENCY', required=True)
 
-PROFILE = overridable('CYBERSOURCE_PROFILE', required=True)
-ACCESS = overridable('CYBERSOURCE_ACCESS', required=True)
-SECRET = overridable('CYBERSOURCE_SECRET', required=True)
+PROFILE = overridable('CYBERSOURCE_PROFILE')
+ACCESS = overridable('CYBERSOURCE_ACCESS')
+SECRET = overridable('CYBERSOURCE_SECRET')
+if PROFILE:
+    warnings.warn('CYBERSOURCE_PROFILE setting is deprecated. Use cybersource.SecureAcceptanceProfile model instead.', DeprecationWarning)
+if ACCESS:
+    warnings.warn('CYBERSOURCE_ACCESS setting is deprecated. Use cybersource.SecureAcceptanceProfile model instead.', DeprecationWarning)
+if SECRET:
+    warnings.warn('CYBERSOURCE_SECRET setting is deprecated. Use cybersource.SecureAcceptanceProfile model instead.', DeprecationWarning)
 
 ORG_ID = overridable('CYBERSOURCE_ORG_ID', required=True)
 MERCHANT_ID = overridable('CYBERSOURCE_MERCHANT_ID', required=True)

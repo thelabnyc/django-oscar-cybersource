@@ -17,3 +17,9 @@ class CyberSourceReplyAdmin(admin.ModelAdmin):
     list_display = ['date_created', 'user', 'order', 'date_modified']
     fields = ['user', 'order', 'data', 'date_modified', 'date_created']
     readonly_fields = fields
+
+
+@admin.register(models.SecureAcceptanceProfile)
+class SecureAcceptanceProfileAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hostname', 'profile_id', 'is_default']
+    fields = ['hostname', 'profile_id', 'access_key', 'secret_key', 'is_default']

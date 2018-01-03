@@ -9,3 +9,12 @@
     printable_name: "United States"
   model: address.country
   pk: US
+
+- model: cybersource.secureacceptanceprofile
+  pk: 1
+  fields:
+    hostname: 'testserver'
+    profile_id: 'DE9AD002-1C0C-44BA-8A18-AA163B424952'
+    access_key: '3427f3d74b5a3bc1904aec4e724ce78e'
+    secret_key: 'a2594ec5a33c44938f0599f4875c9c17d8a0d4f9805e448a901f328caba81fd788e4e17bac264fd982fa845a74530c8f4a553d36cd5e4702811d010d5fd6841450f8855e5bbe42c999505a649088d175bc85b9624b5a459782f569eff6623f3a8a9496a21f204a1f800adc53ad2327289c1cd4291c9e41d9975e841ebaa672f2'
+    is_default: false

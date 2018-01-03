@@ -16,7 +16,7 @@ from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW, DECISION_ERROR
 from .methods import Cybersource
-from .models import CyberSourceReply
+from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
 import dateutil.parser
 import uuid
@@ -96,7 +96,9 @@ class CyberSourceReplyView(APIView):
 
 
     def is_request_valid(self, request):
-        return signature.SecureAcceptanceSigner().verify_request(request)
+        server_hostname = request.META.get('SERVER_NAME', '')
+        profile = SecureAcceptanceProfile.get_profile(server_hostname)
+        return signature.SecureAcceptanceSigner(profile.secret_key).verify_request(request)
 
 
     def log_response(self, request):

@@ -9,7 +9,6 @@ django-haystack==2.6.1
 django-oscar==1.5.1
 django-oscar-api==1.2.1
 django-oscar-api-checkout==0.3.3
--e git+git@gitlab.com:thelabnyc/django-oscar/django-oscar-cybersource.git@65be2666133dab0bd6c26dd59b79b9c679a89758#egg=django_oscar_cybersource
 django-phonenumber-field==1.3.0
 django-tables2==1.17.1
 django-treebeard==4.2.0

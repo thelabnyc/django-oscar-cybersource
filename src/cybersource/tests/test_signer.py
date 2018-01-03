@@ -1,11 +1,15 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
 from ..signature import SecureAcceptanceSigner
+from .factories import get_sa_profile
 
 
 class SignerTest(TestCase):
+    fixtures = ['cybersource-test.yaml']
+
     def test_sign(self):
-        signer = SecureAcceptanceSigner()
+        profile = get_sa_profile()
+        signer = SecureAcceptanceSigner(profile.secret_key)
 
         # Baseline
         signer.secret_key = 'FOO'
@@ -22,8 +26,9 @@ class SignerTest(TestCase):
         self.assertEqual(signature, b'FvjC1PIhxuaLipTbRDw9UXL6F58t9Hyj12HLHiYoOD0=')
 
     def test_verify(self):
+        profile = get_sa_profile()
         rf = RequestFactory()
-        signer = SecureAcceptanceSigner()
+        signer = SecureAcceptanceSigner(profile.secret_key)
 
         # Baseline
         signer.secret_key = 'FOO'

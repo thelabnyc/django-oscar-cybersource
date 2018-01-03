@@ -1,7 +1,12 @@
 from datetime import datetime
 from random import randrange
 from ..signature import SecureAcceptanceSigner
+from ..models import SecureAcceptanceProfile
 import uuid
+
+
+def get_sa_profile():
+    return SecureAcceptanceProfile.get_profile('testserver')
 
 
 def build_accepted_token_reply_data(order_number):
@@ -323,8 +328,9 @@ def build_dmreview_auth_reply_data(order_number):
 
 
 def sign_reply_data(data):
+    profile = get_sa_profile()
     fields = list(data.keys())
-    data['signature'] = SecureAcceptanceSigner().sign(data, fields).decode('utf8')
+    data['signature'] = SecureAcceptanceSigner(profile.secret_key).sign(data, fields).decode('utf8')
     data['signed_date_time'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     data['signed_field_names'] = ','.join(fields)
     return data

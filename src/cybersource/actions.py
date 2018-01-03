@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
-from . import settings, signature
+from . import settings, signature, models
 import random
 import time
 import re
@@ -9,12 +9,14 @@ PRECISION = Decimal('0.01')
 
 
 class SecureAcceptanceAction(object):
-    access_key = settings.ACCESS
     currency = settings.DEFAULT_CURRENCY
     date_format = settings.DATE_FORMAT
     locale = settings.LOCALE
-    profile_id = settings.PROFILE
     transaction_type = ''
+
+
+    def __init__(self, server_hostname):
+        self.profile = models.SecureAcceptanceProfile.get_profile(server_hostname)
 
 
     @property
@@ -49,16 +51,16 @@ class SecureAcceptanceAction(object):
         fields['signed_field_names'] = ','.join(signed_fields)
         fields['unsigned_field_names'] = ','.join(unsigned_fields)
 
-        signer = signature.SecureAcceptanceSigner()
+        signer = signature.SecureAcceptanceSigner(self.profile.secret_key)
         fields['signature'] = signer.sign(fields, signed_fields)
         return fields
 
     def build_request_data(self):
         data = {
-            'access_key': self.access_key,
+            'access_key': self.profile.access_key,
             'currency': self.currency,
             'locale': self.locale,
-            'profile_id': self.profile_id,
+            'profile_id': self.profile.profile_id,
             'transaction_type': self.transaction_type,
             'transaction_uuid': self.generate_uuid(),
         }
@@ -160,12 +162,13 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
     """
     Abstract SecureAcceptanceAction for action's related to orders.
     """
-    def __init__(self, order, amount, **kwargs):
+    def __init__(self, order, amount, server_hostname, **kwargs):
         self.order = order
         self.amount = amount
         self.customer_ip_address = kwargs.get('customer_ip_address')
         self.device_fingerprint_id = kwargs.get('fingerprint_session_id')
         self.extra_fields = kwargs.get('extra_fields')
+        super().__init__(server_hostname)
 
 
     @property
@@ -247,9 +250,9 @@ class AuthorizePaymentToken(OrderAction):
     transaction_type = 'authorization'
     url = settings.ENDPOINT_PAY
 
-    def __init__(self, token_string, order, amount, **kwargs):
+    def __init__(self, token_string, order, amount, server_hostname, **kwargs):
         self.token_string = token_string
-        super().__init__(order, amount, **kwargs)
+        super().__init__(order, amount, server_hostname, **kwargs)
 
 
     @property
