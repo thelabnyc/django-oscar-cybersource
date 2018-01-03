@@ -463,6 +463,14 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.3.0
+------------------
+- Use Cybersource's ``reason_code`` field in addition to the ``decision`` field when deciding how to handle a response.
+- Move secure acceptance profile data into the database.
+    - Profiles can be configured in the Django Admin interface. A default profile is created when running migrations based on the old environment variable settings.
+    - Stores the profile secret key in the using Fernet encryption via `django-fernet-fields <https://django-fernet-fields.readthedocs.io/en/latest/>`_. Therefore, you should declare a ``FERNET_KEYS`` setting in your project.
+    - Since secure acceptable profiles are limited to a single domains for customer redirect pages, this change allows a single Django instance to serve multiple domains (by using multiple profiles).
+
 3.2.3
 ------------------
 - Fix Django 2.0 Deprecation warnings.

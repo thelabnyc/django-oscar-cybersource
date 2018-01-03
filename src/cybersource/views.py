@@ -96,7 +96,7 @@ class CyberSourceReplyView(APIView):
 
 
     def is_request_valid(self, request):
-        server_hostname = request.META.get('SERVER_NAME', '')
+        server_hostname = request.META.get('HTTP_HOST', '')
         profile = SecureAcceptanceProfile.get_profile(server_hostname)
         return signature.SecureAcceptanceSigner(profile.secret_key).verify_request(request)
 
