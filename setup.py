@@ -24,7 +24,7 @@ extras_require = {
     'development': [
         'beautifulsoup4>=4.6.0',
         'flake8>=3.5.0',
-        'psycopg2>=2.7.3.2',
+        'psycopg2cffi>=2.7.7',
         'PyYAML>=3.12',
         'requests>=2.18.4',
         'sphinx>=1.5.2',
