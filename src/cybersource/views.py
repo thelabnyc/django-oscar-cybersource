@@ -218,7 +218,7 @@ class CyberSourceReplyView(APIView):
 
 
     def _get_card_reject_error(self, order):
-        return settings.CARD_REJECT_ERROR.format(order_number=order.number)
+        return settings.CARD_REJECT_ERROR.format(order_number=order.number, order=order)
 
 
 

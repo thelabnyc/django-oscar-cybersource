@@ -463,6 +463,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.3.1
+------------------
+- Add ``order`` as a value for the ``CARD_REJECT_ERROR`` string template literal.
+
 3.3.0
 ------------------
 - Use Cybersource's ``reason_code`` field in addition to the ``decision`` field when deciding how to handle a response.
