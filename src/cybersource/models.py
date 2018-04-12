@@ -1,10 +1,15 @@
+from cryptography.fernet import InvalidToken
 from datetime import datetime
+from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
 from fernet_fields import EncryptedTextField
 from .constants import DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR
 import dateutil.parser
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SecureAcceptanceProfile(models.Model):
@@ -19,16 +24,49 @@ class SecureAcceptanceProfile(models.Model):
 
     @classmethod
     def get_profile(cls, hostname):
-        profile = cls.objects.filter(hostname__iexact=hostname).first()
+        # Lambda function to get profiles whilst catching cryptography exceptions (in-case the Fernet key
+        # unexpectedly changed, the data somehow got corrupted, etc).
+        def _get_safe(**filters):
+            try:
+                return cls.objects.filter(**filters).first()
+            except InvalidToken as e:
+                logger.exception('Caught InvalidToken exception while retrieving profile')
+                return None
+
+        # Try to get the profile for the given hostname
+        profile = _get_safe(hostname__iexact=hostname)
         if profile:
             return profile
-        return cls.objects.get(is_default=True)
+
+        # Fall back to the default profile
+        profile = _get_safe(is_default=True)
+        if profile:
+            return profile
+
+        # No default profile exists, so try and get something out of settings.
+        if hasattr(settings, 'CYBERSOURCE_PROFILE') and hasattr(settings, 'CYBERSOURCE_ACCESS') and hasattr(settings, 'CYBERSOURCE_SECRET'):
+            profile = SecureAcceptanceProfile()
+            profile.hostname = ''
+            profile.profile_id = settings.CYBERSOURCE_PROFILE
+            profile.access_key = settings.CYBERSOURCE_ACCESS
+            profile.secret_key = settings.CYBERSOURCE_SECRET
+            profile.is_default = True
+            profile.save()
+            logger.info('Created SecureAcceptanceProfile from Django settings: {}'.format(profile))
+            return profile
+
+        # Out of options—raise an exception.
+        raise cls.DoesNotExist()
 
 
     def save(self, *args, **kwargs):
         if self.is_default:
             self.__class__._default_manager.filter(is_default=True).update(is_default=False)
         return super().save(*args, **kwargs)
+
+
+    def __str__(self):
+        return 'Secure Acceptance Profile hostname={}, profile_id={}'.format(self.hostname, self.profile_id)
 
 
 

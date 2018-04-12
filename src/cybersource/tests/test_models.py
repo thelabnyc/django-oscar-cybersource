@@ -62,5 +62,5 @@ class SecureAcceptanceProfileTest(TestCase):
 
     def test_no_profiles(self):
         SecureAcceptanceProfile.objects.all().delete()
-        with self.assertRaises(SecureAcceptanceProfile.DoesNotExist):
-            SecureAcceptanceProfile.get_profile('www.example.com')
+        profile = SecureAcceptanceProfile.get_profile('www.example.com')
+        self.assertEqual(profile.profile_id, '2A37F989-C8B2-4FEF-ACCF-2562577780E2')
