@@ -463,6 +463,13 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.3.2
+------------------
+- Add management command for unreadable Secure Acceptance Profiles from the database: ``python manage.py remove_unreadable_cybersource_profiles``
+- Add exception try/catch into ``SecureAcceptanceProfile.get_profile`` method to more gracefully handle Fernet decryption errors thrown when fetching a profile from the database.
+- Makes ``SecureAcceptanceProfile.get_profile`` method fall-back to Django settings when no readable profiles exist in the database.
+- Fix unit tests broken by an expired development key
+
 3.3.1
 ------------------
 - Add ``order`` as a value for the ``CARD_REJECT_ERROR`` string template literal.
