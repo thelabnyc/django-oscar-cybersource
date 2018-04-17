@@ -123,6 +123,7 @@ class CyberSourceReplyView(APIView):
     def record_token(self, request, format, reply_log_entry):
         # Fetch the related order
         order = self._get_order(request)
+        method_key = self._get_method_key(request)
 
         # Figure out what status the order is in.
         decision = reply_log_entry.get_decision()
@@ -136,15 +137,15 @@ class CyberSourceReplyView(APIView):
 
         # Check if the payment token was actually created or not.
         if decision in (DECISION_ACCEPT, DECISION_REVIEW):
-            new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, request.data)
-            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+            new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
+            utils.update_payment_method_state(order, request, method_key, new_state)
             return redirect(settings.REDIRECT_PENDING)
 
         # Must be a payment decline
         messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         amount = Decimal(request.data.get('req_amount', '0.00'))
         try:
-            utils.mark_payment_method_declined(order, request, Cybersource.code, amount)
+            utils.mark_payment_method_declined(order, request, method_key, amount)
         except InvalidOrderStatus:
             logger.exception((
                 "Failed to set Order {} to payment declined. Order is current in status {}. "
@@ -161,6 +162,7 @@ class CyberSourceReplyView(APIView):
 
         # Fetch the related order
         order = self._get_order(request)
+        method_key = self._get_method_key(request)
 
         # Figure out what status the order is in.
         decision = reply_log_entry.get_decision()
@@ -177,7 +179,7 @@ class CyberSourceReplyView(APIView):
         # If authorization was successful, log it and redirect to the success page.
         if decision in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
-            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+            utils.update_payment_method_state(order, request, method_key, new_state)
 
             # If the order is under review, add a note explaining why
             if decision == DECISION_REVIEW:
@@ -193,7 +195,7 @@ class CyberSourceReplyView(APIView):
         messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
         try:
-            utils.update_payment_method_state(order, request, Cybersource.code, new_state)
+            utils.update_payment_method_state(order, request, method_key, new_state)
         except InvalidOrderStatus:
             logger.exception((
                 "Failed to set Order {} to payment declined. Order is current in status {}. "
@@ -215,6 +217,11 @@ class CyberSourceReplyView(APIView):
         except Order.DoesNotExist:
             raise SuspiciousOperation("Order not found.")
         return order
+
+
+    def _get_method_key(self, request):
+        field_name = 'req_{}'.format(actions.OrderAction.method_key_field_name)
+        return request.data.get(field_name, Cybersource.code)
 
 
     def _get_card_reject_error(self, order):

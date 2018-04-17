@@ -23,9 +23,8 @@ class Cybersource(PaymentMethod):
 
 
     # Payment Step 1: Require form POST to Cybersource
-    def _record_payment(self, request, order, amount, reference, **kwargs):
+    def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         source = self.get_source(order, reference)
-        amount_to_allocate = amount - source.amount_allocated
 
         # Allow application to include extra, arbitrary fields in the request to CS
         extra_fields = {}
@@ -34,12 +33,14 @@ class Cybersource(PaymentMethod):
             extra_fields=extra_fields,
             request=request,
             order=order,
-            source=source)
+            source=source,
+            method_key=method_key)
 
         # Build the data for CyberSource transaction
         operation = actions.CreatePaymentToken(
             order=order,
-            amount=amount_to_allocate,
+            method_key=method_key,
+            amount=amount,
             server_hostname=request.META.get('HTTP_HOST', ''),
             customer_ip_address=request.META['REMOTE_ADDR'],
             fingerprint_session_id=request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID),
@@ -59,7 +60,7 @@ class Cybersource(PaymentMethod):
 
 
     # Payment Step 2: Record the generated payment token and require authorization using the token.
-    def record_created_payment_token(self, request, reply_log_entry, order, data):
+    def record_created_payment_token(self, request, reply_log_entry, order, method_key, data):
         token_string = data.get('payment_token')
         card_num = data.get('req_card_number')
         card_type = data.get('req_card_type')
@@ -83,12 +84,14 @@ class Cybersource(PaymentMethod):
             extra_fields=extra_fields,
             request=request,
             order=order,
-            token=token)
+            token=token,
+            method_key=method_key)
 
         # Build the data for CyberSource transaction
         operation = actions.AuthorizePaymentToken(
             token_string=token_string,
             order=order,
+            method_key=method_key,
             amount=req_amount,
             server_hostname=request.META.get('HTTP_HOST', ''),
             customer_ip_address=request.META['REMOTE_ADDR'],

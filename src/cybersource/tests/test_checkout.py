@@ -209,7 +209,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         resp = self.do_fetch_payment_states()
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['order_status'], 'Authorized')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Complete')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
         self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
         self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
 
