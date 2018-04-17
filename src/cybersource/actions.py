@@ -159,11 +159,14 @@ class BillingAddressMixin(object):
 
 
 class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMixin):
+    method_key_field_name = 'merchant_defined_data50'
+
     """
     Abstract SecureAcceptanceAction for action's related to orders.
     """
-    def __init__(self, order, amount, server_hostname, **kwargs):
+    def __init__(self, order, method_key, amount, server_hostname, **kwargs):
         self.order = order
+        self.method_key = method_key
         self.amount = amount
         self.customer_ip_address = kwargs.get('customer_ip_address')
         self.device_fingerprint_id = kwargs.get('fingerprint_session_id')
@@ -184,6 +187,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
             'line_item_count',
             'customer_ip_address',
             'device_fingerprint_id',
+            self.method_key_field_name,
         ])
         return fields
 
@@ -203,6 +207,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
         data['payment_method'] = 'card'
         data['reference_number'] = str(self.order.number)
         data['currency'] = self.order.currency
+        data[self.method_key_field_name] = self.method_key
         data['amount'] = str(self.amount.quantize(PRECISION))
 
         # Add shipping and billing info
@@ -250,9 +255,9 @@ class AuthorizePaymentToken(OrderAction):
     transaction_type = 'authorization'
     url = settings.ENDPOINT_PAY
 
-    def __init__(self, token_string, order, amount, server_hostname, **kwargs):
+    def __init__(self, token_string, order, method_key, amount, server_hostname, **kwargs):
         self.token_string = token_string
-        super().__init__(order, amount, server_hostname, **kwargs)
+        super().__init__(order, method_key, amount, server_hostname, **kwargs)
 
 
     @property
