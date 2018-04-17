@@ -15,7 +15,7 @@ install_requires = [
     'django-fernet-fields>=0.5',
     'django-oscar>=1.5',
     'django-oscar-api>=1.2.1',
-    'django-oscar-api-checkout>=0.3.3',
+    'django-oscar-api-checkout>=0.3.3,<0.4.0',
     'lxml>=4.1.1',
     'phonenumbers>=8.8.8',
 ]
