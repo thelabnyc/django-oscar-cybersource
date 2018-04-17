@@ -463,6 +463,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.4.0
+------------------
+- Adds support for ``django-oscar-api-checkout>=0.4.0``
+
 3.3.2
 ------------------
 - Add management command for unreadable Secure Acceptance Profiles from the database: ``python manage.py remove_unreadable_cybersource_profiles``
