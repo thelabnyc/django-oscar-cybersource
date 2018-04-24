@@ -11,10 +11,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
-from oscarapicheckout.settings import (
-    ORDER_STATUS_PAYMENT_DECLINED,
-    ORDER_STATUS_AUTHORIZED,
-)
+from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW, DECISION_ERROR
@@ -131,19 +128,17 @@ class CyberSourceReplyView(APIView):
         # Figure out what status the order is in.
         decision = reply_log_entry.get_decision()
 
-        # Check in an error occurred
-        if decision == DECISION_ERROR:
-            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
-            return redirect(settings.REDIRECT_FAIL)
-
         # Check if the payment token was actually created or not.
         if decision in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
             utils.update_payment_method_state(order, request, method_key, new_state)
             return redirect(settings.REDIRECT_PENDING)
 
-        # Must be a payment decline
-        messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
+        # Check in an error occurred or if it's payment declined
+        if decision == DECISION_ERROR:
+            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
+        else:
+            messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         amount = Decimal(request.data.get('req_amount', '0.00'))
         try:
             utils.mark_payment_method_declined(order, request, method_key, amount)
@@ -168,15 +163,6 @@ class CyberSourceReplyView(APIView):
         # Figure out what status the order is in.
         decision = reply_log_entry.get_decision()
 
-        # If an error occurred, log it and redirect as a failure. This normally occurs when the customer
-        # somehow refreshes / resends and authorization POST. Cybersource sends back an error because the
-        # transaction_uuid is a duplicate.
-        if decision == DECISION_ERROR:
-            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
-            if order.status == ORDER_STATUS_AUTHORIZED:
-                return redirect(settings.REDIRECT_SUCCESS)
-            return redirect(settings.REDIRECT_FAIL)
-
         # If authorization was successful, log it and redirect to the success page.
         if decision in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
@@ -192,8 +178,11 @@ class CyberSourceReplyView(APIView):
 
             return redirect(settings.REDIRECT_SUCCESS)
 
-        # Authorization was declined. Show a message to the user.
-        messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
+        # Check in an error occurred or if it's payment declined
+        if decision == DECISION_ERROR:
+            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
+        else:
+            messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
         try:
             utils.update_payment_method_state(order, request, method_key, new_state)
