@@ -11,7 +11,10 @@ from rest_framework.views import APIView
 from rest_framework import status
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
-from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
+from oscarapicheckout.settings import (
+    ORDER_STATUS_PAYMENT_DECLINED,
+    ORDER_STATUS_AUTHORIZED,
+)
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW, DECISION_ERROR
@@ -131,9 +134,7 @@ class CyberSourceReplyView(APIView):
         # Check in an error occurred
         if decision == DECISION_ERROR:
             messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
-            if order.status == ORDER_STATUS_PAYMENT_DECLINED:
-                return redirect(settings.REDIRECT_FAIL)
-            return redirect(settings.REDIRECT_PENDING)
+            return redirect(settings.REDIRECT_FAIL)
 
         # Check if the payment token was actually created or not.
         if decision in (DECISION_ACCEPT, DECISION_REVIEW):
@@ -172,9 +173,9 @@ class CyberSourceReplyView(APIView):
         # transaction_uuid is a duplicate.
         if decision == DECISION_ERROR:
             messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
-            if order.status == ORDER_STATUS_PAYMENT_DECLINED:
-                return redirect(settings.REDIRECT_FAIL)
-            return redirect(settings.REDIRECT_SUCCESS)
+            if order.status == ORDER_STATUS_AUTHORIZED:
+                return redirect(settings.REDIRECT_SUCCESS)
+            return redirect(settings.REDIRECT_FAIL)
 
         # If authorization was successful, log it and redirect to the success page.
         if decision in (DECISION_ACCEPT, DECISION_REVIEW):
