@@ -466,6 +466,7 @@ Changelog
 3.4.0
 ------------------
 - Adds support for ``django-oscar-api-checkout>=0.4.0``
+- Fix error handling behavior in CyberSourceReplyView which often times lead to infinite loops.
 
 3.3.2
 ------------------
