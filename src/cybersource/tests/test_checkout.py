@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from decimal import Decimal as D
 from django.core import mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from mock import patch
 from oscar.core.loading import get_model
 from oscar.test import factories
