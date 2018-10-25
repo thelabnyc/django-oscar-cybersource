@@ -22,8 +22,8 @@ class Cybersource(PaymentMethod):
     serializer_class = PaymentMethodSerializer
 
 
-    # Payment Step 1: Require form POST to Cybersource
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
+        """Payment Step 1: Require form POST to Cybersource"""
         source = self.get_source(order, reference)
 
         # Allow application to include extra, arbitrary fields in the request to CS
@@ -59,8 +59,8 @@ class Cybersource(PaymentMethod):
             fields=fields)
 
 
-    # Payment Step 2: Record the generated payment token and require authorization using the token.
     def record_created_payment_token(self, request, reply_log_entry, order, method_key, data):
+        """Payment Step 2: Record the generated payment token and require authorization using the token."""
         token_string = data.get('payment_token')
         card_num = data.get('req_card_number')
         card_type = data.get('req_card_type')
@@ -110,8 +110,8 @@ class Cybersource(PaymentMethod):
             fields=fields)
 
 
-    # Payment Step 3: Record a successful authorization
     def record_successful_authorization(self, reply_log_entry, order, data):
+        """Payment Step 3: Record a successful authorization"""
         token_string = data.get('req_payment_token')
         transaction_id = data.get('transaction_id')
         decision = reply_log_entry.get_decision()
@@ -148,8 +148,8 @@ class Cybersource(PaymentMethod):
         return Complete(source.amount_allocated)
 
 
-    # Payment Declined in Step 3: Record a failed authorization.
     def record_declined_authorization(self, reply_log_entry, order, data):
+        """Payment Declined in Step 3: Record a failed authorization."""
         token_string = data.get('req_payment_token')
         transaction_id = data.get('transaction_id', '')
         decision = reply_log_entry.get_decision()

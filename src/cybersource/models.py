@@ -29,7 +29,7 @@ class SecureAcceptanceProfile(models.Model):
         def _get_safe(**filters):
             try:
                 return cls.objects.filter(**filters).first()
-            except InvalidToken as e:
+            except InvalidToken:
                 logger.exception('Caught InvalidToken exception while retrieving profile')
                 return None
 

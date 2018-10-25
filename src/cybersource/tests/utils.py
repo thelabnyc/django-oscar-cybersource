@@ -11,7 +11,7 @@ def retry(ExceptionToCheck, tries=4, delay=2, backoff=2):
             while mtries > 1:
                 try:
                     return fn(*args, **kwargs)
-                except ExceptionToCheck as e:
+                except ExceptionToCheck:
                     print("\n")
                     traceback.print_exc()
                     print("Retrying in {} seconds...".format(mdelay))
