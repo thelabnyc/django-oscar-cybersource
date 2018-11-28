@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from decimal import Decimal as D
 from django.core import mail
 from django.urls import reverse
+from django.test import tag
 from mock import patch
 from oscar.core.loading import get_model
 from oscar.test import factories
@@ -164,6 +165,8 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
 
 
+
+@tag('integration', 'slow')
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout"""
 
