@@ -129,12 +129,12 @@ class CyberSourceReplyView(APIView):
         decision = reply_log_entry.get_decision()
 
         # Check if the payment token was actually created or not.
-        if decision in (DECISION_ACCEPT, DECISION_REVIEW):
+        if decision == DECISION_ACCEPT:
             new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
             utils.update_payment_method_state(order, request, method_key, new_state)
             return redirect(settings.REDIRECT_PENDING)
 
-        # Check in an error occurred or if it's payment declined
+        # Check if an error occurred or if it's payment declined
         if decision == DECISION_ERROR:
             messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
         else:
@@ -178,7 +178,7 @@ class CyberSourceReplyView(APIView):
 
             return redirect(settings.REDIRECT_SUCCESS)
 
-        # Check in an error occurred or if it's payment declined
+        # Check in an error occurred or if it's payment declined / needing review
         if decision == DECISION_ERROR:
             messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
         else:
