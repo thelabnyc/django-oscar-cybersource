@@ -139,6 +139,56 @@ def build_accepted_auth_reply_data(order_number):
     return data
 
 
+def build_review_token_reply_data(order_number):
+    data = {
+        "decision": "REVIEW",
+        "message": "Decision is REVIEW.",
+        "reason_code": "480",
+        "req_access_key": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "req_amount": "99.99",
+        "req_bill_to_address_city": "Manhattan",
+        "req_bill_to_address_country": "US",
+        "req_bill_to_address_line1": "627 W 27th st",
+        "req_bill_to_address_line2": "",
+        "req_bill_to_address_postal_code": "10001",
+        "req_bill_to_address_state": "NY",
+        "req_bill_to_email": "foo@example.com",
+        "req_bill_to_forename": "Bob",
+        "req_bill_to_phone": "18006927753",
+        "req_bill_to_surname": "Smith",
+        "req_card_expiry_date": "12-2020",
+        "req_card_number": "xxxxxxxxxxxx1111",
+        "req_card_type": "001",
+        "req_currency": "USD",
+        "req_customer_ip_address": "8.8.8.8",
+        "req_device_fingerprint_id": str(uuid.uuid4()),
+        "req_item_0_name": "My Product",
+        "req_item_0_quantity": "1",
+        "req_item_0_sku": "12345678",
+        "req_item_0_unit_price": "99.99",
+        "req_line_item_count": "1",
+        "req_locale": "en",
+        "req_payment_method": "card",
+        "req_profile_id": str(uuid.uuid4()),
+        "req_reference_number": order_number,
+        "req_ship_to_address_city": "Manhattan",
+        "req_ship_to_address_country": "US",
+        "req_ship_to_address_line1": "627 W 27th st",
+        "req_ship_to_address_line2": "",
+        "req_ship_to_address_postal_code": "10001",
+        "req_ship_to_address_state": "NY",
+        "req_ship_to_forename": "Bob",
+        "req_ship_to_phone": "18006927753",
+        "req_ship_to_surname": "Smith",
+        "req_transaction_type": "create_payment_token",
+        "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
+        "request_token": "Ahj77wSR8sY0PySenECSIpcaMXXZAClxoxddkaQR1G8vpJl6SZbpAd0+2AnI+WMaH5JPTiBJAAAA9hKE",
+        "transaction_id": str(randrange(0, 99999999999999999999)),
+        "utf8": "✓",
+    }
+    return data
+
+
 def build_declined_token_reply_data(order_number):
     data = {
         "decision": "DECLINE",
