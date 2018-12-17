@@ -1,5 +1,4 @@
 from decimal import Decimal
-from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.http import Http404
@@ -14,7 +13,7 @@ from oscarapicheckout import utils
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW, DECISION_ERROR
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
 from .methods import Cybersource
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
@@ -134,11 +133,6 @@ class CyberSourceReplyView(APIView):
             utils.update_payment_method_state(order, request, method_key, new_state)
             return redirect(settings.REDIRECT_PENDING)
 
-        # Check if an error occurred or if it's payment declined
-        if decision == DECISION_ERROR:
-            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
-        else:
-            messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         amount = Decimal(request.data.get('req_amount', '0.00'))
         try:
             utils.mark_payment_method_declined(order, request, method_key, amount)
@@ -178,11 +172,6 @@ class CyberSourceReplyView(APIView):
 
             return redirect(settings.REDIRECT_SUCCESS)
 
-        # Check in an error occurred or if it's payment declined / needing review
-        if decision == DECISION_ERROR:
-            messages.add_message(request._request, messages.ERROR, settings.DATA_ERROR)
-        else:
-            messages.add_message(request._request, messages.ERROR, self._get_card_reject_error(order))
         new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
         try:
             utils.update_payment_method_state(order, request, method_key, new_state)
@@ -212,11 +201,6 @@ class CyberSourceReplyView(APIView):
     def _get_method_key(self, request):
         field_name = 'req_{}'.format(actions.OrderAction.method_key_field_name)
         return request.data.get(field_name, Cybersource.code)
-
-
-    def _get_card_reject_error(self, order):
-        return settings.CARD_REJECT_ERROR.format(order_number=order.number, order=order)
-
 
 
 class DecisionManagerNotificationView(APIView):
