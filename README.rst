@@ -150,10 +150,9 @@ Once a user has added items to his or her basket, your client-side application m
     4. Compare the reference number in the response data to the order number we generated and saved to the user's session in step 1. If it differs, throw an error and return `400 Bad Request`.
     5. Get the basket based on the ID we saved to the session in step 1. If it doesn't exist, throw an error and return `400 Bad Request`.
     6. If the decision was to decline the authorization:
-        1. Add a message to the session using the text in `CYBERSOURCE_CARD_REJECT_ERROR`
-        2. Mark the order as payment declined.
-        3. Unfreeze the basket so that it is editable again.
-        4. Redirect the user to `CYBERSOURCE_REDIRECT_FAIL`
+        1. Mark the order as payment declined.
+        2. Unfreeze the basket so that it is editable again.
+        3. Redirect the user to `CYBERSOURCE_REDIRECT_FAIL`
     7. Create the related `cybersource.PaymentToken`, `payment.SourceType`, `payment.Source`, `payment.Transaction`, `order.PaymentEvent`, and `order.PaymentEventQuantity` models.
     8. Save the order ID to the session so that the `CYBERSOURCE_REDIRECT_SUCCESS` view can access it.
     9. Redirect the user to `CYBERSOURCE_REDIRECT_SUCCESS`.
