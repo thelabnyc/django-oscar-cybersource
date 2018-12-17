@@ -504,8 +504,23 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
     @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    def test_review_card(self, order_payment_authorized):
+        """Review card should be treated like a decline and result in redirect to failure page"""
+        order_number = self.prepare_order()
+        data = cs_factories.build_review_token_reply_data(order_number)
+        data = cs_factories.sign_reply_data(data)
+        url = reverse('cybersource-reply')
+
+        resp = self.client.post(url, data)
+        self.assertRedirects(resp, reverse('checkout:index'), fetch_redirect_response=False)
+
+        self.assertEqual(order_payment_authorized.call_count, 0, 'Should not trigger signal')
+        self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Payment Declined')
+
+
+    @patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_declined_card(self, order_payment_authorized):
-        """Declined card should should result in redirect to failure page"""
+        """Declined card should result in redirect to failure page"""
         order_number = self.prepare_order()
         data = cs_factories.build_declined_token_reply_data(order_number)
         data = cs_factories.sign_reply_data(data)
