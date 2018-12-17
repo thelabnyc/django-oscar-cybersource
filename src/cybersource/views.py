@@ -13,7 +13,7 @@ from oscarapicheckout import utils
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW, DECISION_ERROR
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
 from .methods import Cybersource
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
