@@ -462,6 +462,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.4.1
+------------------
+- Fix bug with missing payment token fields on REVIEW replies.
+
 3.4.0
 ------------------
 - Adds support for ``django-oscar-api-checkout>=0.4.0``
