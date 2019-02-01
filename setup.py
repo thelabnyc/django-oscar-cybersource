@@ -23,6 +23,7 @@ install_requires = [
 extras_require = {
     'development': [
         'beautifulsoup4>=4.6.0',
+        'coverage>=4.4.2',
         'flake8>=3.5.0',
         'psycopg2cffi>=2.7.7',
         'PyYAML>=3.12',

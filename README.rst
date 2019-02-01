@@ -2,15 +2,26 @@
 django-oscar-cybersource
 ========================
 
-|  |license| |kit| |format|
+|  |build| |coverage| |license| |kit| |format|
 
 This package is to handle integration between django-oscar based e-commerce sites and `Cybersource Secure Acceptance Silent Order POST <http://apps.cybersource.com/library/documentation/dev_guides/Secure_Acceptance_SOP/Secure_Acceptance_SOP.pdf>`_.
+
+.. |build| image:: https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/badges/master/pipeline.svg
+    :target: https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/commits/master
+.. |coverage| image:: https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/badges/master/coverage.svg
+    :target: https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/commits/master
+.. |license| image:: https://img.shields.io/pypi/l/django-oscar-cybersource.svg
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
+.. |kit| image:: https://badge.fury.io/py/django-oscar-cybersource.svg
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
+.. |format| image:: https://img.shields.io/pypi/format/django-oscar-cybersource.svg
+    :target: https://pypi.python.org/pypi/django-oscar-cybersource
 
 
 Caveats
 =======
 
-1. Requires and `django-oscar>=1.1.1` and `django-oscar-api>=1.0.1`.
+1. Requires and `django-oscar>=1.5` and `django-oscar-api>=1.3`.
 2. Your project must use PostgreSQL, since cybersource.models.CyberSourceReply uses an HStore field to log request data.
 3. You must fork the Oscar payment app to add a mixin to the transaction model.
 
@@ -596,12 +607,3 @@ Changelog
 1.0.0 (2016-01-25)
 ------------------
 - Initial release.
-
-
-
-.. |license| image:: https://img.shields.io/pypi/l/django-oscar-cybersource.svg
-    :target: https://pypi.python.org/pypi/django-oscar-cybersource
-.. |kit| image:: https://badge.fury.io/py/django-oscar-cybersource.svg
-    :target: https://pypi.python.org/pypi/django-oscar-cybersource
-.. |format| image:: https://img.shields.io/pypi/format/django-oscar-cybersource.svg
-    :target: https://pypi.python.org/pypi/django-oscar-cybersource
