@@ -13,7 +13,7 @@ packages = find_packages('src')
 
 install_requires = [
     'django-fernet-fields>=0.5',
-    'django-oscar-api-checkout>=0.5.0b1',
+    'django-oscar-api-checkout>=0.5.0b2',
     'django-oscar-api>=1.3.0',
     'django-oscar>=1.5',
     'lxml>=4.1.1',
