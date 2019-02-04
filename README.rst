@@ -473,6 +473,10 @@ The Javascript app should loop through the fields in the above response and fill
 Changelog
 =========
 
+3.5.0
+------------------
+- Make payment methods create separate ``payment.Source`` objects per Reference number (`!7 <https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/merge_requests/7>`_).
+
 3.4.1
 ------------------
 - Fix bug with missing payment token fields on REVIEW replies.
