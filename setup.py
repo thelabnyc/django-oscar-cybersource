@@ -13,7 +13,7 @@ packages = find_packages('src')
 
 install_requires = [
     'django-fernet-fields>=0.5',
-    'django-oscar-api-checkout>=0.4.0b1',
+    'django-oscar-api-checkout>=0.5.0b2',
     'django-oscar-api>=1.3.0',
     'django-oscar>=1.5',
     'lxml>=4.1.1',
@@ -23,6 +23,7 @@ install_requires = [
 extras_require = {
     'development': [
         'beautifulsoup4>=4.6.0',
+        'coverage>=4.4.2',
         'flake8>=3.5.0',
         'psycopg2cffi>=2.7.7',
         'PyYAML>=3.12',

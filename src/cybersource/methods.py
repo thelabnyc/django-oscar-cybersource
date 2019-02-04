@@ -24,8 +24,6 @@ class Cybersource(PaymentMethod):
 
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """Payment Step 1: Require form POST to Cybersource"""
-        source = self.get_source(order, reference)
-
         # Allow application to include extra, arbitrary fields in the request to CS
         extra_fields = {}
         signals.pre_build_get_token_request.send(
@@ -33,7 +31,6 @@ class Cybersource(PaymentMethod):
             extra_fields=extra_fields,
             request=request,
             order=order,
-            source=source,
             method_key=method_key)
 
         # Build the data for CyberSource transaction
@@ -120,12 +117,13 @@ class Cybersource(PaymentMethod):
         auth_amount = Decimal(data.get('auth_amount', '0'))
         req_amount = Decimal(data.get('req_amount', '0'))
 
+        source = self.get_source(order, transaction_id)
+
         try:
             token = PaymentToken.objects.get(token=token_string)
         except PaymentToken.DoesNotExist:
-            return Declined(req_amount)
+            return Declined(req_amount, source_id=source.pk)
 
-        source = self.get_source(order, transaction_id)
         source.amount_allocated += auth_amount
         source.save()
 
@@ -145,7 +143,7 @@ class Cybersource(PaymentMethod):
         for line in order.lines.all():
             self.make_event_quantity(event, line, line.quantity)
 
-        return Complete(source.amount_allocated)
+        return Complete(source.amount_allocated, source_id=source.pk)
 
 
     def record_declined_authorization(self, reply_log_entry, order, data):
@@ -157,9 +155,11 @@ class Cybersource(PaymentMethod):
         signed_date_time = data.get('signed_date_time')
         req_amount = Decimal(data.get('req_amount', '0'))
 
+        source = self.get_source(order, transaction_id)
+
         transaction = Transaction()
         transaction.log = reply_log_entry
-        transaction.source = self.get_source(order, transaction_id)
+        transaction.source = source
         transaction.token = PaymentToken.objects.filter(token=token_string).first()
         transaction.txn_type = Transaction.AUTHORISE
         transaction.amount = req_amount
@@ -169,7 +169,7 @@ class Cybersource(PaymentMethod):
         transaction.processed_datetime = datetime.strptime(signed_date_time, settings.DATE_FORMAT)
         transaction.save()
 
-        return Declined(req_amount)
+        return Declined(req_amount, source_id=source.pk)
 
 
     def _fields(self, operation):

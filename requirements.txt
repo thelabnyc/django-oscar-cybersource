@@ -3,6 +3,7 @@ Babel==2.5.1
 beautifulsoup4==4.6.0
 certifi==2017.11.5
 chardet==3.0.4
+coverage==4.4
 Django==1.11.9
 django-extra-views==0.6.4
 django-haystack==2.6.1
