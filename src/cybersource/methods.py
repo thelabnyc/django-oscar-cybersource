@@ -1,4 +1,3 @@
-from datetime import datetime
 from decimal import Decimal
 from oscar.core.loading import get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
@@ -6,6 +5,7 @@ from oscarapicheckout.states import FormPostRequired, Complete, Declined
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
 from .models import PaymentToken
 from . import actions, signals, settings
+import dateutil.parser
 
 Transaction = get_model('payment', 'Transaction')
 
@@ -136,7 +136,7 @@ class Cybersource(PaymentMethod):
         transaction.reference = transaction_id
         transaction.status = decision
         transaction.request_token = request_token
-        transaction.processed_datetime = datetime.strptime(signed_date_time, settings.DATE_FORMAT)
+        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
         transaction.save()
 
         event = self.make_authorize_event(order, auth_amount, transaction_id)
@@ -166,7 +166,7 @@ class Cybersource(PaymentMethod):
         transaction.reference = transaction_id
         transaction.status = decision
         transaction.request_token = request_token
-        transaction.processed_datetime = datetime.strptime(signed_date_time, settings.DATE_FORMAT)
+        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
         transaction.save()
 
         return Declined(req_amount, source_id=source.pk)
