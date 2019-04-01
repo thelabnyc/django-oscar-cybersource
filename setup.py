@@ -18,6 +18,7 @@ install_requires = [
     'django-oscar>=1.5',
     'lxml>=4.1.1',
     'phonenumbers>=8.8.8',
+    'python-dateutil>=2.8.0',
 ]
 
 extras_require = {
