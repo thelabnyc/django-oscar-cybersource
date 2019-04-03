@@ -476,6 +476,7 @@ Changelog
 3.5.0
 ------------------
 - Make payment methods create separate ``payment.Source`` objects per Reference number (`!7 <https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/merge_requests/7>`_).
+- Fix pate parsing bug which occurs during a spring-time daylight savings time transition.
 
 3.4.1
 ------------------
