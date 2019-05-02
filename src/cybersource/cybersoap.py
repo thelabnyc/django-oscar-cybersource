@@ -37,22 +37,22 @@ class CyberSourceSoap(object):
         print("init ok")
 
     # we probably don't need this and can just authorize and hopefully get back a token
-    def get_token_encrypted(self, request, order, data):
+    def get_token_encrypted(self, request, order, encrypted):
         data = self.prep_transaction(request, order, 'paySubscriptionCreateService')
 
         # Add encrypted data
         data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
-        data['encryptedPayment'].data = '02A600C0170018008292;4111********1111=1912?*6D929248974C89EDD6C6079A89BC80D2F0F9AE888BFB2A5A000000000000000000000000000000000000000038343355313138373932629949960E004A800003103803'
+        data['encryptedPayment'].data = encrypted
         data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
 
         return self.run_transaction(data, order)
 
-    def authorize_encrypted(self, request, order, data):
+    def authorize_encrypted(self, request, order, encrypted):
         data = self.prep_transaction(request, order, 'ccAuthService')
 
         # Add encrypted data
         data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
-        data['encryptedPayment'].data = '02A600C0170018008292;4111********1111=1912?*6D929248974C89EDD6C6079A89BC80D2F0F9AE888BFB2A5A000000000000000000000000000000000000000038343355313138373932629949960E004A800003103803'
+        data['encryptedPayment'].data = encrypted
         data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
 
         return self.run_transaction(data, order)
