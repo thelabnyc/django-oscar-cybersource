@@ -22,7 +22,6 @@ import uuid
 import logging
 
 from .cybersoap import CyberSourceSoap
-from django.conf import settings
 
 InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
@@ -138,7 +137,7 @@ class CyberSourceReplyView(APIView):
             print('try authorize')
             cs = CyberSourceSoap(
                 "https://ics2wstesta.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.155.wsdl",
-                settings.CYBERSOURCE_MERCHANT_ID,
+                settings.MERCHANT_ID,
                 "62a67633d0063c26a9c578bd9dcab18d")
             cs.authorize_encrypted(request, order, None)
 
