@@ -21,6 +21,9 @@ import dateutil.parser
 import uuid
 import logging
 
+from .cybersoap import CyberSourceSoap
+from django.conf import settings
+
 InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 OrderPlacementMixin = get_class('checkout.mixins', 'OrderPlacementMixin')
@@ -130,6 +133,15 @@ class CyberSourceReplyView(APIView):
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
             new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
+
+            ## FIXME testing
+            print('try authorize')
+            cs = CyberSourceSoap(
+                "https://ics2wstesta.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.155.wsdl",
+                settings.CYBERSOURCE_MERCHANT_ID,
+                "62a67633d0063c26a9c578bd9dcab18d")
+            cs.authorize_encrypted(request, order, None)
+
             utils.update_payment_method_state(order, request, method_key, new_state)
             return redirect(settings.REDIRECT_PENDING)
 
