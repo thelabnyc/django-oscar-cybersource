@@ -36,6 +36,16 @@ class CyberSourceSoap(object):
 
         print("init ok")
 
+    # use soap to authorize with a token
+    def authorize(self, request, order):
+        data = self.prep_transaction(request, order, 'ccAuthService')
+        token_string = request.data.get('payment_token')
+
+        data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
+        data['recurringSubscriptionInfo'].subscriptionID = token_string
+
+        return self.run_transaction(data, order)
+
     # we probably don't need this and can just authorize and hopefully get back a token
     def get_token_encrypted(self, request, order, encrypted):
         data = self.prep_transaction(request, order, 'paySubscriptionCreateService')
