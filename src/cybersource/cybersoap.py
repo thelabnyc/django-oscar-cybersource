@@ -126,6 +126,9 @@ class CyberSourceSoap(object):
             logger.exception("Failed to run Cybersource SOAP transaction on Order {}".format(order.number))
             resp = None
 
+        print('----------------->')
+        print(resp)
+
         # Parse the response for a decision code and a message
         try:
             decision, message = self.parse_response_outcome(resp)
