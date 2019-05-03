@@ -55,6 +55,9 @@ class CyberSourceSoap(object):
         data['encryptedPayment'].data = encrypted
         data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
 
+        data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
+        data['recurringSubscriptionInfo'].frequency = 'on-demand'
+
         return self.run_transaction(data, order)
 
     def authorize_encrypted(self, request, order, encrypted):
