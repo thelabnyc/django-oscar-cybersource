@@ -702,10 +702,9 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
 class CybersourceMethodTest(BaseCheckoutTest):
-    @patch('cybersource.signals.pre_build_auth_request.send')
     @patch('cybersource.signals.pre_build_get_token_request.send')
     @patch('oscarapicheckout.signals.pre_calculate_total.send')
-    def test_request_auth_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request):
+    def test_request_auth_form_success(self, pre_calculate_total, pre_build_get_token_request):
         product = self.create_product()
 
         resp = self.do_get_basket()
@@ -725,7 +724,6 @@ class CybersourceMethodTest(BaseCheckoutTest):
         def add_a_field(sender, extra_fields, **kwargs):
             extra_fields['my_custom_field'] = 'ABC'
         pre_build_get_token_request.side_effect = add_a_field
-        pre_build_auth_request.side_effect = add_a_field
 
         # Checkout
         resp = self.do_checkout(basket_id)
@@ -794,51 +792,11 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         resp = self.do_cs_reply(resp)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-        self.assertEqual(pre_build_auth_request.call_count, 1)
 
         # Fetch payment states again
         resp = self.do_fetch_payment_states()
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        cs_url = action['url']
-        data = {}
-        for field in action['fields']:
-            data[field['key']] = field['value']
-
-        # Check response fields
-        self.assertEqual(cs_url, 'https://testsecureacceptance.cybersource.com/silent/pay')
-        self.assertEqual(data['amount'], '10.42')
-        self.assertEqual(data['bill_to_address_city'], 'Manhattan')
-        self.assertEqual(data['bill_to_address_country'], 'US')
-        self.assertEqual(data['bill_to_address_line1'], '234 5th Ave')
-        self.assertEqual(data['bill_to_address_line2'], '')
-        self.assertEqual(data['bill_to_address_postal_code'], '10001')
-        self.assertEqual(data['bill_to_address_state'], 'NY')
-        self.assertEqual(data['bill_to_email'], 'joe@example.com')
-        self.assertEqual(data['bill_to_forename'], 'Joe')
-        self.assertEqual(data['bill_to_phone'], '')
-        self.assertEqual(data['bill_to_surname'], 'Schmoe')
-        self.assertEqual(data['currency'], 'USD')
-        self.assertEqual(data['customer_ip_address'], '127.0.0.1')
-        self.assertEqual(data['device_fingerprint_id'], '')
-        self.assertEqual(data['item_0_name'], 'My Product')
-        self.assertEqual(data['item_0_quantity'], '1')
-        self.assertEqual(data['item_0_unit_price'], '10.42')
-        self.assertEqual(data['line_item_count'], '1')
-        self.assertEqual(data['locale'], 'en')
-        self.assertEqual(data['my_custom_field'], 'ABC')
-        self.assertEqual(data['payment_method'], 'card')
-        self.assertEqual(data['reference_number'], order_number)
-        self.assertEqual(data['ship_to_address_city'], 'Manhattan')
-        self.assertEqual(data['ship_to_address_country'], 'US')
-        self.assertEqual(data['ship_to_address_line1'], '234 5th Ave')
-        self.assertEqual(data['ship_to_address_line2'], '')
-        self.assertEqual(data['ship_to_address_postal_code'], '10001')
-        self.assertEqual(data['ship_to_address_state'], 'NY')
-        self.assertEqual(data['ship_to_forename'], 'Joe')
-        self.assertEqual(data['ship_to_phone'], '17174671111')
-        self.assertEqual(data['ship_to_surname'], 'Schmoe')
-        self.assertEqual(data['transaction_type'], 'authorization')
-        self.assertEqual(data['shipping_method'], 'lowcost')
-        self.assertIsNotNone(data['payment_token'])
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.42')
+        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])

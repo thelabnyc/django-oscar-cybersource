@@ -111,10 +111,18 @@ class CyberSourceReplyView(APIView):
         return log
 
 
+    def log_soap_response(self, request, response):
+        log = CyberSourceReply(
+            user=request.user if request.user.is_authenticated else None,
+            order=self._get_order(request),
+            data=response)
+        log.save()
+        return log
+
+
     def get_handler_fn(self, trans_type):
         handlers = {
             actions.CreatePaymentToken.transaction_type: self.record_token,
-            actions.AuthorizePaymentToken.transaction_type: self.record_authorization,
         }
         if trans_type not in handlers:
             raise SuspiciousOperation("Couldn't find handler for %s" % trans_type)
@@ -131,10 +139,10 @@ class CyberSourceReplyView(APIView):
 
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
-            new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
+            Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
 
             ## FIXME testing
-            print('try authorize')
+            print('-- try authorize')
             cs = CyberSourceSoap(
                 "https://ics2wstesta.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.155.wsdl",
                 'tempurdrcyb',
@@ -142,63 +150,49 @@ class CyberSourceReplyView(APIView):
                 '9sBv3xEh7woZXkPEvsV1ZFXA8axH7GgY9Bw6Yg2Kk9U57PINNejy0D+9V8tDzq/7JfLlFad8La09uzaxZ8MhFiRQwTYNGyWOPVIY+rCrJ9lh6j+Ow0'
                 '0b9/Lz5TvAUIi7gKBKIykBQzoT6PQXqAwdRiVtJsG9V53jnEB9EC/TYXLqbbqIaX3x9WC0JDRORmnymOt4meh9RndjSDsA5ANGpEMCaV4E3u2nk60w=='))
 
-            cs.get_token_encrypted(request, order, '02A600C0170018008292;4111********1111=2012?*90A55BA844341117AEF1318D5FF154CE9082CEF3C798F8D6000000000000000000000000000000000000000038343355313138373932629949960E004A8000041DF503')
+            # FIXME probably don't actually need the `message`
+            decision, message, response = cs.authorize(request, order)
+            reply_log_entry = self.log_soap_response(request, response)
 
-            # cs.authorize_encrypted(request, order, '02A600C0170018008292;4111********1111=2012?*90A55BA844341117AEF1318D5FF154CE9082CEF3C798F8D6000000000000000000000000000000000000000038343355313138373932629949960E004A8000041DF503')
+            print('-- authorize done: {} {}'.format(decision, message))
+            # If authorization was successful, log it and redirect to the success page.
+            if decision in (DECISION_ACCEPT, DECISION_REVIEW):
+                print('-- about to record')
+                new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
+                print('-- new state: ', new_state)
+                utils.update_payment_method_state(order, request, method_key, new_state)
 
-            # cs.authorize(request, order)
+                # If the order is under review, add a note explaining why
+                if decision == DECISION_REVIEW:
+                    msg = (
+                              'Transaction %s is currently under review. '
+                              'Use Decision Manager to either accept or reject the transaction.'
+                          ) % request.data.get('transaction_id')
+                    self._create_order_note(order, msg)
 
-            utils.update_payment_method_state(order, request, method_key, new_state)
-            return redirect(settings.REDIRECT_PENDING)
+                return redirect(settings.REDIRECT_SUCCESS)
+            else:
+                new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
+                try:
+                    utils.update_payment_method_state(order, request, method_key, new_state)
+                except InvalidOrderStatus:
+                    logger.exception((
+                                         "Failed to set Order {} to payment declined. Order is current in status {}. "
+                                         "Examine CyberSourceReply[{}]"
+                                     ).format(order.number, order.status, reply_log_entry.pk))
+                return redirect(settings.REDIRECT_FAIL)
 
-        amount = Decimal(request.data.get('req_amount', '0.00'))
-        try:
-            utils.mark_payment_method_declined(order, request, method_key, amount)
-        except InvalidOrderStatus:
-            logger.exception((
-                "Failed to set Order {} to payment declined. Order is current in status {}. "
-                "Examine CyberSourceReply[{}]"
-            ).format(order.number, order.status, reply_log_entry.pk))
-        return redirect(settings.REDIRECT_FAIL)
-
-
-    def record_authorization(self, request, format, reply_log_entry):
-        # If the transaction already exists, do nothing
-        if Transaction.objects.filter(reference=request.data.get('transaction_id')).exists():
-            logger.warning('Duplicate transaction_id received from CyberSource: %s' % request.data.get('transaction_id'))
-            return redirect(settings.REDIRECT_SUCCESS)
-
-        # Fetch the related order
-        order = self._get_order(request)
-        method_key = self._get_method_key(request)
-
-        # Figure out what status the order is in.
-        decision = reply_log_entry.get_decision()
-
-        # If authorization was successful, log it and redirect to the success page.
-        if decision in (DECISION_ACCEPT, DECISION_REVIEW):
-            new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
-            utils.update_payment_method_state(order, request, method_key, new_state)
-
-            # If the order is under review, add a note explaining why
-            if decision == DECISION_REVIEW:
-                msg = (
-                    'Transaction %s is currently under review. '
-                    'Use Decision Manager to either accept or reject the transaction.'
-                ) % request.data.get('transaction_id')
-                self._create_order_note(order, msg)
-
-            return redirect(settings.REDIRECT_SUCCESS)
-
-        new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
-        try:
-            utils.update_payment_method_state(order, request, method_key, new_state)
-        except InvalidOrderStatus:
-            logger.exception((
-                "Failed to set Order {} to payment declined. Order is current in status {}. "
-                "Examine CyberSourceReply[{}]"
-            ).format(order.number, order.status, reply_log_entry.pk))
-        return redirect(settings.REDIRECT_FAIL)
+        else:
+            # Payment token was not created
+            amount = Decimal(request.data.get('req_amount', '0.00'))
+            try:
+                utils.mark_payment_method_declined(order, request, method_key, amount)
+            except InvalidOrderStatus:
+                logger.exception((
+                    "Failed to set Order {} to payment declined. Order is current in status {}. "
+                    "Examine CyberSourceReply[{}]"
+                ).format(order.number, order.status, reply_log_entry.pk))
+            return redirect(settings.REDIRECT_FAIL)
 
 
     def _create_order_note(self, order, msg):

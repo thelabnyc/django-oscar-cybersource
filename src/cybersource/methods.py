@@ -61,12 +61,9 @@ class Cybersource(PaymentMethod):
         token_string = data.get('payment_token')
         card_num = data.get('req_card_number')
         card_type = data.get('req_card_type')
-        req_amount = Decimal(data.get('req_amount', '0'))
 
         # Create the payment token
-        try:
-            token = PaymentToken.objects.get(token=token_string)
-        except PaymentToken.DoesNotExist:
+        if not PaymentToken.objects.filter(token=token_string).exists():
             token = PaymentToken(
                 log=reply_log_entry,
                 token=token_string,
@@ -74,48 +71,18 @@ class Cybersource(PaymentMethod):
                 card_type=card_type)
             token.save()
 
-        # Allow application to include extra, arbitrary fields in the request to CS
-        extra_fields = {}
-        signals.pre_build_auth_request.send(
-            sender=self.__class__,
-            extra_fields=extra_fields,
-            request=request,
-            order=order,
-            token=token,
-            method_key=method_key)
-
-        # Build the data for CyberSource transaction
-        operation = actions.AuthorizePaymentToken(
-            token_string=token_string,
-            order=order,
-            method_key=method_key,
-            amount=req_amount,
-            server_hostname=request.META.get('HTTP_HOST', ''),
-            customer_ip_address=request.META['REMOTE_ADDR'],
-            fingerprint_session_id=request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID),
-            extra_fields=extra_fields)
-
-        # Return form fields to the browser. The browser then needs to fill in the blank
-        # fields (like billing data) and submit them as a POST to CyberSource.
-        url, fields = self._fields(operation)
-
-        # Require that the client now perform an authorization using this token
-        return FormPostRequired(
-            amount=req_amount,
-            name='authorize',
-            url=url,
-            fields=fields)
-
 
     def record_successful_authorization(self, reply_log_entry, order, data):
         """Payment Step 3: Record a successful authorization"""
-        token_string = data.get('req_payment_token')
+        token_string = data.get('payment_token')
         transaction_id = data.get('transaction_id')
         decision = reply_log_entry.get_decision()
         request_token = data.get('request_token')
         signed_date_time = data.get('signed_date_time')
-        auth_amount = Decimal(data.get('auth_amount', '0'))
         req_amount = Decimal(data.get('req_amount', '0'))
+
+        # assuming these are equal since authorization succeeded
+        auth_amount = req_amount
 
         source = self.get_source(order, transaction_id)
 
@@ -148,7 +115,7 @@ class Cybersource(PaymentMethod):
 
     def record_declined_authorization(self, reply_log_entry, order, data):
         """Payment Declined in Step 3: Record a failed authorization."""
-        token_string = data.get('req_payment_token')
+        token_string = data.get('payment_token')
         transaction_id = data.get('transaction_id', '')
         decision = reply_log_entry.get_decision()
         request_token = data.get('request_token')

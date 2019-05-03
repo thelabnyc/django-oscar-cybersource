@@ -2,6 +2,8 @@ import logging
 import soap
 import uuid
 
+from suds.sudsobject import asdict
+
 from .constants import *
 
 from suds.wsse import Security
@@ -125,7 +127,10 @@ class CyberSourceSoap(object):
         # Add order total data
         data['purchaseTotals'] = self.client.factory.create('ns0:PurchaseTotals')
         data['purchaseTotals'].currency = order.currency
-        data['purchaseTotals'].grandTotalAmount = order.total_incl_tax
+
+        # FIXME is this the right amount?
+        # data['purchaseTotals'].grandTotalAmount = order.total_incl_tax
+        data['purchaseTotals'].grandTotalAmount = request.data.get('req_amount', '0')
 
         return data
 
@@ -134,32 +139,30 @@ class CyberSourceSoap(object):
 
         # Send the transaction to Cybersource to process
         try:
-            resp = self.client.service.runTransaction(**data)
+            response = self.client.service.runTransaction(**data)
         except Exception:
             logger.exception("Failed to run Cybersource SOAP transaction on Order {}".format(order.number))
-            resp = None
+            response = None
 
         print('----------------->')
-        print(resp)
+        print(response)
 
         # Parse the response for a decision code and a message
         try:
-            decision, message = self.parse_response_outcome(resp)
+            decision, message = self.parse_response_outcome(response)
         except Exception:
             decision, message = DECISION_ERROR, "Error: Could not parse Cybersource response."
 
-        # Get the transaction ID
-        try:
-            reference = resp.requestID
-        except Exception:
-            reference = uuid.uuid1()
+        # convert response to a generic python dict so it can be stored in an HStoreField etc.
+        response = asdict(response)
 
-        return decision, message, reference
+        return decision, message, response
 
     def parse_response_outcome(self, resp):
-        message = CYBERSOURCE_RESPONSES[resp.reasonCode]
+        print(resp.reasonCode)
+        message = CYBERSOURCE_RESPONSES[str(resp.reasonCode)]
         if message is None:
-            message = "Error: Could not parse Cybersource response."
+            message = "Could not identify Cybersource response code."
         if resp.reasonCode == 100:
             decision = DECISION_ACCEPT
         elif message.startswith('Error'):
