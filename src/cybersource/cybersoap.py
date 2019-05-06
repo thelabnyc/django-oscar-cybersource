@@ -38,17 +38,18 @@ class CyberSourceSoap(object):
 
         print("init ok")
 
-    # use soap to authorize with a token
+    # Authorize with a token
     def authorize(self, request, order):
         data = self.prep_transaction(request, order, 'ccAuthService')
         token_string = request.data.get('payment_token')
 
+        # Add token info
         data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
         data['recurringSubscriptionInfo'].subscriptionID = token_string
 
         return self.run_transaction(data, order)
 
-    # we probably don't need this and can just authorize and hopefully get back a token
+    # Get a token using encrypted card number
     def get_token_encrypted(self, request, order, encrypted):
         data = self.prep_transaction(request, order, 'paySubscriptionCreateService')
 
@@ -57,11 +58,13 @@ class CyberSourceSoap(object):
         data['encryptedPayment'].data = encrypted
         data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
 
+        # Add token request
         data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
         data['recurringSubscriptionInfo'].frequency = 'on-demand'
 
         return self.run_transaction(data, order)
 
+    # Authorise using encrypted card number
     def authorize_encrypted(self, request, order, encrypted):
         data = self.prep_transaction(request, order, 'ccAuthService')
 
