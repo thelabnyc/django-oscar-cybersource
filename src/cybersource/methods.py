@@ -56,7 +56,7 @@ class Cybersource(PaymentMethod):
             fields=fields)
 
 
-    def record_created_payment_token(self, request, reply_log_entry, order, method_key, data):
+    def record_created_payment_token(self, reply_log_entry, data):
         """Payment Step 2: Record the generated payment token and require authorization using the token."""
         token_string = data.get('payment_token')
         card_num = data.get('req_card_number')

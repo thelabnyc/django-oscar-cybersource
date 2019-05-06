@@ -92,7 +92,7 @@ class CyberSourceReplyView(APIView):
         trans_type = request.data.get('req_transaction_type')
         handler = self.get_handler_fn(trans_type)
         with transaction.atomic():
-            resp = handler(request, format, log)
+            resp = handler(request, log)
         return resp
 
 
@@ -129,7 +129,7 @@ class CyberSourceReplyView(APIView):
         return handlers[trans_type]
 
 
-    def record_token(self, request, format, reply_log_entry):
+    def record_token(self, request, reply_log_entry):
         # Fetch the related order
         order = self._get_order(request)
         method_key = self._get_method_key(request)
@@ -139,7 +139,7 @@ class CyberSourceReplyView(APIView):
 
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
-            Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
+            Cybersource().record_created_payment_token(reply_log_entry, request.data)
 
             ## FIXME testing
             print('-- try authorize')
@@ -151,7 +151,7 @@ class CyberSourceReplyView(APIView):
                 '0b9/Lz5TvAUIi7gKBKIykBQzoT6PQXqAwdRiVtJsG9V53jnEB9EC/TYXLqbbqIaX3x9WC0JDRORmnymOt4meh9RndjSDsA5ANGpEMCaV4E3u2nk60w=='))
 
             # FIXME probably don't actually need the `message`
-            decision, message, response = cs.authorize(request, order)
+            decision, message, response = cs.authorize(request, order, method_key)
             reply_log_entry = self.log_soap_response(request, response)
 
             print('-- authorize done: {} {}'.format(decision, message))

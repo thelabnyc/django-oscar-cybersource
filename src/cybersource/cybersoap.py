@@ -1,10 +1,11 @@
 import logging
 import soap
-import uuid
+
 
 from suds.sudsobject import asdict
 
 from .constants import *
+from . import signals
 
 from suds.wsse import Security
 from suds.wsse import UsernameToken
@@ -39,13 +40,16 @@ class CyberSourceSoap(object):
         print("init ok")
 
     # Authorize with a token
-    def authorize(self, request, order):
+    def authorize(self, request, order, method_key):
         data = self.prep_transaction(request, order, 'ccAuthService')
-        token_string = request.data.get('payment_token')
+        token = request.data.get('payment_token')
 
         # Add token info
         data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
-        data['recurringSubscriptionInfo'].subscriptionID = token_string
+        data['recurringSubscriptionInfo'].subscriptionID = token
+
+        # Add extra fields
+        data = self.add_signal(data, signals.pre_build_auth_request, request, order, token, method_key)
 
         return self.run_transaction(data, order)
 
@@ -58,6 +62,9 @@ class CyberSourceSoap(object):
         data['encryptedPayment'].data = encrypted
         data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
 
+        # TODO Add extra fields
+        # data = self.add_signal(data, signals.pre_build_get_token_request, request, order, token, method_key)
+
         # Add token request
         data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
         data['recurringSubscriptionInfo'].frequency = 'on-demand'
@@ -68,10 +75,13 @@ class CyberSourceSoap(object):
     def authorize_encrypted(self, request, order, encrypted):
         data = self.prep_transaction(request, order, 'ccAuthService')
 
-        # Add encrypted data
+        # TODO Add encrypted data
         data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
         data['encryptedPayment'].data = encrypted
         data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
+
+        # Add extra fields
+        # data = self.add_signal(data, signals.pre_build_auth_request, request, order, token, method_key)
 
         return self.run_transaction(data, order)
 
@@ -134,6 +144,26 @@ class CyberSourceSoap(object):
         # FIXME is this the right amount?
         # data['purchaseTotals'].grandTotalAmount = order.total_incl_tax
         data['purchaseTotals'].grandTotalAmount = request.data.get('req_amount', '0')
+
+        return data
+
+    def add_signal(self, data, signal, request, order, token, method_key):
+        extra_fields = {}
+        signal.send(
+            sender=self.__class__,
+            extra_fields=extra_fields,
+            request=request,
+            order=order,
+            token=token,
+            method_key=method_key)
+
+        # TODO would be nice if `merchant_defined_data` wasn't hardcoded
+        data['merchantDefinedData'] = self.client.factory.create('ns0:MerchantDefinedData')
+
+        i = 1
+        while 'merchant_defined_data{}'.format(i) in extra_fields:
+            data['merchantDefinedData']['field{}'.format(i)] = extra_fields['merchant_defined_data{}'.format(i)]
+            i += 1
 
         return data
 

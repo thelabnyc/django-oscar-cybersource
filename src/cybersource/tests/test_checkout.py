@@ -702,9 +702,10 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
 class CybersourceMethodTest(BaseCheckoutTest):
+    @patch('cybersource.signals.pre_build_auth_request.send')
     @patch('cybersource.signals.pre_build_get_token_request.send')
     @patch('oscarapicheckout.signals.pre_calculate_total.send')
-    def test_request_auth_form_success(self, pre_calculate_total, pre_build_get_token_request):
+    def test_request_auth_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request):
         product = self.create_product()
 
         resp = self.do_get_basket()
@@ -722,8 +723,10 @@ class CybersourceMethodTest(BaseCheckoutTest):
 
         # Add an extra field into the request
         def add_a_field(sender, extra_fields, **kwargs):
-            extra_fields['my_custom_field'] = 'ABC'
+            extra_fields['merchant_defined_data1'] = 'ABC'
+            extra_fields['merchant_defined_data2'] = 'DEF'
         pre_build_get_token_request.side_effect = add_a_field
+        pre_build_auth_request.side_effect = add_a_field
 
         # Checkout
         resp = self.do_checkout(basket_id)
@@ -767,7 +770,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEqual(data['item_0_unit_price'], '10.42')
         self.assertEqual(data['line_item_count'], '1')
         self.assertEqual(data['locale'], 'en')
-        self.assertEqual(data['my_custom_field'], 'ABC')
+        self.assertEqual(data['merchant_defined_data1'], 'ABC')
         self.assertEqual(data['payment_method'], 'card')
         self.assertEqual(data['reference_number'], order_number)
         self.assertEqual(data['ship_to_address_city'], 'Manhattan')
@@ -792,6 +795,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         resp = self.do_cs_reply(resp)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(pre_build_auth_request.call_count, 1)
 
         # Fetch payment states again
         resp = self.do_fetch_payment_states()
