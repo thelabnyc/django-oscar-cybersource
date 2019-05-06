@@ -78,7 +78,7 @@ class CyberSourceSoap(object):
 
         return self._run_transaction()
 
-    # Authorise using encrypted card number
+    # Authorize using encrypted card number
     def authorize_encrypted(self, encrypted):
         self._prep_transaction('ccAuthService')
 
