@@ -62,6 +62,9 @@ class CyberSourceSoap(object):
 
     # Get a token using encrypted card number
     def get_token_encrypted(self, encrypted):
+        if encrypted is None:
+            return DECISION_ERROR, None, None
+
         self._prep_transaction('paySubscriptionCreateService')
 
         # Add encrypted data
@@ -79,8 +82,11 @@ class CyberSourceSoap(object):
         return self._run_transaction()
 
     # Authorize using encrypted card number
-    def authorize_encrypted(self, encrypted):
-        self._prep_transaction('ccAuthService')
+    def authorize_encrypted(self, encrypted, amount=None):
+        if encrypted is None:
+            return DECISION_ERROR, None, None
+
+        self._prep_transaction('ccAuthService', amount)
 
         # TODO Add encrypted data
         self.data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
@@ -92,11 +98,11 @@ class CyberSourceSoap(object):
 
         return self._run_transaction()
 
-    def _prep_transaction(self, service):
+    def _prep_transaction(self, service, amount=None):
         self.data = {}
         self._add_service(service)
         self._add_merchant()
-        self._add_order()
+        self._add_order(amount)
 
     def _add_service(self, service):
         self.data[service] = self.client.factory.create('ns0:{}'.format(service))
@@ -108,7 +114,7 @@ class CyberSourceSoap(object):
         self.data['merchantID'] = self.merchant_id
         self.data['merchantReferenceCode'] = self.order.number
 
-    def _add_order(self):
+    def _add_order(self, amount=None):
         self.data['billTo'] = self.client.factory.create('ns0:BillTo')
         self.data['billTo'].email = self.order.email
         self.data['billTo'].ipAddress = self.request.META.get('REMOTE_ADDR')
@@ -145,7 +151,7 @@ class CyberSourceSoap(object):
 
         # FIXME is this the right amount?
         # self.data['purchaseTotals'].grandTotalAmount = self.order.total_incl_tax
-        self.data['purchaseTotals'].grandTotalAmount = self.request.data.get('req_amount', '0')
+        self.data['purchaseTotals'].grandTotalAmount = amount if amount is not None else self.request.data.get('req_amount', '0')
 
     def _add_signal(self, signal):
         extra_fields = {}

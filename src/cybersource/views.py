@@ -140,9 +140,6 @@ class CyberSourceReplyView(APIView):
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
             Cybersource().record_created_payment_token(reply_log_entry, request.data)
-
-            ## FIXME testing
-            print('-- try authorize')
             cs = CyberSourceSoap(
                 settings.CYBERSOURCE_WSDL,
                 settings.MERCHANT_ID,
@@ -151,7 +148,7 @@ class CyberSourceReplyView(APIView):
                 order,
                 method_key)
 
-            # FIXME probably don't actually need the `message`
+            # FIXME we're determining decision two different ways, which is the truth?
             decision, message, response = cs.authorize()
             reply_log_entry = self.log_soap_response(request, response)
 

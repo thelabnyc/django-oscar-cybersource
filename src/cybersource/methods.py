@@ -1,13 +1,21 @@
 from decimal import Decimal
-from oscar.core.loading import get_model
+from oscar.core.loading import get_class, get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
-from .models import PaymentToken
+from oscarapicheckout import utils
+from rest_framework import serializers
+
+from cybersource.cybersoap import CyberSourceSoap
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
+from .models import PaymentToken, CyberSourceReply
 from . import actions, signals, settings
 import dateutil.parser
+import logging
+
+logger = logging.getLogger(__name__)
 
 Transaction = get_model('payment', 'Transaction')
+InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
 
 
 class Cybersource(PaymentMethod):
@@ -152,3 +160,109 @@ class Cybersource(PaymentMethod):
             })
 
         return operation.url, fields
+
+
+class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
+    payment_data = serializers.CharField(max_length=256)
+
+    def validate(self, data):
+        if 'payment_data' not in data:
+            raise serializers.ValidationError('Missing encrypted payment data.')
+        return super().validate(data)
+
+
+class Bluefin(Cybersource):
+
+    name = settings.SOURCE_TYPE
+    code = 'bluefin'
+    serializer_class = BluefinPaymentMethodSerializer
+
+    # FIXME this is a duplicate of what's in views.py
+    def _log_soap_response(self, request, response):
+        log = CyberSourceReply(
+            user=request.user if request.user.is_authenticated else None,
+            order=self._get_order(request),
+            data=response)
+        log.save()
+        return log
+
+    def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
+        payment_data = kwargs.get('payment_data')
+        print('-- kw:')
+        print(kwargs)
+        print(payment_data)
+
+        if payment_data is None:
+            return Declined(amount)
+
+        return self._record_bluefin_payment(request, order, method_key, amount, payment_data)
+
+    def _record_bluefin_payment(self, request, order, method_key, amount, payment_data):
+        # Allow application to include extra, arbitrary fields in the request to CS
+        extra_fields = {}
+        signals.pre_build_get_token_request.send(
+            sender=self.__class__,
+            extra_fields=extra_fields,
+            request=request,
+            order=order,
+            method_key=method_key)
+
+        cs = CyberSourceSoap(
+            settings.CYBERSOURCE_WSDL,
+            settings.MERCHANT_ID,
+            settings.CYBERSOURCE_SOAP_KEY,
+            request,
+            order,
+            method_key)
+
+        # Get token via SOAP
+        print('-- getting bluefin token')
+        decision, message, response = cs.get_token_encrypted(payment_data)
+        reply_log_entry = self._log_soap_response(request, response)
+
+        if decision == DECISION_ACCEPT:
+            self.record_created_payment_token(reply_log_entry, request.data)
+
+            # Authorize via SOAP
+            print('-- getting bluefin authorize')
+            decision, message, response = cs.authorize_encrypted(payment_data, amount)
+            reply_log_entry = self._log_soap_response(request, response)
+
+            print('-- authorize done: {} {}'.format(decision, message))
+            # If authorization was successful, log it and redirect to the success page.
+            if decision in (DECISION_ACCEPT, DECISION_REVIEW):
+                print('-- about to record')
+                new_state = self.record_successful_authorization(reply_log_entry, order, request.data)
+
+                # If the order is under review, add a note explaining why
+                if decision == DECISION_REVIEW:
+                    msg = (
+                              'Transaction %s is currently under review. '
+                              'Use Decision Manager to either accept or reject the transaction.'
+                          ) % request.data.get('transaction_id')
+                    self._create_order_note(order, msg)
+
+                return new_state
+            else:
+                # Authorization failed
+                new_state = self.record_declined_authorization(reply_log_entry, order, request.data)
+                try:
+                    utils.update_payment_method_state(order, request, method_key, new_state)
+                except InvalidOrderStatus:
+                    logger.exception((
+                                         "Failed to set Order {} to payment declined. Order is current in status {}. "
+                                         "Examine CyberSourceReply[{}]"
+                                     ).format(order.number, order.status, reply_log_entry.pk))
+                return new_state
+
+        else:
+            # Payment token was not created
+            amount = Decimal(request.data.get('req_amount', '0.00'))
+            try:
+                utils.mark_payment_method_declined(order, request, method_key, amount)
+            except InvalidOrderStatus:
+                logger.exception((
+                                     "Failed to set Order {} to payment declined. Order is current in status {}. "
+                                     "Examine CyberSourceReply[{}]"
+                                 ).format(order.number, order.status, reply_log_entry.pk))
+            return Declined(amount)
