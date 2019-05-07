@@ -11,6 +11,8 @@ from rest_framework import status
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
+from suds.sudsobject import asdict
+
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
@@ -112,6 +114,12 @@ class CyberSourceReplyView(APIView):
 
 
     def log_soap_response(self, request, response):
+        # convert SOAP response to a generic python dict so it can be stored in an HStoreField
+        try:
+            response = asdict(response)
+        except Exception:
+            response = {}
+
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
             order=self._get_order(request),

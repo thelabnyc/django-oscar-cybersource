@@ -4,6 +4,7 @@ from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
 from oscarapicheckout import utils
 from rest_framework import serializers
+from suds.sudsobject import asdict
 
 from cybersource.cybersoap import CyberSourceSoap
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
@@ -177,20 +178,76 @@ class Bluefin(Cybersource):
     code = 'bluefin'
     serializer_class = BluefinPaymentMethodSerializer
 
-    # FIXME this is a duplicate of what's in views.py
-    def _log_soap_response(self, request, response):
+    # FIXME this is a nearly duplicate of what's in views.py
+    def _log_soap_response(self, request, order, response):
+        # convert SOAP response to a generic python dict so it can be stored in an HStoreField
+        try:
+            response = asdict(response)
+        except Exception:
+            response = {}
+
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
-            order=self._get_order(request),
+            order=order,
             data=response)
         log.save()
         return log
+
+    def _record_created_payment_token(self, reply_log_entry, response):
+        token_string = response.paySubscriptionCreateReply.subscriptionID
+        print('-- got token:', token_string)
+        # Create the payment token
+        if not PaymentToken.objects.filter(token=token_string).exists():
+            token = PaymentToken(
+                log=reply_log_entry,
+                token=token_string,
+                masked_card_number='',
+                card_type='')
+            token.save()
+
+    def _record_successful_authorization(self, reply_log_entry, order, token_string, response):
+        decision = reply_log_entry.get_decision()
+        request_token = response.requestToken
+        signed_date_time = response.ccAuthReply.authorizedDateTime
+        req_amount = Decimal(response.ccAuthReply.amount)
+
+        # assuming these are equal since authorization succeeded
+        auth_amount = req_amount
+
+        source = self.get_source(order)
+
+        try:
+            token = PaymentToken.objects.get(token=token_string)
+        except PaymentToken.DoesNotExist:
+            return Declined(req_amount, source_id=source.pk)
+
+        source.amount_allocated += auth_amount
+        source.save()
+
+        transaction = Transaction()
+        transaction.log = reply_log_entry
+        transaction.source = source
+        transaction.token = token
+        transaction.txn_type = Transaction.AUTHORISE
+        transaction.amount = req_amount
+        transaction.reference = ''
+        transaction.status = decision
+        transaction.request_token = request_token
+        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
+        transaction.save()
+
+        event = self.make_authorize_event(order, auth_amount)
+        for line in order.lines.all():
+            self.make_event_quantity(event, line, line.quantity)
+
+        return Complete(source.amount_allocated, source_id=source.pk)
 
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         payment_data = kwargs.get('payment_data')
         print('-- kw:')
         print(kwargs)
         print(payment_data)
+        print('reference:', reference)
 
         if payment_data is None:
             return Declined(amount)
@@ -218,21 +275,22 @@ class Bluefin(Cybersource):
         # Get token via SOAP
         print('-- getting bluefin token')
         decision, message, response = cs.get_token_encrypted(payment_data)
-        reply_log_entry = self._log_soap_response(request, response)
+        reply_log_entry = self._log_soap_response(request, order, response)
 
         if decision == DECISION_ACCEPT:
-            self.record_created_payment_token(reply_log_entry, request.data)
+            self._record_created_payment_token(reply_log_entry, response)
+            token_string = response.paySubscriptionCreateReply.subscriptionID
 
             # Authorize via SOAP
             print('-- getting bluefin authorize')
             decision, message, response = cs.authorize_encrypted(payment_data, amount)
-            reply_log_entry = self._log_soap_response(request, response)
+            reply_log_entry = self._log_soap_response(request, order, response)
 
             print('-- authorize done: {} {}'.format(decision, message))
             # If authorization was successful, log it and redirect to the success page.
             if decision in (DECISION_ACCEPT, DECISION_REVIEW):
                 print('-- about to record')
-                new_state = self.record_successful_authorization(reply_log_entry, order, request.data)
+                new_state = self._record_successful_authorization(reply_log_entry, order, token_string, response)
 
                 # If the order is under review, add a note explaining why
                 if decision == DECISION_REVIEW:

@@ -1,9 +1,6 @@
 import logging
 import soap
 
-
-from suds.sudsobject import asdict
-
 from .constants import *
 from . import signals
 
@@ -189,13 +186,6 @@ class CyberSourceSoap(object):
             decision, message = self._parse_response_outcome(response)
         except Exception:
             decision, message = DECISION_ERROR, "Error: Could not parse Cybersource response."
-
-        # convert response to a generic python dict so it can be stored in an HStoreField etc.
-        try:
-            response = asdict(response)
-        except Exception:
-            decision, message = DECISION_ERROR, "Error: Could not parse Cybersource response."
-            response = {}
 
         return decision, message, response
 
