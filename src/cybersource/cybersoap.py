@@ -185,7 +185,11 @@ class CyberSourceSoap(object):
             decision, message = DECISION_ERROR, "Error: Could not parse Cybersource response."
 
         # convert response to a generic python dict so it can be stored in an HStoreField etc.
-        response = asdict(response)
+        try:
+            response = asdict(response)
+        except Exception:
+            decision, message = DECISION_ERROR, "Error: Could not parse Cybersource response."
+            response = {}
 
         return decision, message, response
 

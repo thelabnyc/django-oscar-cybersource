@@ -144,11 +144,9 @@ class CyberSourceReplyView(APIView):
             ## FIXME testing
             print('-- try authorize')
             cs = CyberSourceSoap(
-                "https://ics2wstesta.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.155.wsdl",
-                'tempurdrcyb',
-                ('+zUgnDT8pbFgODXldYN6YCtU+I5QAtb0Qrb3tGQ/QaiSRLDgBDQ2NXxz64mF/IDrlQGlv87jHTATF/BKUNG7xcqCJnvA+yzDnoqXDkWwrXNgKRRCV/'
-                '9sBv3xEh7woZXkPEvsV1ZFXA8axH7GgY9Bw6Yg2Kk9U57PINNejy0D+9V8tDzq/7JfLlFad8La09uzaxZ8MhFiRQwTYNGyWOPVIY+rCrJ9lh6j+Ow0'
-                '0b9/Lz5TvAUIi7gKBKIykBQzoT6PQXqAwdRiVtJsG9V53jnEB9EC/TYXLqbbqIaX3x9WC0JDRORmnymOt4meh9RndjSDsA5ANGpEMCaV4E3u2nk60w=='),
+                settings.CYBERSOURCE_WSDL,
+                settings.MERCHANT_ID,
+                settings.CYBERSOURCE_SOAP_KEY,
                 request,
                 order,
                 method_key)
