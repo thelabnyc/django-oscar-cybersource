@@ -156,8 +156,9 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(transactions[0].amount, order.total_incl_tax)
         self.assertEqual(transactions[0].status, 'ACCEPT')
 
+        # SOAP API stores order number in merchantReferenceCode, while client-side get token uses req_reference_number
         self.assertEqual(transactions[0].log.order, order)
-        self.assertEqual(transactions[0].log_field('req_reference_number'), order.number)
+        self.assertEqual(transactions[0].log_field('merchantReferenceCode'), order.number)
         self.assertEqual(transactions[0].token.card_last4, '1111')
         self.assertEqual(transactions[0].token.log.order, order)
         self.assertEqual(transactions[0].token.log_field('req_reference_number'), order.number)
@@ -195,18 +196,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
         resp = self.do_cs_get_token(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'authorize')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-
-        resp = self.do_cs_auth(action['url'], action['fields'])
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
 
         resp = self.do_fetch_payment_states()
@@ -539,15 +528,6 @@ class CSReplyViewTest(BaseCheckoutTest):
         order_number = self.prepare_order()
 
         data = cs_factories.build_accepted_token_reply_data(order_number)
-        data = cs_factories.sign_reply_data(data)
-        url = reverse('cybersource-reply')
-        resp = self.client.post(url, data)
-
-        self.assertRedirects(resp, reverse('checkout:index'), fetch_redirect_response=False)
-        self.assertEqual(order_payment_authorized.call_count, 0, 'Should not trigger signal')
-        self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Pending')
-
-        data = cs_factories.build_declined_auth_reply_data(order_number)
         data = cs_factories.sign_reply_data(data)
         url = reverse('cybersource-reply')
         resp = self.client.post(url, data)
