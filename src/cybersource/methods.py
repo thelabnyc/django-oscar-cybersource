@@ -172,7 +172,7 @@ class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
         return super().validate(data)
 
 
-class Bluefin(Cybersource):
+class Bluefin(PaymentMethod):
 
     name = settings.SOURCE_TYPE
     code = 'bluefin'
@@ -243,6 +243,29 @@ class Bluefin(Cybersource):
 
         return Complete(source.amount_allocated, source_id=source.pk)
 
+    def _record_declined_authorization(self, reply_log_entry, order, token_string, response):
+        decision = reply_log_entry.get_decision()
+        transaction_id = response.EncryptedPayment.referenceID
+        request_token = response.requestToken
+        signed_date_time = response.ccAuthReply.authorizedDateTime
+        req_amount = Decimal(response.ccAuthReply.amount)
+
+        source = self.get_source(order, transaction_id)
+
+        transaction = Transaction()
+        transaction.log = reply_log_entry
+        transaction.source = source
+        transaction.token = PaymentToken.objects.filter(token=token_string).first()
+        transaction.txn_type = Transaction.AUTHORISE
+        transaction.amount = req_amount
+        transaction.reference = transaction_id
+        transaction.status = decision
+        transaction.request_token = request_token
+        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
+        transaction.save()
+
+        return Declined(req_amount, source_id=source.pk)
+
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """ This is the entry point from django-oscar-api-checkout """
         payment_data = kwargs.get('payment_data')
@@ -305,7 +328,7 @@ class Bluefin(Cybersource):
                 return new_state
             else:
                 # Authorization failed
-                new_state = self.record_declined_authorization(reply_log_entry, order, request.data)
+                new_state = self.record_declined_authorization(reply_log_entry, order, token_string, response)
                 try:
                     utils.update_payment_method_state(order, request, method_key, new_state)
                 except InvalidOrderStatus:
