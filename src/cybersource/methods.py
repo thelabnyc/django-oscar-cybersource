@@ -207,6 +207,7 @@ class Bluefin(Cybersource):
 
     def _record_successful_authorization(self, reply_log_entry, order, token_string, response):
         decision = reply_log_entry.get_decision()
+        transaction_id = response.EncryptedPayment.referenceID
         request_token = response.requestToken
         signed_date_time = response.ccAuthReply.authorizedDateTime
         req_amount = Decimal(response.ccAuthReply.amount)
@@ -214,7 +215,7 @@ class Bluefin(Cybersource):
         # assuming these are equal since authorization succeeded
         auth_amount = req_amount
 
-        source = self.get_source(order)
+        source = self.get_source(order, transaction_id)
 
         try:
             token = PaymentToken.objects.get(token=token_string)
@@ -230,7 +231,7 @@ class Bluefin(Cybersource):
         transaction.token = token
         transaction.txn_type = Transaction.AUTHORISE
         transaction.amount = req_amount
-        transaction.reference = ''
+        transaction.reference = transaction_id
         transaction.status = decision
         transaction.request_token = request_token
         transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
@@ -243,6 +244,7 @@ class Bluefin(Cybersource):
         return Complete(source.amount_allocated, source_id=source.pk)
 
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
+        """ This is the entry point from django-oscar-api-checkout """
         payment_data = kwargs.get('payment_data')
         print('-- kw:')
         print(kwargs)
