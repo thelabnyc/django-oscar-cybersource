@@ -244,15 +244,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
         resp = self.do_fetch_payment_states()
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'authorize')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        resp = self.do_cs_auth(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['order_status'], 'Authorized')
         self.check_finished_order(order_number, product.id)
 
@@ -294,66 +285,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
 
     @retry(AssertionError)
-    def test_manipulate_total_during_auth(self):
-        """Test attempting to manipulate basket price when requesting auth from CyberSource"""
-        product = self.create_product()
-
-        resp = self.do_get_basket()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket_id = resp.data['id']
-
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['total_incl_tax'], '10.00')
-
-        resp = self.do_checkout(basket_id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        self.do_cs_get_token(action['url'], action['fields'])
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'authorize')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        next_year = datetime.date.today().year + 1
-        cs_data = {
-            'card_type': '001',
-            'card_number': '4111111111111111',
-            'card_cvn': '123',
-            'card_expiry_date': '12-{}'.format(next_year),
-            'bill_to_forename': 'Testy',
-            'bill_to_surname': 'McUnitTest',
-            'bill_to_address_line1': '234 5th Ave',
-            'bill_to_address_line2': 'apt 5',
-            'bill_to_address_city': 'Manhattan',
-            'bill_to_address_state': 'NY',
-            'bill_to_address_postal_code': '10001',
-            'bill_to_address_country': 'US',
-            'bill_to_phone': '17174671111',
-        }
-        for field in action['fields']:
-            if not field['editable'] or field['key'] not in cs_data:
-                cs_data[field['key']] = field['value']
-
-        cs_data['amount'] = '2.00'  # Try and change the auth amount
-
-        resp = requests.post(action['url'], cs_data)
-        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
-
-
-    @retry(AssertionError)
     def test_free_product(self):
         """Full checkout process using minimal api calls"""
         product = self.create_product(price=D('0.00'))
@@ -376,15 +307,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
         resp = self.do_cs_get_token(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'authorize')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        resp = self.do_cs_auth(action['url'], action['fields'])
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
 
         resp = self.do_fetch_payment_states()
