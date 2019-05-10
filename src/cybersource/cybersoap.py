@@ -39,13 +39,11 @@ class CyberSourceSoap(object):
         security.tokens.append(token)
         self.client.set_options(wsse=security)
 
-        print("init ok")
-
     def _get_token(self):
         return self.request.data.get('payment_token')
 
-    # Authorize with a token
     def authorize(self):
+        """ Authorize with a token """
         self._prep_transaction('ccAuthService')
 
         # Add token info
@@ -57,8 +55,8 @@ class CyberSourceSoap(object):
 
         return self._run_transaction()
 
-    # Get a token using encrypted card number
     def get_token_encrypted(self, encrypted):
+        """ Get a token using encrypted card number """
         if encrypted is None:
             return DECISION_ERROR, None, None
 
@@ -78,14 +76,14 @@ class CyberSourceSoap(object):
 
         return self._run_transaction()
 
-    # Authorize using encrypted card number
     def authorize_encrypted(self, encrypted, amount=None):
+        """ Authorize using encrypted card number """
         if encrypted is None:
             return DECISION_ERROR, None, None
 
         self._prep_transaction('ccAuthService', amount)
 
-        # TODO Add encrypted data
+        # Add encrypted data
         self.data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
         self.data['encryptedPayment'].data = encrypted
         self.data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
@@ -169,7 +167,6 @@ class CyberSourceSoap(object):
             i += 1
 
     def _run_transaction(self):
-        print(self.data)
 
         # Send the transaction to Cybersource to process
         try:
@@ -178,7 +175,5 @@ class CyberSourceSoap(object):
             logger.exception("Failed to run Cybersource SOAP transaction on Order {}".format(self.order.number))
             response = None
 
-        print('-- response ----------------->')
-        print(response)
 
         return response

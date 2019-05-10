@@ -227,7 +227,6 @@ class Bluefin(PaymentMethod):
 
     def _record_created_payment_token(self, reply_log_entry, response):
         token_string = response.paySubscriptionCreateReply.subscriptionID
-        print('-- got token:', token_string)
         # Create the payment token
         if not PaymentToken.objects.filter(token=token_string).exists():
             token = PaymentToken(
@@ -301,10 +300,6 @@ class Bluefin(PaymentMethod):
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """ This is the entry point from django-oscar-api-checkout """
         payment_data = kwargs.get('payment_data')
-        print('-- kw:')
-        print(kwargs)
-        print(payment_data)
-        print('reference:', reference)
 
         if payment_data is None:
             return Declined(amount)
@@ -330,7 +325,6 @@ class Bluefin(PaymentMethod):
             method_key)
 
         # Get token via SOAP
-        print('-- getting bluefin token')
         response = cs.get_token_encrypted(payment_data)
         reply_log_entry = self.__class__.log_soap_response(request, order, response)
 
@@ -339,14 +333,11 @@ class Bluefin(PaymentMethod):
             token_string = response.paySubscriptionCreateReply.subscriptionID
 
             # Authorize via SOAP
-            print('-- getting bluefin authorize')
             response = cs.authorize_encrypted(payment_data, amount)
             reply_log_entry = self.__class__.log_soap_response(request, order, response)
 
-            print('-- authorize done: {}'.format(response.decision))
             # If authorization was successful, log it and redirect to the success page.
             if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
-                print('-- about to record')
                 new_state = self._record_successful_authorization(reply_log_entry, order, token_string, response)
 
                 if response.decision == DECISION_REVIEW:

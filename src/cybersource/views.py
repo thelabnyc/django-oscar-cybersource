@@ -1,4 +1,3 @@
-from decimal import Decimal
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.http import Http404
@@ -15,7 +14,7 @@ from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
-from .methods import Cybersource, Bluefin, create_review_order_note, log_order_exception, mark_declined
+from .methods import Cybersource, Bluefin, create_review_order_note, mark_declined
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
 import dateutil.parser
@@ -143,12 +142,9 @@ class CyberSourceReplyView(APIView):
             response = cs.authorize()
             reply_log_entry = Bluefin.log_soap_response(request, order, response)
 
-            print('-- authorize done: {}'.format(response.decision))
             # If authorization was successful, log it and redirect to the success page.
             if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
-                print('-- about to record')
                 new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
-                print('-- new state: ', new_state)
                 utils.update_payment_method_state(order, request, method_key, new_state)
 
                 if response.decision == DECISION_REVIEW:
