@@ -178,13 +178,17 @@ class Bluefin(PaymentMethod):
     code = 'bluefin'
     serializer_class = BluefinPaymentMethodSerializer
 
-    # FIXME this is a nearly duplicate of what's in views.py
-    def _log_soap_response(self, request, order, response):
+    @staticmethod
+    def log_soap_response(request, order, response):
         # convert SOAP response to a generic python dict so it can be stored in an HStoreField
         try:
             response = asdict(response)
         except Exception:
             response = {}
+
+        # SOAP API stores order number in merchantReferenceCode, while client-side get token uses req_reference_number
+        # let's store both to make downstream code token method agnostic
+        response['req_reference_number'] = response.get('merchantReferenceCode', '')
 
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
@@ -300,7 +304,7 @@ class Bluefin(PaymentMethod):
         # Get token via SOAP
         print('-- getting bluefin token')
         response = cs.get_token_encrypted(payment_data)
-        reply_log_entry = self._log_soap_response(request, order, response)
+        reply_log_entry = self.__class__.log_soap_response(request, order, response)
 
         if response.decision == DECISION_ACCEPT:
             self._record_created_payment_token(reply_log_entry, response)
@@ -309,7 +313,7 @@ class Bluefin(PaymentMethod):
             # Authorize via SOAP
             print('-- getting bluefin authorize')
             response = cs.authorize_encrypted(payment_data, amount)
-            reply_log_entry = self._log_soap_response(request, order, response)
+            reply_log_entry = self.__class__.log_soap_response(request, order, response)
 
             print('-- authorize done: {}'.format(response.decision))
             # If authorization was successful, log it and redirect to the success page.

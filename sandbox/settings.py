@@ -164,6 +164,10 @@ API_ENABLED_PAYMENT_METHODS = [
         'method': 'cybersource.methods.Cybersource',
         'permission': 'oscarapicheckout.permissions.Public',
     },
+    {
+        'method': 'cybersource.methods.Bluefin',
+        'permission': 'oscarapicheckout.permissions.Public',
+    },
 ]
 
 CYBERSOURCE_SHIPPING_METHOD_MAPPING = {
