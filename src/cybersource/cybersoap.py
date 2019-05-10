@@ -1,7 +1,7 @@
 import logging
 import soap
 
-from .constants import *
+from .constants import DECISION_ERROR, TERMINAL_DESCRIPTOR, CHECKOUT_FINGERPRINT_SESSION_ID
 from . import signals
 
 from suds.wsse import Security
