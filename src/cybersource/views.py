@@ -15,7 +15,7 @@ from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
-from .methods import Cybersource, Bluefin
+from .methods import Cybersource, Bluefin, create_review_order_note, log_order_exception, mark_declined
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
 import dateutil.parser
@@ -128,7 +128,7 @@ class CyberSourceReplyView(APIView):
 
         # Figure out what status the order is in.
         decision = reply_log_entry.get_decision()
-        # FIXME can we use the Bluefin object for all this?
+
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
             Cybersource().record_created_payment_token(reply_log_entry, request.data)
@@ -151,45 +151,19 @@ class CyberSourceReplyView(APIView):
                 print('-- new state: ', new_state)
                 utils.update_payment_method_state(order, request, method_key, new_state)
 
-                # If the order is under review, add a note explaining why
                 if response.decision == DECISION_REVIEW:
-                    msg = (
-                              'Transaction %s is currently under review. '
-                              'Use Decision Manager to either accept or reject the transaction.'
-                          ) % request.data.get('transaction_id')
-                    self._create_order_note(order, msg)
+                    create_review_order_note(order, request.data.get('transaction_id'))
 
                 return redirect(settings.REDIRECT_SUCCESS)
             else:
-                new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
-                try:
-                    utils.update_payment_method_state(order, request, method_key, new_state)
-                except InvalidOrderStatus:
-                    logger.exception((
-                                         "Failed to set Order {} to payment declined. Order is current in status {}. "
-                                         "Examine CyberSourceReply[{}]"
-                                     ).format(order.number, order.status, reply_log_entry.pk))
+                # Authorization was declined
+                mark_declined(order, request, method_key, reply_log_entry)
                 return redirect(settings.REDIRECT_FAIL)
 
         else:
             # Payment token was not created
-            amount = Decimal(request.data.get('req_amount', '0.00'))
-            try:
-                utils.mark_payment_method_declined(order, request, method_key, amount)
-            except InvalidOrderStatus:
-                logger.exception((
-                    "Failed to set Order {} to payment declined. Order is current in status {}. "
-                    "Examine CyberSourceReply[{}]"
-                ).format(order.number, order.status, reply_log_entry.pk))
+            mark_declined(order, request, method_key, reply_log_entry)
             return redirect(settings.REDIRECT_FAIL)
-
-
-    # FIXME is this needed?
-    def _create_order_note(self, order, msg):
-        return OrderNote.objects.create(
-            note_type=OrderNote.SYSTEM,
-            order=order,
-            message=msg)
 
 
     def _get_order(self, request):

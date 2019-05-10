@@ -20,6 +20,33 @@ InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
 OrderNote = get_model('order', 'OrderNote')
 
 
+def create_order_note(order, msg):
+    return OrderNote.objects.create(
+        note_type=OrderNote.SYSTEM,
+        order=order,
+        message=msg)
+
+
+def create_review_order_note(order, transaction_id):
+    """ If an order is under review, add a note explaining why"""
+    msg = 'Transaction {} is currently under review. Use Decision Manager' \
+          ' to either accept or reject the transaction.'.format(transaction_id)
+    create_order_note(order, msg)
+
+
+def log_order_exception(order_number, order_status, reply_log_entry):
+    logger.exception("Failed to set Order {} to payment declined. Order is current in status {}. "
+                     "Examine CyberSourceReply[{}]").format(order_number, order_status, reply_log_entry.pk)
+
+
+def mark_declined(order, request, method_key, reply_log_entry):
+    amount = Decimal(request.data.get('req_amount', '0.00'))
+    try:
+        utils.mark_payment_method_declined(order, request, method_key, amount)
+    except InvalidOrderStatus:
+        log_order_exception(order.number, order.status, reply_log_entry)
+
+
 class Cybersource(PaymentMethod):
     """
     This is an example of how to implement a payment method that required some off-site
@@ -271,12 +298,6 @@ class Bluefin(PaymentMethod):
 
         return Declined(req_amount, source_id=source.pk)
 
-    def _create_order_note(self, order, msg):
-        return OrderNote.objects.create(
-            note_type=OrderNote.SYSTEM,
-            order=order,
-            message=msg)
-
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """ This is the entry point from django-oscar-api-checkout """
         payment_data = kwargs.get('payment_data')
@@ -328,35 +349,17 @@ class Bluefin(PaymentMethod):
                 print('-- about to record')
                 new_state = self._record_successful_authorization(reply_log_entry, order, token_string, response)
 
-                # If the order is under review, add a note explaining why
                 if response.decision == DECISION_REVIEW:
-                    msg = (
-                              'Transaction %s is currently under review. '
-                              'Use Decision Manager to either accept or reject the transaction.'
-                          ) % response.encryptedPayment.referenceID
-                    self._create_order_note(order, msg)
+                    create_review_order_note(order, response.encryptedPayment.referenceID)
 
                 return new_state
             else:
                 # Authorization failed
                 new_state = self._record_declined_authorization(reply_log_entry, order, token_string, response)
-                try:
-                    utils.update_payment_method_state(order, request, method_key, new_state)
-                except InvalidOrderStatus:
-                    logger.exception((
-                                         "Failed to set Order {} to payment declined. Order is current in status {}. "
-                                         "Examine CyberSourceReply[{}]"
-                                     ).format(order.number, order.status, reply_log_entry.pk))
+                mark_declined(order, request, method_key, reply_log_entry)
                 return new_state
 
         else:
             # Payment token was not created
-            amount = Decimal(request.data.get('req_amount', '0.00'))
-            try:
-                utils.mark_payment_method_declined(order, request, method_key, amount)
-            except InvalidOrderStatus:
-                logger.exception((
-                                     "Failed to set Order {} to payment declined. Order is current in status {}. "
-                                     "Examine CyberSourceReply[{}]"
-                                 ).format(order.number, order.status, reply_log_entry.pk))
+            mark_declined(order, request, method_key, reply_log_entry)
             return Declined(amount)

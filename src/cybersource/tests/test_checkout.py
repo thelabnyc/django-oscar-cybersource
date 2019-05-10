@@ -436,7 +436,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['order_status'], 'Payment Declined')
         self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
-        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '0.00')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
 
 
@@ -467,7 +467,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['order_status'], 'Payment Declined')
         self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
-        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '0.00')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
 
 
@@ -510,7 +510,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['order_status'], 'Payment Declined')
         self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
-        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '0.00')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
 
 
