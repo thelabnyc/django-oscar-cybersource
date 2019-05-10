@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 Transaction = get_model('payment', 'Transaction')
 InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
+OrderNote = get_model('order', 'OrderNote')
 
 
 class Cybersource(PaymentMethod):
@@ -249,7 +250,7 @@ class Bluefin(PaymentMethod):
 
     def _record_declined_authorization(self, reply_log_entry, order, token_string, response):
         decision = reply_log_entry.get_decision()
-        transaction_id = response.EncryptedPayment.referenceID
+        transaction_id = response.encryptedPayment.referenceID
         request_token = response.requestToken
         signed_date_time = response.ccAuthReply.authorizedDateTime
         req_amount = Decimal(response.ccAuthReply.amount)
@@ -269,6 +270,12 @@ class Bluefin(PaymentMethod):
         transaction.save()
 
         return Declined(req_amount, source_id=source.pk)
+
+    def _create_order_note(self, order, msg):
+        return OrderNote.objects.create(
+            note_type=OrderNote.SYSTEM,
+            order=order,
+            message=msg)
 
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """ This is the entry point from django-oscar-api-checkout """
@@ -326,13 +333,13 @@ class Bluefin(PaymentMethod):
                     msg = (
                               'Transaction %s is currently under review. '
                               'Use Decision Manager to either accept or reject the transaction.'
-                          ) % request.data.get('transaction_id')
+                          ) % response.encryptedPayment.referenceID
                     self._create_order_note(order, msg)
 
                 return new_state
             else:
                 # Authorization failed
-                new_state = self.record_declined_authorization(reply_log_entry, order, token_string, response)
+                new_state = self._record_declined_authorization(reply_log_entry, order, token_string, response)
                 try:
                     utils.update_payment_method_state(order, request, method_key, new_state)
                 except InvalidOrderStatus:

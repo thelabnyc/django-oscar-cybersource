@@ -216,43 +216,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
 
     @retry(AssertionError)
-    def test_bluefin_checkout_process(self):
-        """Full checkout process using minimal api calls"""
-        product = self.create_product()
-
-        resp = self.do_get_basket()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket_id = resp.data['id']
-
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        # Use VISA 4111-1111-1111-1111 with a 12/50 expiration date
-        resp = self.do_checkout(basket_id, extra_data={
-            "payment": {
-                "bluefin": {
-                    "enabled": True,
-                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
-                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
-                                    "0E004A80000610D203"
-                }
-            }
-        })
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        order_number = resp.data['number']
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Authorized')
-        self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Consumed')
-        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
-        self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
-
-        # don't expect a card_last4, since we're using encrypted card info
-        self.check_finished_order(order_number, product.id, card_last4='')
-
-
-    @retry(AssertionError)
     def test_decision_manager_review_auth(self):
         product = self.create_product()
 
@@ -406,6 +369,195 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '0.00')
         self.check_finished_order(order_number, product.id)
 
+
+    @retry(AssertionError)
+    def test_bluefin_checkout_ok(self):
+        """Full Bluefin checkout process"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Use VISA 4111-1111-1111-1111 with a 12/50 expiration date
+        resp = self.do_checkout(basket_id, extra_data={
+            "payment": {
+                "bluefin": {
+                    "enabled": True,
+                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
+                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
+                                    "0E004A80000610D203"
+                }
+            }
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Consumed')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
+        self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
+
+        # don't expect a card_last4, since we're using encrypted card info
+        self.check_finished_order(order_number, product.id, card_last4='')
+
+
+    @retry(AssertionError)
+    def test_bluefin_expired(self):
+        """Full Bluefin checkout process with expired card"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Use VISA 4111-1111-1111-1111 with a 12/18 expiration date
+        resp = self.do_checkout(basket_id, extra_data={
+            "payment": {
+                "bluefin": {
+                    "enabled": True,
+                    "payment_data": "02A600C0170018008292;4111********1111=1812?*F34830CD08A5756641F0013117D267339592"
+                                    "342CE5A3832200000000000000000000000000000000000000003834335531313837393262994996"
+                                    "0E004A8000071A6803"
+                }
+            }
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Payment Declined')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '0.00')
+        self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
+
+
+    @retry(AssertionError)
+    def test_bluefin_bad_data(self):
+        """Full Bluefin checkout process with bad payment data"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Use VISA 4111-1111-1111-1111 with a 12/18 expiration date
+        resp = self.do_checkout(basket_id, extra_data={
+            "payment": {
+                "bluefin": {
+                    "enabled": True,
+                    "payment_data": "FOO"
+                }
+            }
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Payment Declined')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '0.00')
+        self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
+
+
+    @retry(AssertionError)
+    def test_bluefin_decline(self):
+        """Full Bluefin checkout process with decline"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Use VISA 4111-1111-1111-1111 with a 12/50 expiration date
+        resp = self.do_checkout(basket_id, extra_data={
+            "payment": {
+                "bluefin": {
+                    "enabled": True,
+                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
+                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
+                                    "0E004A80000610D203"
+                }
+            },
+            "shipping_address": {
+                "first_name": "Joe",
+                "last_name": "Reject",  # trigger a decline, per a custom rule in CyberSource admin
+                "line1": "234 5th Ave",
+                "line4": "Manhattan",
+                "postcode": "10001",
+                "state": "NY",
+                "country": reverse('country-detail', args=['US']),
+                "phone_number": "+1 (717) 467-1111",
+            },
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Payment Declined')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '0.00')
+        self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
+
+
+    @retry(AssertionError)
+    def test_bluefin_decision_manager_review_auth(self):
+        """Full Bluefin checkout process with review"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Use VISA 4111-1111-1111-1111 with a 12/50 expiration date
+        resp = self.do_checkout(basket_id, extra_data={
+            "payment": {
+                "bluefin": {
+                    "enabled": True,
+                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
+                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
+                                    "0E004A80000610D203"
+                }
+            },
+            "shipping_address": {
+                "first_name": "Joe",
+                "last_name": "Review",  # trigger a review, per a custom rule in CyberSource admin
+                "line1": "234 5th Ave",
+                "line4": "Manhattan",
+                "postcode": "10001",
+                "state": "NY",
+                "country": reverse('country-detail', args=['US']),
+                "phone_number": "+1 (717) 467-1111",
+            },
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Consumed')
+        self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
+        self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
+
+        self.check_finished_order(order_number, product.id, status='REVIEW', card_last4='')
 
 
 class CSReplyViewTest(BaseCheckoutTest):

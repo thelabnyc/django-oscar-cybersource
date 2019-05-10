@@ -128,7 +128,7 @@ class CyberSourceReplyView(APIView):
 
         # Figure out what status the order is in.
         decision = reply_log_entry.get_decision()
-
+        # FIXME can we use the Bluefin object for all this?
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
             Cybersource().record_created_payment_token(reply_log_entry, request.data)
@@ -184,6 +184,7 @@ class CyberSourceReplyView(APIView):
             return redirect(settings.REDIRECT_FAIL)
 
 
+    # FIXME is this needed?
     def _create_order_note(self, order, msg):
         return OrderNote.objects.create(
             note_type=OrderNote.SYSTEM,
