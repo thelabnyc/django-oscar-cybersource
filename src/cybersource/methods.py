@@ -207,7 +207,7 @@ class Bluefin(PaymentMethod):
 
     def _record_successful_authorization(self, reply_log_entry, order, token_string, response):
         decision = reply_log_entry.get_decision()
-        transaction_id = response.EncryptedPayment.referenceID
+        transaction_id = response.encryptedPayment.referenceID
         request_token = response.requestToken
         signed_date_time = response.ccAuthReply.authorizedDateTime
         req_amount = Decimal(response.ccAuthReply.amount)
