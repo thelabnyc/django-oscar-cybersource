@@ -143,10 +143,8 @@ class CyberSourceSoap(object):
         # Add order total data
         self.data['purchaseTotals'] = self.client.factory.create('ns0:PurchaseTotals')
         self.data['purchaseTotals'].currency = self.order.currency
-
-        # FIXME is this the right amount?
-        # self.data['purchaseTotals'].grandTotalAmount = self.order.total_incl_tax
-        self.data['purchaseTotals'].grandTotalAmount = amount if amount is not None else self.request.data.get('req_amount', '0')
+        self.data['purchaseTotals'].grandTotalAmount = amount if amount is not None \
+            else self.request.data.get('req_amount', '0')
 
     def _add_signal(self, signal):
         extra_fields = {}
