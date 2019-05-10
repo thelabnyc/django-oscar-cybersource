@@ -11,7 +11,7 @@ from rest_framework.test import APITestCase
 import datetime
 import requests  # Needed for external calls
 
-from ..constants import CHECKOUT_ORDER_ID
+from ..constants import DECISION_REVIEW, DECISION_ACCEPT
 from .utils import retry
 from . import factories as cs_factories
 
@@ -127,7 +127,7 @@ class BaseCheckoutTest(APITestCase):
         return self.do_cs_reply(resp)
 
 
-    def check_finished_order(self, number, product_id, quantity=1):
+    def check_finished_order(self, number, product_id, quantity=1, status=DECISION_ACCEPT):
         # Order exists and was paid for
         self.assertEqual(Order.objects.all().count(), 1)
         order = Order.objects.get()
@@ -154,7 +154,7 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(transactions.count(), 1)
         self.assertEqual(transactions[0].txn_type, 'Authorise')
         self.assertEqual(transactions[0].amount, order.total_incl_tax)
-        self.assertEqual(transactions[0].status, 'ACCEPT')
+        self.assertEqual(transactions[0].status, status)
 
         # SOAP API stores order number in merchantReferenceCode, while client-side get token uses req_reference_number
         self.assertEqual(transactions[0].log.order, order)
@@ -165,6 +165,14 @@ class BaseCheckoutTest(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
 
+        if status == DECISION_REVIEW:
+            self.assertEqual(order.notes.count(), 1, 'Should save OrderNote')
+            note = order.notes.first()
+            self.assertEqual(note.note_type, 'System')
+            self.assertEqual(note.message,
+                             'Transaction %s is currently under review. '
+                             'Use Decision Manager to either accept or '
+                             'reject the transaction.' % transactions[0].reference)
 
 
 @tag('integration', 'slow')
@@ -206,6 +214,53 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
 
         self.check_finished_order(order_number, product.id)
+
+
+    @retry(AssertionError)
+    def test_decision_manager_review_auth(self):
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_checkout(basket_id, extra_data={
+            "shipping_address": {
+                "first_name": "Joe",
+                "last_name": "Review",  # trigger a review, as per custom rule in CyberSource admin
+                "line1": "234 5th Ave",
+                "line4": "Manhattan",
+                "postcode": "10001",
+                "state": "NY",
+                "country": reverse('country-detail', args=['US']),
+                "phone_number": "+1 (717) 467-1111",
+            },
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
+
+        action = resp.data['payment_method_states']['cybersource']['required_action']
+        resp = self.do_cs_get_token(action['url'], action['fields'])
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
+
+        self.check_finished_order(order_number, product.id, status='REVIEW')
 
 
     @retry(AssertionError)
