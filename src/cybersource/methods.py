@@ -299,26 +299,26 @@ class Bluefin(PaymentMethod):
 
         # Get token via SOAP
         print('-- getting bluefin token')
-        decision, message, response = cs.get_token_encrypted(payment_data)
+        response = cs.get_token_encrypted(payment_data)
         reply_log_entry = self._log_soap_response(request, order, response)
 
-        if decision == DECISION_ACCEPT:
+        if response.decision == DECISION_ACCEPT:
             self._record_created_payment_token(reply_log_entry, response)
             token_string = response.paySubscriptionCreateReply.subscriptionID
 
             # Authorize via SOAP
             print('-- getting bluefin authorize')
-            decision, message, response = cs.authorize_encrypted(payment_data, amount)
+            response = cs.authorize_encrypted(payment_data, amount)
             reply_log_entry = self._log_soap_response(request, order, response)
 
-            print('-- authorize done: {} {}'.format(decision, message))
+            print('-- authorize done: {}'.format(response.decision))
             # If authorization was successful, log it and redirect to the success page.
-            if decision in (DECISION_ACCEPT, DECISION_REVIEW):
+            if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
                 print('-- about to record')
                 new_state = self._record_successful_authorization(reply_log_entry, order, token_string, response)
 
                 # If the order is under review, add a note explaining why
-                if decision == DECISION_REVIEW:
+                if response.decision == DECISION_REVIEW:
                     msg = (
                               'Transaction %s is currently under review. '
                               'Use Decision Manager to either accept or reject the transaction.'

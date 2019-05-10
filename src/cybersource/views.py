@@ -156,20 +156,19 @@ class CyberSourceReplyView(APIView):
                 order,
                 method_key)
 
-            # FIXME we're determining decision two different ways, which is the truth?
-            decision, message, response = cs.authorize()
+            response = cs.authorize()
             reply_log_entry = self.log_soap_response(request, response)
 
-            print('-- authorize done: {} {}'.format(decision, message))
+            print('-- authorize done: {}'.format(response.decision))
             # If authorization was successful, log it and redirect to the success page.
-            if decision in (DECISION_ACCEPT, DECISION_REVIEW):
+            if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
                 print('-- about to record')
                 new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
                 print('-- new state: ', new_state)
                 utils.update_payment_method_state(order, request, method_key, new_state)
 
                 # If the order is under review, add a note explaining why
-                if decision == DECISION_REVIEW:
+                if response.decision == DECISION_REVIEW:
                     msg = (
                               'Transaction %s is currently under review. '
                               'Use Decision Manager to either accept or reject the transaction.'
