@@ -21,6 +21,7 @@ Faker==0.8.8
 flake8==3.5.0
 idna==2.6
 imagesize==0.7.1
+instrumented-soap==1.1.1
 Jinja2==2.10
 lxml==4.1.1
 MarkupSafe==1.0
@@ -46,6 +47,7 @@ snowballstemmer==1.2.1
 sorl-thumbnail==12.4.1
 Sphinx==1.6.5
 sphinxcontrib-websupport==1.0.1
+suds-jurko==0.6
 text-unidecode==1.1
 tox==2.9.1
 Unidecode==0.4.21

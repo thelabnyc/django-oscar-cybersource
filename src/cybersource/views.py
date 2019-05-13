@@ -1,4 +1,3 @@
-from decimal import Decimal
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.http import Http404
@@ -11,15 +10,18 @@ from rest_framework import status
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
+
 from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
-from .methods import Cybersource
+from .methods import Cybersource, Bluefin, create_review_order_note, mark_declined
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
 import dateutil.parser
 import uuid
 import logging
+
+from .cybersoap import CyberSourceSoap
 
 InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
@@ -90,7 +92,7 @@ class CyberSourceReplyView(APIView):
         trans_type = request.data.get('req_transaction_type')
         handler = self.get_handler_fn(trans_type)
         with transaction.atomic():
-            resp = handler(request, format, log)
+            resp = handler(request, log)
         return resp
 
 
@@ -112,14 +114,13 @@ class CyberSourceReplyView(APIView):
     def get_handler_fn(self, trans_type):
         handlers = {
             actions.CreatePaymentToken.transaction_type: self.record_token,
-            actions.AuthorizePaymentToken.transaction_type: self.record_authorization,
         }
         if trans_type not in handlers:
             raise SuspiciousOperation("Couldn't find handler for %s" % trans_type)
         return handlers[trans_type]
 
 
-    def record_token(self, request, format, reply_log_entry):
+    def record_token(self, request, reply_log_entry):
         # Fetch the related order
         order = self._get_order(request)
         method_key = self._get_method_key(request)
@@ -129,65 +130,36 @@ class CyberSourceReplyView(APIView):
 
         # Check if the payment token was actually created or not.
         if decision == DECISION_ACCEPT:
-            new_state = Cybersource().record_created_payment_token(request, reply_log_entry, order, method_key, request.data)
-            utils.update_payment_method_state(order, request, method_key, new_state)
-            return redirect(settings.REDIRECT_PENDING)
+            Cybersource().record_created_payment_token(reply_log_entry, request.data)
+            cs = CyberSourceSoap(
+                settings.CYBERSOURCE_WSDL,
+                settings.MERCHANT_ID,
+                settings.CYBERSOURCE_SOAP_KEY,
+                request,
+                order,
+                method_key)
 
-        amount = Decimal(request.data.get('req_amount', '0.00'))
-        try:
-            utils.mark_payment_method_declined(order, request, method_key, amount)
-        except InvalidOrderStatus:
-            logger.exception((
-                "Failed to set Order {} to payment declined. Order is current in status {}. "
-                "Examine CyberSourceReply[{}]"
-            ).format(order.number, order.status, reply_log_entry.pk))
-        return redirect(settings.REDIRECT_FAIL)
+            response = cs.authorize()
+            reply_log_entry = Bluefin.log_soap_response(request, order, response)
 
+            # If authorization was successful, log it and redirect to the success page.
+            if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
+                new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
+                utils.update_payment_method_state(order, request, method_key, new_state)
 
-    def record_authorization(self, request, format, reply_log_entry):
-        # If the transaction already exists, do nothing
-        if Transaction.objects.filter(reference=request.data.get('transaction_id')).exists():
-            logger.warning('Duplicate transaction_id received from CyberSource: %s' % request.data.get('transaction_id'))
-            return redirect(settings.REDIRECT_SUCCESS)
+                if response.decision == DECISION_REVIEW:
+                    create_review_order_note(order, request.data.get('transaction_id'))
 
-        # Fetch the related order
-        order = self._get_order(request)
-        method_key = self._get_method_key(request)
+                return redirect(settings.REDIRECT_SUCCESS)
+            else:
+                # Authorization was declined
+                mark_declined(order, request, method_key, reply_log_entry)
+                return redirect(settings.REDIRECT_FAIL)
 
-        # Figure out what status the order is in.
-        decision = reply_log_entry.get_decision()
-
-        # If authorization was successful, log it and redirect to the success page.
-        if decision in (DECISION_ACCEPT, DECISION_REVIEW):
-            new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
-            utils.update_payment_method_state(order, request, method_key, new_state)
-
-            # If the order is under review, add a note explaining why
-            if decision == DECISION_REVIEW:
-                msg = (
-                    'Transaction %s is currently under review. '
-                    'Use Decision Manager to either accept or reject the transaction.'
-                ) % request.data.get('transaction_id')
-                self._create_order_note(order, msg)
-
-            return redirect(settings.REDIRECT_SUCCESS)
-
-        new_state = Cybersource().record_declined_authorization(reply_log_entry, order, request.data)
-        try:
-            utils.update_payment_method_state(order, request, method_key, new_state)
-        except InvalidOrderStatus:
-            logger.exception((
-                "Failed to set Order {} to payment declined. Order is current in status {}. "
-                "Examine CyberSourceReply[{}]"
-            ).format(order.number, order.status, reply_log_entry.pk))
-        return redirect(settings.REDIRECT_FAIL)
-
-
-    def _create_order_note(self, order, msg):
-        return OrderNote.objects.create(
-            note_type=OrderNote.SYSTEM,
-            order=order,
-            message=msg)
+        else:
+            # Payment token was not created
+            mark_declined(order, request, method_key, reply_log_entry)
+            return redirect(settings.REDIRECT_FAIL)
 
 
     def _get_order(self, request):

@@ -23,7 +23,10 @@ if SECRET:
     warnings.warn('CYBERSOURCE_SECRET setting is deprecated. Use cybersource.SecureAcceptanceProfile model instead.', DeprecationWarning)
 
 ORG_ID = overridable('CYBERSOURCE_ORG_ID', required=True)
-MERCHANT_ID = overridable('CYBERSOURCE_MERCHANT_ID', required=True)
+MERCHANT_ID = overridable('CYBERSOURCE_MERCHANT_ID')
+CYBERSOURCE_SOAP_KEY = overridable('CYBERSOURCE_SOAP_KEY')
+CYBERSOURCE_WSDL = overridable('CYBERSOURCE_WSDL',
+                               'https://ics2wstesta.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.155.wsdl')
 
 REDIRECT_PENDING = overridable('CYBERSOURCE_REDIRECT_PENDING', required=True)
 REDIRECT_SUCCESS = overridable('CYBERSOURCE_REDIRECT_SUCCESS', required=True)
@@ -42,5 +45,4 @@ SOURCE_TYPE = overridable('CYBERSOURCE_SOURCE_TYPE', 'Cybersource Secure Accepta
 DECISION_MANAGER_KEYS = overridable('CYBERSOURCE_DECISION_MANAGER_KEYS', [])
 
 SHIPPING_METHOD_DEFAULT = overridable('CYBERSOURCE_SHIPPING_METHOD_DEFAULT', 'none')
-SHIPPING_METHOD_MAPPING = overridable('CYBERSOURCE_SHIPPING_METHOD_MAPPING', {
-})
+SHIPPING_METHOD_MAPPING = overridable('CYBERSOURCE_SHIPPING_METHOD_MAPPING', {})
