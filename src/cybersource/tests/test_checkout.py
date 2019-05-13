@@ -202,7 +202,7 @@ class BaseCheckoutTest(APITestCase):
 
 @tag('integration', 'slow')
 class CheckoutIntegrationTest(BaseCheckoutTest):
-    """Full Integration Test of Checkout"""
+    """Full Integration Test of Checkout using mocked SOAP integration"""
 
     @patch('cybersource.methods.Bluefin.log_soap_response')
     @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
@@ -408,6 +408,173 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         run_transaction.return_value.decision = 'ACCEPT'
         run_transaction.return_value.merchantReferenceCode = order_number
         log_soap_response.side_effect = mock_log_soap_response
+
+        action = resp.data['payment_method_states']['cybersource']['required_action']
+        resp = self.do_cs_get_token(action['url'], action['fields'])
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '0.00')
+        self.check_finished_order(order_number, product.id)
+
+
+@tag('integration', 'slow')
+class CheckoutSOAPIntegrationTest(BaseCheckoutTest):
+    """Full Integration Test of Checkout using real SOAP authorization"""
+
+    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
+    @retry(AssertionError)
+    def test_checkout_process(self):
+        """Full checkout process using minimal api calls"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_checkout(basket_id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
+
+        action = resp.data['payment_method_states']['cybersource']['required_action']
+        resp = self.do_cs_get_token(action['url'], action['fields'])
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
+
+        self.check_finished_order(order_number, product.id)
+
+    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
+    @retry(AssertionError)
+    def test_decision_manager_review_auth(self):
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_checkout(basket_id, extra_data={
+            "shipping_address": {
+                "first_name": "Joe",
+                "last_name": "Review",  # trigger a review, per a custom rule in CyberSource admin
+                "line1": "234 5th Ave",
+                "line4": "Manhattan",
+                "postcode": "10001",
+                "state": "NY",
+                "country": reverse('country-detail', args=['US']),
+                "phone_number": "+1 (717) 467-1111",
+            },
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
+
+        action = resp.data['payment_method_states']['cybersource']['required_action']
+        resp = self.do_cs_get_token(action['url'], action['fields'])
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
+
+        self.check_finished_order(order_number, product.id, status='REVIEW')
+
+    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
+    @retry(AssertionError)
+    def test_add_product_during_auth(self):
+        """Test attempting to add a product during the authorize flow"""
+        product = self.create_product()
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        # Adding a product here should succeed
+        resp = self.do_add_to_basket(product.id)
+        basket1 = resp.data['id']
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_checkout(basket_id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        # Adding a product here should go to a new basket, not the one we're auth'ing
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket2 = resp.data['id']
+        self.assertNotEqual(basket1, basket2)
+
+        # Finish checkout process
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
+
+        action = resp.data['payment_method_states']['cybersource']['required_action']
+        resp = self.do_cs_get_token(action['url'], action['fields'])
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Authorized')
+        self.check_finished_order(order_number, product.id)
+
+        # Adding a product here should go to basket2, not basket1
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket3 = resp.data['id']
+        self.assertEqual(basket2, basket3)
+
+    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
+    @retry(AssertionError)
+    def test_free_product(self):
+        """Full checkout process using minimal api calls"""
+        product = self.create_product(price=D('0.00'))
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_checkout(basket_id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
         resp = self.do_cs_get_token(action['url'], action['fields'])
