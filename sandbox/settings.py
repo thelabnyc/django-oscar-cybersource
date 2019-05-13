@@ -139,7 +139,6 @@ OSCAR_DEFAULT_CURRENCY = 'USD'
 
 
 # Cybersource Config
-CYBERSOURCE_MERCHANT_ID = 'somemerchant'
 CYBERSOURCE_ORG_ID = 'someorg'
 CYBERSOURCE_PROFILE = '2A37F989-C8B2-4FEF-ACCF-2562577780E2'
 CYBERSOURCE_ACCESS = '62a67633d0063c26a9c578bd9dcab18d'
@@ -153,11 +152,18 @@ CYBERSOURCE_REDIRECT_PENDING = 'checkout:index'
 CYBERSOURCE_REDIRECT_SUCCESS = 'checkout:thank-you'
 CYBERSOURCE_REDIRECT_FAIL = 'checkout:index'
 
+# Cybersource SOAP Config
+CYBERSOURCE_MERCHANT_ID = os.environ.get('CYBERSOURCE_MERCHANT_ID')
+CYBERSOURCE_SOAP_KEY = os.environ.get('CYBERSOURCE_SOAP_KEY')
 
 # Configure payment methods
 API_ENABLED_PAYMENT_METHODS = [
     {
         'method': 'cybersource.methods.Cybersource',
+        'permission': 'oscarapicheckout.permissions.Public',
+    },
+    {
+        'method': 'cybersource.methods.Bluefin',
         'permission': 'oscarapicheckout.permissions.Public',
     },
 ]

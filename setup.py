@@ -32,6 +32,8 @@ extras_require = {
         'sphinx>=1.5.2',
         'tox>=2.6.0',
         'versiontag>=1.2.0',
+        'suds-jurko==0.6',
+        'instrumented-soap==1.1.1',
     ],
 }
 
