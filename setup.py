@@ -30,6 +30,7 @@ extras_require = {
         'PyYAML>=3.12',
         'requests>=2.18.4',
         'sphinx>=1.5.2',
+        'sphinx-rtd-theme>=0.4.3',
         'tox>=2.6.0',
         'versiontag>=1.2.0',
         'suds-jurko==0.6',

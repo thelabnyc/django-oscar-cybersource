@@ -46,6 +46,7 @@ six==1.11.0
 snowballstemmer==1.2.1
 sorl-thumbnail==12.4.1
 Sphinx==1.6.5
+sphinx-rtd-theme==0.4.3
 sphinxcontrib-websupport==1.0.1
 suds-jurko==0.6
 text-unidecode==1.1
