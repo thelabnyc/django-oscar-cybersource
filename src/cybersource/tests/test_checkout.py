@@ -920,7 +920,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
     @patch('cybersource.signals.pre_build_auth_request.send')
     @patch('cybersource.signals.pre_build_get_token_request.send')
     @patch('oscarapicheckout.signals.pre_calculate_total.send')
-    def test_request_auth_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request):
+    def test_request_auth_soap_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request):
         product = self.create_product()
 
         resp = self.do_get_basket()
