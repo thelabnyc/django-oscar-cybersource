@@ -158,11 +158,8 @@ class CyberSourceSoap(object):
 
         self.data['merchantDefinedData'] = self.client.factory.create('ns0:MerchantDefinedData')
 
-        # TODO would be nice if `merchant_defined_dataX` wasn't hardcoded
-        i = 1
-        while 'merchant_defined_data{}'.format(i) in extra_fields:
-            self.data['merchantDefinedData']['field{}'.format(i)] = extra_fields['merchant_defined_data{}'.format(i)]
-            i += 1
+        for k, v in extra_fields.items():
+            self.data['merchantDefinedData']['field{}'.format(k)] = v
 
     def _run_transaction(self):
 

@@ -229,6 +229,11 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
             value = getattr(self, field, None)
             if value is not None:
                 data[field] = value
+
+        # Extra fields
+        for k, v in self.extra_fields.items():
+            data['merchant_defined_data{}'.format(k)] = v
+
         data.update(self.extra_fields)
 
         return data

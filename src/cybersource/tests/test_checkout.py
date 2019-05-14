@@ -938,8 +938,8 @@ class CybersourceMethodTest(BaseCheckoutTest):
 
         # Add an extra field into the request
         def add_a_field(sender, extra_fields, **kwargs):
-            extra_fields['merchant_defined_data1'] = 'ABC'
-            extra_fields['merchant_defined_data2'] = 'DEF'
+            extra_fields['1'] = 'ABC'
+            extra_fields['2'] = 'DEF'
         pre_build_get_token_request.side_effect = add_a_field
         pre_build_auth_request.side_effect = add_a_field
 
@@ -1002,8 +1002,8 @@ class CybersourceMethodTest(BaseCheckoutTest):
 
         # Add an extra field into the request
         def add_a_field(sender, extra_fields, **kwargs):
-            extra_fields['merchant_defined_data1'] = 'ABC'
-            extra_fields['merchant_defined_data2'] = 'DEF'
+            extra_fields['1'] = 'ABC'
+            extra_fields['2'] = 'DEF'
 
         pre_build_get_token_request.side_effect = add_a_field
         pre_build_auth_request.side_effect = add_a_field
