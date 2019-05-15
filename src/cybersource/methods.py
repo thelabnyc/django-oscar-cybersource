@@ -4,7 +4,6 @@ from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
 from oscarapicheckout import utils
 from rest_framework import serializers
-from suds.sudsobject import asdict
 
 from cybersource.cybersoap import CyberSourceSoap
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
@@ -208,20 +207,31 @@ class Bluefin(PaymentMethod):
 
     @staticmethod
     def log_soap_response(request, order, response):
-        # convert SOAP response to a generic python dict so it can be stored in an HStoreField
-        try:
-            response = asdict(response)
-        except Exception:
-            response = {}
+        # convert SOAP response to python dict with fields matching the client-side API
+        data = {}
+        data['transaction_id'] = response.requestID
+        data['decision'] = response.decision
+        data['req_transaction_type'] = 'create_payment_token' \
+            if 'paySubscriptionCreateReply' in response else 'authorization'
+        data['reason_code'] = response.reasonCode
 
-        # SOAP API stores order number in merchantReferenceCode, while client-side get token uses req_reference_number
-        # let's store both to make downstream code token method agnostic
-        response['req_reference_number'] = response.get('merchantReferenceCode', '')
+        # these fields may or may not be present
+        try:
+            data['req_reference_number'] = response.merchantReferenceCode
+            data['auth_trans_ref_no'] = response.ccAuthReply.reconciliationID
+            data['auth_avs_code'] = response.ccAuthReply.avsCode
+            data['auth_code'] = response.ccAuthReply.authorizationCode
+            data['auth_response'] = response.ccAuthReply.processorResponse
+            data['date_created'] = response.ccAuthReply.authorizedDateTime
+            # data['req_transaction_uuid'] = Nothing for this key
+            # data['message'] = Nothing for this key
+        except AttributeError:
+            pass
 
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
             order=order,
-            data=response)
+            data=data)
         log.save()
         return log
 
