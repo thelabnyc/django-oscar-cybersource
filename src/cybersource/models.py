@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from oscar.core.compat import AUTH_USER_MODEL
+from oscar.models.fields import NullCharField
 from fernet_fields import EncryptedTextField
 from .constants import DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR
 import dateutil.parser
@@ -71,10 +72,46 @@ class SecureAcceptanceProfile(models.Model):
 
 
 class CyberSourceReply(models.Model):
+    REPLY_TYPE_SA = 1
+    REPLY_TYPE_SOAP = 2
+    REPLY_TYPE_CHOICES = [
+        (REPLY_TYPE_SA, "Secure Acceptance"),
+        (REPLY_TYPE_SOAP, "SOAP API"),
+    ]
+
+
+    # Reply Metadata
     user = models.ForeignKey(AUTH_USER_MODEL,
         related_name='cybersource_replies', null=True, blank=True, on_delete=models.SET_NULL)
     order = models.ForeignKey('order.Order', related_name='cybersource_replies', null=True, on_delete=models.SET_NULL)
+
+    # Denotes what kind of response this is: Secure Acceptance or SOAP
+    reply_type = models.SmallIntegerField(
+        choices=REPLY_TYPE_CHOICES,
+        default=REPLY_TYPE_SA)
+
+    # Full Log of the reply data (raw data, so formats will differ between SA and SOAP replies)
     data = HStoreField()
+
+    # More normalized view of the above reply data
+    auth_avs_code = NullCharField(max_length=20)
+    auth_code = NullCharField(max_length=20)
+    auth_response = NullCharField(max_length=20)
+    auth_trans_ref_no = NullCharField(max_length=128)
+    decision = NullCharField(max_length=20)
+    message = NullCharField(max_length=100)
+    reason_code = models.IntegerField(null=True)
+    req_bill_to_address_postal_code = NullCharField(max_length=64)
+    req_bill_to_forename = NullCharField(max_length=255)
+    req_bill_to_surname = NullCharField(max_length=255)
+    req_card_expiry_date = NullCharField(max_length=10)
+    req_reference_number = NullCharField(max_length=128)
+    req_transaction_type = NullCharField(max_length=20)
+    req_transaction_uuid = NullCharField(max_length=40)
+    request_token = NullCharField(max_length=200)
+    transaction_id = NullCharField(max_length=64)
+
+    # Timestamps
     date_modified = models.DateTimeField("Date Modified", auto_now=True)
     date_created = models.DateTimeField("Date Received", auto_now_add=True)
 
@@ -88,37 +125,30 @@ class CyberSourceReply(models.Model):
     def signed_date_time(self):
         try:
             return dateutil.parser.parse(self.data['signed_date_time'])
-        except (AttributeError, ValueError):
-            return None
+        except (AttributeError, ValueError, KeyError):
+            return self.date_created
 
 
     def get_decision(self):
-        # Extract the reply's decision data
-        decision = self.data.get('decision') or DECISION_ERROR
-        try:
-            decision_reason_code = int(self.data.get('reason_code') or '')
-        except ValueError:
-            decision_reason_code = None
-
         # Accept
-        if decision_reason_code in (100, ):
+        if self.reason_code in (100, ):
             return DECISION_ACCEPT
 
         # Review
-        if decision_reason_code in (201, 480):
+        if self.reason_code in (201, 480):
             return DECISION_REVIEW
 
         # Rejections
-        if decision_reason_code in (110, 200, 202, 203, 204, 205, 207, 208, 210, 211, 221, 222, 230, 231, 232, 233, 234, 400, 481, 520):
+        if self.reason_code in (110, 200, 202, 203, 204, 205, 207, 208, 210, 211, 221, 222, 230, 231, 232, 233, 234, 400, 481, 520):
             return DECISION_DECLINE
 
         # Errors
-        if decision_reason_code in (101, 102, 104, 150, 151, 152, 236, 240):
+        if self.reason_code in (101, 102, 104, 150, 151, 152, 236, 240):
             return DECISION_ERROR
 
         # If we don't recognize the reason code, go by the decision field
-        if decision in (DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR):
-            return decision
+        if self.decision in (DECISION_ACCEPT, DECISION_REVIEW, DECISION_DECLINE, DECISION_ERROR):
+            return self.decision
 
         # Last ditch catch-all
         return DECISION_ERROR
@@ -164,15 +194,19 @@ class PaymentToken(ReplyLogMixin, models.Model):
 
     @property
     def billing_zip_code(self):
-        return self.log_field('req_bill_to_address_postal_code')
+        return self.log.req_bill_to_address_postal_code
 
     @property
     def expiry_month(self):
-        return self.log_field('req_card_expiry_date').split('-')[0]
+        if not self.log.req_card_expiry_date:
+            return None
+        return self.log.req_card_expiry_date.split('-')[0]
 
     @property
     def expiry_year(self):
-        return self.log_field('req_card_expiry_date').split('-')[1]
+        if not self.log.req_card_expiry_date:
+            return None
+        return self.log.req_card_expiry_date.split('-')[1]
 
     @property
     def card_last4(self):
@@ -180,7 +214,7 @@ class PaymentToken(ReplyLogMixin, models.Model):
 
     @property
     def card_holder(self):
-        return "%s %s" % (self.log_field('req_bill_to_forename'), self.log_field('req_bill_to_surname'))
+        return "%s %s" % (self.log.req_bill_to_forename, self.log.req_bill_to_surname)
 
     def __str__(self):
         return "%s" % self.masked_card_number

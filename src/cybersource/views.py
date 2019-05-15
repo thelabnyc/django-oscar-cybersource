@@ -106,7 +106,25 @@ class CyberSourceReplyView(APIView):
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
             order=self._get_order(request),
-            data=request.data)
+            data=request.data,
+            reply_type=CyberSourceReply.REPLY_TYPE_SA,
+            auth_avs_code=request.data.get('auth_avs_code'),
+            auth_code=request.data.get('auth_code'),
+            auth_response=request.data.get('auth_response'),
+            auth_trans_ref_no=request.data.get('auth_trans_ref_no'),
+            decision=request.data.get('decision'),
+            message=request.data.get('message'),
+            reason_code=request.data.get('reason_code'),
+            req_bill_to_address_postal_code=request.data.get('req_bill_to_address_postal_code'),
+            req_bill_to_forename=request.data.get('req_bill_to_forename'),
+            req_bill_to_surname=request.data.get('req_bill_to_surname'),
+            req_card_expiry_date=request.data.get('req_card_expiry_date'),
+            req_reference_number=request.data.get('req_reference_number'),
+            req_transaction_type=request.data.get('req_transaction_type'),
+            req_transaction_uuid=request.data.get('req_transaction_uuid'),
+            request_token=request.data.get('request_token'),
+            transaction_id=request.data.get('transaction_id'),
+        )
         log.save()
         return log
 

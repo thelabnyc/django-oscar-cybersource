@@ -4,7 +4,7 @@ from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
 from oscarapicheckout import utils
 from rest_framework import serializers
-
+from suds import sudsobject
 from cybersource.cybersoap import CyberSourceSoap
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
 from .models import PaymentToken, CyberSourceReply
@@ -44,6 +44,27 @@ def mark_declined(order, request, method_key, reply_log_entry):
         utils.mark_payment_method_declined(order, request, method_key, amount)
     except InvalidOrderStatus:
         log_order_exception(order.number, order.status, reply_log_entry)
+
+
+def sudsobj_to_dict(sudsobj, key_prefix=''):
+    """Convert Suds object into a flattened dictionary"""
+    out = {}
+    # Handle lists
+    if isinstance(sudsobj, list):
+        for i, child in enumerate(sudsobj):
+            child_key = '{}[{}]'.format(key_prefix, i)
+            out.update(sudsobj_to_dict(child, key_prefix=child_key))
+        return out
+    # Handle Primitives
+    if not hasattr(sudsobj, '__keylist__'):
+        out[key_prefix] = sudsobj
+        return out
+    # Handle Suds Objects
+    for parent_key, parent_val in sudsobject.asdict(sudsobj).items():
+        full_parent_key = '{}.{}'.format(key_prefix, parent_key) if key_prefix else parent_key
+        out.update(sudsobj_to_dict(parent_val, key_prefix=full_parent_key))
+    return out
+
 
 
 class Cybersource(PaymentMethod):
@@ -190,6 +211,7 @@ class Cybersource(PaymentMethod):
         return operation.url, fields
 
 
+
 class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
     payment_data = serializers.CharField(max_length=256)
 
@@ -199,39 +221,37 @@ class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
         return super().validate(data)
 
 
-class Bluefin(PaymentMethod):
 
+class Bluefin(PaymentMethod):
     name = settings.SOURCE_TYPE
     code = 'bluefin'
     serializer_class = BluefinPaymentMethodSerializer
 
     @staticmethod
     def log_soap_response(request, order, response):
-        # convert SOAP response to python dict with fields matching the client-side API
-        data = {}
-        data['transaction_id'] = response.requestID
-        data['decision'] = response.decision
-        data['req_transaction_type'] = 'create_payment_token' \
-            if 'paySubscriptionCreateReply' in response else 'authorization'
-        data['reason_code'] = response.reasonCode
-
-        # these fields may or may not be present
-        try:
-            data['req_reference_number'] = response.merchantReferenceCode
-            data['auth_trans_ref_no'] = response.ccAuthReply.reconciliationID
-            data['auth_avs_code'] = response.ccAuthReply.avsCode
-            data['auth_code'] = response.ccAuthReply.authorizationCode
-            data['auth_response'] = response.ccAuthReply.processorResponse
-            data['date_created'] = response.ccAuthReply.authorizedDateTime
-            # data['req_transaction_uuid'] = Nothing for this key
-            # data['message'] = Nothing for this key
-        except AttributeError:
-            pass
-
+        reply_data = sudsobj_to_dict(response)
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
             order=order,
-            data=data)
+            reply_type=CyberSourceReply.REPLY_TYPE_SOAP,
+            data=reply_data,
+            auth_avs_code=response.ccAuthReply.avsCode,
+            auth_code=response.ccAuthReply.authorizationCode,
+            auth_response=response.ccAuthReply.processorResponse,
+            auth_trans_ref_no=response.ccAuthReply.reconciliationID,
+            decision=response.decision,
+            message=None,
+            reason_code=response.reasonCode,
+            req_bill_to_address_postal_code=order.billing_address.postcode,
+            req_bill_to_forename=order.billing_address.first_name,
+            req_bill_to_surname=order.billing_address.last_name,
+            req_card_expiry_date=None,
+            req_reference_number=response.merchantReferenceCode,
+            req_transaction_type=('create_payment_token' if 'paySubscriptionCreateReply' in response else 'authorization'),
+            req_transaction_uuid=None,
+            request_token=response.requestToken,
+            transaction_id=response.requestID,
+        )
         log.save()
         return log
 
