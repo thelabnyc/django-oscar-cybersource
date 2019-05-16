@@ -41,7 +41,25 @@ def mock_log_soap_response(request, order, response):
     log = CyberSourceReply(
         user=request.user if request.user.is_authenticated else None,
         order=order,
-        data=response)
+        reply_type=CyberSourceReply.REPLY_TYPE_SA,
+        data=response,
+        auth_avs_code=response.get('auth_avs_code'),
+        auth_code=response.get('auth_code'),
+        auth_response=response.get('auth_response'),
+        auth_trans_ref_no=response.get('auth_trans_ref_no'),
+        decision=response.get('decision'),
+        message=response.get('message'),
+        reason_code=response.get('reason_code'),
+        req_bill_to_address_postal_code=response.get('req_bill_to_address_postal_code'),
+        req_bill_to_forename=response.get('req_bill_to_forename'),
+        req_bill_to_surname=response.get('req_bill_to_surname'),
+        req_card_expiry_date=response.get('req_card_expiry_date'),
+        req_reference_number=response.get('req_reference_number'),
+        req_transaction_type=response.get('req_transaction_type'),
+        req_transaction_uuid=response.get('req_transaction_uuid'),
+        request_token=response.get('request_token'),
+        transaction_id=response.get('transaction_id'),
+    )
     log.save()
     return log
 
@@ -183,10 +201,10 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(transactions[0].status, status)
 
         self.assertEqual(transactions[0].log.order, order)
-        self.assertEqual(transactions[0].log_field('req_reference_number'), order.number)
+        self.assertEqual(transactions[0].log.req_reference_number, order.number)
         self.assertEqual(transactions[0].token.card_last4, card_last4)
         self.assertEqual(transactions[0].token.log.order, order)
-        self.assertEqual(transactions[0].token.log_field('req_reference_number'), order.number)
+        self.assertEqual(transactions[0].token.log.req_reference_number, order.number)
 
         self.assertEqual(len(mail.outbox), 1)
 
@@ -905,7 +923,15 @@ class CSReplyViewTest(BaseCheckoutTest):
 
         data = cs_factories.build_accepted_token_reply_data(order_number)
         data = cs_factories.sign_reply_data(data)
+        run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
         run_transaction.return_value.decision = 'REJECT'
+        run_transaction.return_value.reasonCode = '200'
+        run_transaction.return_value.merchantReferenceCode = '118031289162'
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
         url = reverse('cybersource-reply')
         resp = self.client.post(url, data)
 
@@ -1073,7 +1099,15 @@ class CybersourceMethodTest(BaseCheckoutTest):
         resp = requests.post(cs_url, data)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
+        run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
         run_transaction.return_value.decision = 'ACCEPT'
+        run_transaction.return_value.reasonCode = '100'
+        run_transaction.return_value.merchantReferenceCode = '118031289162'
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
         resp = self.do_cs_reply(resp)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
         self.assertEqual(pre_build_auth_request.call_count, 1)
