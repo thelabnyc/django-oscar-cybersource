@@ -235,10 +235,6 @@ class Bluefin(PaymentMethod):
             order=order,
             reply_type=CyberSourceReply.REPLY_TYPE_SOAP,
             data=reply_data,
-            auth_avs_code=response.ccAuthReply.avsCode,
-            auth_code=response.ccAuthReply.authorizationCode,
-            auth_response=response.ccAuthReply.processorResponse,
-            auth_trans_ref_no=response.ccAuthReply.reconciliationID,
             decision=response.decision,
             message=None,
             reason_code=response.reasonCode,
@@ -246,12 +242,22 @@ class Bluefin(PaymentMethod):
             req_bill_to_forename=order.billing_address.first_name,
             req_bill_to_surname=order.billing_address.last_name,
             req_card_expiry_date=None,
-            req_reference_number=response.merchantReferenceCode,
+            req_reference_number=response.merchantReferenceCode if 'merchantReferenceCode' in response else None,
             req_transaction_type=('create_payment_token' if 'paySubscriptionCreateReply' in response else 'authorization'),
             req_transaction_uuid=None,
             request_token=response.requestToken,
             transaction_id=response.requestID,
         )
+
+        # These fields may or may not be present
+        try:
+            log.auth_code = response.ccAuthReply.authorizationCode
+            log.auth_response = response.ccAuthReply.processorResponse
+            log.auth_trans_ref_no = response.ccAuthReply.reconciliationID
+            log.auth_avs_code = response.ccAuthReply.avsCode
+        except AttributeError:
+            pass
+
         log.save()
         return log
 
