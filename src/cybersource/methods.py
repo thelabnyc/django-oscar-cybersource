@@ -227,8 +227,9 @@ class Bluefin(PaymentMethod):
     code = 'bluefin'
     serializer_class = BluefinPaymentMethodSerializer
 
+
     @staticmethod
-    def log_soap_response(request, order, response):
+    def log_soap_response(request, order, response, card_expiry_date=None):
         reply_data = sudsobj_to_dict(response)
         log = CyberSourceReply(
             user=request.user if request.user.is_authenticated else None,
@@ -241,7 +242,7 @@ class Bluefin(PaymentMethod):
             req_bill_to_address_postal_code=order.billing_address.postcode,
             req_bill_to_forename=order.billing_address.first_name,
             req_bill_to_surname=order.billing_address.last_name,
-            req_card_expiry_date=None,
+            req_card_expiry_date=card_expiry_date,
             req_reference_number=response.merchantReferenceCode if 'merchantReferenceCode' in response else None,
             req_transaction_type=('create_payment_token' if 'paySubscriptionCreateReply' in response else 'authorization'),
             req_transaction_uuid=None,
@@ -261,16 +262,33 @@ class Bluefin(PaymentMethod):
         log.save()
         return log
 
-    def _record_created_payment_token(self, reply_log_entry, response):
+
+    @staticmethod
+    def lookup_token_details(request, order, payment_token):
+        cs = CyberSourceSoap(
+            settings.CYBERSOURCE_WSDL,
+            settings.MERCHANT_ID,
+            settings.CYBERSOURCE_SOAP_KEY,
+            request,
+            order,
+            '')
+        return cs.lookup_payment_token(payment_token)
+
+
+    def _record_created_payment_token(self, request, order, reply_log_entry, response):
         token_string = response.paySubscriptionCreateReply.subscriptionID
+        # Lookup more details about the token
+        token_details = self.__class__.lookup_token_details(request, order, token_string)
         # Create the payment token
         if not PaymentToken.objects.filter(token=token_string).exists():
             token = PaymentToken(
                 log=reply_log_entry,
                 token=token_string,
-                masked_card_number='',
-                card_type='')
+                masked_card_number=token_details.paySubscriptionRetrieveReply.cardAccountNumber,
+                card_type=token_details.paySubscriptionRetrieveReply.cardType)
             token.save()
+        return token, token_details
+
 
     def _record_successful_authorization(self, reply_log_entry, order, token_string, response):
         decision = reply_log_entry.get_decision()
@@ -365,16 +383,21 @@ class Bluefin(PaymentMethod):
         reply_log_entry = self.__class__.log_soap_response(request, order, response)
 
         if response.decision == DECISION_ACCEPT:
-            self._record_created_payment_token(reply_log_entry, response)
-            token_string = response.paySubscriptionCreateReply.subscriptionID
+            token, token_details = self._record_created_payment_token(request, order, reply_log_entry, response)
+            expiry_date = "{month}-{year}".format(
+                month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
+                year=token_details.paySubscriptionRetrieveReply.cardExpirationYear)
+            reply_log_entry.req_card_expiry_date = expiry_date
+            reply_log_entry.save()
 
             # Authorize via SOAP
             response = cs.authorize_encrypted(payment_data, amount)
-            reply_log_entry = self.__class__.log_soap_response(request, order, response)
+            reply_log_entry = self.__class__.log_soap_response(request, order, response,
+                card_expiry_date=expiry_date)
 
             # If authorization was successful, log it and redirect to the success page.
             if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
-                new_state = self._record_successful_authorization(reply_log_entry, order, token_string, response)
+                new_state = self._record_successful_authorization(reply_log_entry, order, token.token, response)
 
                 if response.decision == DECISION_REVIEW:
                     create_review_order_note(order, response.encryptedPayment.referenceID)
@@ -382,7 +405,7 @@ class Bluefin(PaymentMethod):
                 return new_state
             else:
                 # Authorization failed
-                new_state = self._record_declined_authorization(reply_log_entry, order, token_string, response)
+                new_state = self._record_declined_authorization(reply_log_entry, order, token.token, response)
                 mark_declined(order, request, method_key, reply_log_entry)
                 return new_state
 

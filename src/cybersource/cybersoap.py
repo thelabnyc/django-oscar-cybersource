@@ -42,6 +42,13 @@ class CyberSourceSoap(object):
     def _get_token(self):
         return self.request.data.get('payment_token')
 
+    def lookup_payment_token(self, token):
+        self._prep_transaction('paySubscriptionRetrieveService')
+        # Add token info
+        self.data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
+        self.data['recurringSubscriptionInfo'].subscriptionID = token
+        return self._run_transaction()
+
     def authorize(self):
         """ Authorize with a token """
         self._prep_transaction('ccAuthService')
