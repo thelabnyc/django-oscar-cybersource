@@ -249,16 +249,14 @@ class Bluefin(PaymentMethod):
             request_token=response.requestToken,
             transaction_id=response.requestID,
         )
-
         # These fields may or may not be present
-        try:
-            log.auth_code = response.ccAuthReply.authorizationCode
-            log.auth_response = response.ccAuthReply.processorResponse
-            log.auth_trans_ref_no = response.ccAuthReply.reconciliationID
-            log.auth_avs_code = response.ccAuthReply.avsCode
-        except AttributeError:
-            pass
-
+        cc_auth_reply = getattr(response, 'ccAuthReply', None)
+        if cc_auth_reply:
+            log.auth_code = getattr(cc_auth_reply, 'authorizationCode', None)
+            log.auth_response = getattr(cc_auth_reply, 'processorResponse', None)
+            log.auth_trans_ref_no = getattr(cc_auth_reply, 'reconciliationID', None)
+            log.auth_avs_code = getattr(cc_auth_reply, 'avsCode', None)
+        # Save and return log object
         log.save()
         return log
 
