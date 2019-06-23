@@ -1,6 +1,7 @@
 import logging
 import soap
 
+from cybersource.actions import PRECISION
 from .constants import DECISION_ERROR, TERMINAL_DESCRIPTOR, CHECKOUT_FINGERPRINT_SESSION_ID
 from . import signals
 
@@ -146,6 +147,19 @@ class CyberSourceSoap(object):
             self.data['shipTo'].state = self.order.shipping_address.state
             self.data['shipTo'].postalCode = self.order.shipping_address.postcode
             self.data['shipTo'].country = self.order.shipping_address.country.iso_3166_1_a2
+
+        # Add line items
+        self.data['item'] = []
+        i = 0
+        for line in self.order.lines.all():
+            item = self.client.factory.create('ns0:Item')
+            item._id = str(i)
+            item.productName = line.product.title
+            item.productSKU = line.partner_sku
+            item.quantity = str(line.quantity)
+            item.unitPrice = str(line.unit_price_incl_tax.quantize(PRECISION))
+            self.data['item'].append(item)
+            i += 1
 
         # Add order total data
         self.data['purchaseTotals'] = self.client.factory.create('ns0:PurchaseTotals')
