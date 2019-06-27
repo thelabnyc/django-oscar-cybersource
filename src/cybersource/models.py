@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
+from django.utils.translation import gettext_lazy as _
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
 from fernet_fields import EncryptedTextField
@@ -14,13 +15,17 @@ logger = logging.getLogger(__name__)
 
 
 class SecureAcceptanceProfile(models.Model):
-    hostname = models.CharField("Hostname", max_length=100, blank=True, unique=True,
-        help_text="When the request matches this hostname, this profile will be used.")
-    profile_id = models.CharField("Profile ID", max_length=50, unique=True)
-    access_key = models.CharField("Access Key", max_length=50)
-    secret_key = EncryptedTextField("Secret Key")
-    is_default = models.BooleanField("Is Default Profile?", default=False,
-        help_text="If no profile can be found for a request's hostname, the default profile will be used.")
+    hostname = models.CharField(_("Hostname"), max_length=100, blank=True, unique=True,
+        help_text=_("When the request matches this hostname, this profile will be used."))
+    profile_id = models.CharField(_("Profile ID"), max_length=50, unique=True)
+    access_key = models.CharField(_("Access Key"), max_length=50)
+    secret_key = EncryptedTextField(_("Secret Key"))
+    is_default = models.BooleanField(_("Is Default Profile?"), default=False,
+        help_text=_("If no profile can be found for a request's hostname, the default profile will be used."))
+
+    class Meta:
+        verbose_name = _('Secure Acceptance Profile')
+        verbose_name_plural = _('Secure Acceptance Profiles')
 
 
     @classmethod
@@ -67,7 +72,9 @@ class SecureAcceptanceProfile(models.Model):
 
 
     def __str__(self):
-        return 'Secure Acceptance Profile hostname={}, profile_id={}'.format(self.hostname, self.profile_id)
+        return _('Secure Acceptance Profile hostname=%(hostname)s, profile_id=%(profile_id)s') % dict(
+            hostname=self.hostname,
+            profile_id=self.profile_id)
 
 
 
@@ -75,10 +82,9 @@ class CyberSourceReply(models.Model):
     REPLY_TYPE_SA = 1
     REPLY_TYPE_SOAP = 2
     REPLY_TYPE_CHOICES = [
-        (REPLY_TYPE_SA, "Secure Acceptance"),
-        (REPLY_TYPE_SOAP, "SOAP API"),
+        (REPLY_TYPE_SA, _("Secure Acceptance")),
+        (REPLY_TYPE_SOAP, _("SOAP API")),
     ]
-
 
     # Reply Metadata
     user = models.ForeignKey(AUTH_USER_MODEL,
@@ -112,14 +118,16 @@ class CyberSourceReply(models.Model):
     transaction_id = NullCharField(max_length=64)
 
     # Timestamps
-    date_modified = models.DateTimeField("Date Modified", auto_now=True)
-    date_created = models.DateTimeField("Date Received", auto_now_add=True)
+    date_modified = models.DateTimeField(_("Date Modified"), auto_now=True)
+    date_created = models.DateTimeField(_("Date Received"), auto_now_add=True)
 
     class Meta:
+        verbose_name = _('CyberSource Reply')
+        verbose_name_plural = _('CyberSource Replies')
         ordering = ('date_created', )
 
     def __str__(self):
-        return 'CyberSource Reply %s' % self.date_created
+        return _('CyberSource Reply %(created)s') % dict(self.date_created)
 
     @property
     def signed_date_time(self):
@@ -187,6 +195,10 @@ class PaymentToken(ReplyLogMixin, models.Model):
     token = models.CharField(max_length=100, unique=True)
     masked_card_number = models.CharField(max_length=25)
     card_type = models.CharField(max_length=10)
+
+    class Meta:
+        verbose_name = _('Payment Token')
+        verbose_name_plural = _('Payment Token')
 
     @property
     def card_type_name(self):
