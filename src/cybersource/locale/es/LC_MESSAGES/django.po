@@ -1,0 +1,107 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-06-28 20:38+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: methods.py:32
+#, python-format
+msgid ""
+"Transaction %(transaction_id)s is currently under review. Use Decision "
+"Manager to either accept or reject the transaction."
+msgstr ""
+
+#: methods.py:222
+msgid "Missing encrypted payment data."
+msgstr ""
+
+#: models.py:18
+msgid "Hostname"
+msgstr ""
+
+#: models.py:19
+msgid "When the request matches this hostname, this profile will be used."
+msgstr ""
+
+#: models.py:20
+msgid "Profile ID"
+msgstr ""
+
+#: models.py:21
+msgid "Access Key"
+msgstr ""
+
+#: models.py:22
+msgid "Secret Key"
+msgstr ""
+
+#: models.py:23
+msgid "Is Default Profile?"
+msgstr ""
+
+#: models.py:24
+msgid ""
+"If no profile can be found for a request's hostname, the default profile "
+"will be used."
+msgstr ""
+
+#: models.py:27
+msgid "Secure Acceptance Profile"
+msgstr ""
+
+#: models.py:28
+msgid "Secure Acceptance Profiles"
+msgstr ""
+
+#: models.py:75
+#, python-format
+msgid ""
+"Secure Acceptance Profile hostname=%(hostname)s, profile_id=%(profile_id)s"
+msgstr ""
+
+#: models.py:85
+msgid "Secure Acceptance"
+msgstr ""
+
+#: models.py:86
+msgid "SOAP API"
+msgstr ""
+
+#: models.py:121
+msgid "Date Modified"
+msgstr ""
+
+#: models.py:122
+msgid "Date Received"
+msgstr ""
+
+#: models.py:125
+msgid "CyberSource Reply"
+msgstr ""
+
+#: models.py:126
+msgid "CyberSource Replies"
+msgstr ""
+
+#: models.py:130
+#, python-format
+msgid "CyberSource Reply %(created)s"
+msgstr ""
+
+#: models.py:200 models.py:201
+msgid "Payment Token"
+msgstr ""

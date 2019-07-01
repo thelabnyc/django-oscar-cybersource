@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.utils.translation import gettext_lazy as _
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
@@ -28,14 +29,15 @@ def create_order_note(order, msg):
 
 def create_review_order_note(order, transaction_id):
     """ If an order is under review, add a note explaining why"""
-    msg = 'Transaction {} is currently under review. Use Decision Manager' \
-          ' to either accept or reject the transaction.'.format(transaction_id)
+    msg = _('Transaction %(transaction_id)s is currently under review. Use Decision Manager to either accept or reject the transaction.') % dict(
+        transaction_id=transaction_id)
     create_order_note(order, msg)
 
 
 def log_order_exception(order_number, order_status, reply_log_entry):
-    logger.exception("Failed to set Order {} to payment declined. Order is current in status {}. "
-                     "Examine CyberSourceReply[{}]").format(order_number, order_status, reply_log_entry.pk)
+    logger.exception(
+        "Failed to set Order %s to payment declined. Order is current in status %s. Examine CyberSourceReply[%s]",
+        order_number, order_status, reply_log_entry.pk)
 
 
 def mark_declined(order, request, method_key, reply_log_entry):
@@ -217,7 +219,7 @@ class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
 
     def validate(self, data):
         if 'payment_data' not in data:
-            raise serializers.ValidationError('Missing encrypted payment data.')
+            raise serializers.ValidationError(_('Missing encrypted payment data.'))
         return super().validate(data)
 
 
