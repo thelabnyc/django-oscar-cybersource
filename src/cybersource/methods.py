@@ -1,6 +1,6 @@
 from decimal import Decimal
-
 import datetime
+from django.utils.translation import gettext_lazy as _
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
@@ -30,14 +30,15 @@ def create_order_note(order, msg):
 
 def create_review_order_note(order, transaction_id):
     """ If an order is under review, add a note explaining why"""
-    msg = 'Transaction {} is currently under review. Use Decision Manager' \
-          ' to either accept or reject the transaction.'.format(transaction_id)
+    msg = _('Transaction %(transaction_id)s is currently under review. Use Decision Manager to either accept or reject the transaction.') % dict(
+        transaction_id=transaction_id)
     create_order_note(order, msg)
 
 
 def log_order_exception(order_number, order_status, reply_log_entry):
-    logger.exception("Failed to set Order {} to payment declined. Order is current in status {}. "
-                     "Examine CyberSourceReply[{}]").format(order_number, order_status, reply_log_entry.pk)
+    logger.exception(
+        "Failed to set Order %s to payment declined. Order is current in status %s. Examine CyberSourceReply[%s]",
+        order_number, order_status, reply_log_entry.pk)
 
 
 def mark_declined(order, request, method_key, reply_log_entry):
@@ -219,7 +220,7 @@ class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
 
     def validate(self, data):
         if 'payment_data' not in data:
-            raise serializers.ValidationError('Missing encrypted payment data.')
+            raise serializers.ValidationError(_('Missing encrypted payment data.'))
         return super().validate(data)
 
 
@@ -251,16 +252,14 @@ class Bluefin(PaymentMethod):
             request_token=response.requestToken,
             transaction_id=response.requestID,
         )
-
         # These fields may or may not be present
-        try:
-            log.auth_code = response.ccAuthReply.authorizationCode
-            log.auth_response = response.ccAuthReply.processorResponse
-            log.auth_trans_ref_no = response.ccAuthReply.reconciliationID
-            log.auth_avs_code = response.ccAuthReply.avsCode
-        except AttributeError:
-            pass
-
+        cc_auth_reply = getattr(response, 'ccAuthReply', None)
+        if cc_auth_reply:
+            log.auth_code = getattr(cc_auth_reply, 'authorizationCode', None)
+            log.auth_response = getattr(cc_auth_reply, 'processorResponse', None)
+            log.auth_trans_ref_no = getattr(cc_auth_reply, 'reconciliationID', None)
+            log.auth_avs_code = getattr(cc_auth_reply, 'avsCode', None)
+        # Save and return log object
         log.save()
         return log
 
