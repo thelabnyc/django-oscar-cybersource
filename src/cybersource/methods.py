@@ -1,4 +1,5 @@
 from decimal import Decimal
+import datetime
 from django.utils.translation import gettext_lazy as _
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
@@ -328,12 +329,12 @@ class Bluefin(PaymentMethod):
 
         return Complete(source.amount_allocated, source_id=source.pk)
 
-    def _record_declined_authorization(self, reply_log_entry, order, token_string, response):
+    def _record_declined_authorization(self, reply_log_entry, order, token_string, response, amount):
         decision = reply_log_entry.get_decision()
         transaction_id = response.encryptedPayment.referenceID
         request_token = response.requestToken
-        signed_date_time = response.ccAuthReply.authorizedDateTime
-        req_amount = Decimal(response.ccAuthReply.amount)
+        signed_date_time = str(datetime.datetime.now())  # not available in response.ccAuthReply
+        req_amount = amount  # not available in response.ccAuthReply
 
         source = self.get_source(order, transaction_id)
 
@@ -405,7 +406,7 @@ class Bluefin(PaymentMethod):
                 return new_state
             else:
                 # Authorization failed
-                new_state = self._record_declined_authorization(reply_log_entry, order, token.token, response)
+                new_state = self._record_declined_authorization(reply_log_entry, order, token.token, response, amount)
                 mark_declined(order, request, method_key, reply_log_entry)
                 return new_state
 
