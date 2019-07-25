@@ -3,6 +3,16 @@
 Changelog
 =========
 
+4.0.1
+------------------
+- Fix bug in Internationalization string interpolation
+
+4.0.0
+------------------
+- Use Cybersource SOAP API for performing card authorizations
+- Support Bluefin encrypted card entry / swipe devices.
+- Improve Internationalization
+
 3.5.0
 ------------------
 - Make payment methods create separate ``payment.Source`` objects per Reference number (`!7 <https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource/merge_requests/7>`_).
