@@ -127,7 +127,7 @@ class CyberSourceReply(models.Model):
         ordering = ('date_created', )
 
     def __str__(self):
-        return _('CyberSource Reply %(created)s') % dict(self.date_created)
+        return _('CyberSource Reply %(created)s') % dict(created=self.date_created)
 
     @property
     def signed_date_time(self):
