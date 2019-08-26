@@ -3,6 +3,10 @@
 Changelog
 =========
 
+4.0.2
+------------------
+- Replace a few instances of ``datetime.now`` with ``timezone.now`` to fix naive datetime warnings.
+
 4.0.1
 ------------------
 - Fix bug in Internationalization string interpolation
