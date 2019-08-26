@@ -1,6 +1,6 @@
 from decimal import Decimal
-import datetime
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
@@ -333,7 +333,7 @@ class Bluefin(PaymentMethod):
         decision = reply_log_entry.get_decision()
         transaction_id = response.encryptedPayment.referenceID
         request_token = response.requestToken
-        signed_date_time = str(datetime.datetime.now())  # not available in response.ccAuthReply
+        signed_date_time = str(timezone.now())  # not available in response.ccAuthReply
         req_amount = amount  # not available in response.ccAuthReply
 
         source = self.get_source(order, transaction_id)

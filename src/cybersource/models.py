@@ -1,9 +1,9 @@
 from cryptography.fernet import InvalidToken
-from datetime import datetime
 from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
 from fernet_fields import EncryptedTextField
@@ -244,7 +244,7 @@ class TransactionMixin(ReplyLogMixin, models.Model):
         blank=True,
         on_delete=models.SET_NULL)
     request_token = models.CharField(max_length=200, null=True, blank=True)
-    processed_datetime = models.DateTimeField(default=datetime.now)
+    processed_datetime = models.DateTimeField(default=timezone.now)
 
     class Meta:
         abstract = True
