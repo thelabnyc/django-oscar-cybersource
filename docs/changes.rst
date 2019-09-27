@@ -3,6 +3,11 @@
 Changelog
 =========
 
+5.0.0
+------------------
+- Add support for django-oscar 2.x.
+- Drop support for django-oscar 1.x.
+
 4.0.2
 ------------------
 - Replace a few instances of ``datetime.now`` with ``timezone.now`` to fix naive datetime warnings.
