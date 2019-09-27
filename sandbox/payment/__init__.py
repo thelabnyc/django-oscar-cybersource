@@ -1,1 +1,1 @@
-default_app_config = 'payment.config.PaymentConfig'
+default_app_config = 'payment.apps.PaymentConfig'

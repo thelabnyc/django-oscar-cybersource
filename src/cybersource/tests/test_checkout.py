@@ -1,20 +1,16 @@
-from unittest import skipUnless
-
+from unittest import skipUnless, mock
 from bs4 import BeautifulSoup
 from decimal import Decimal as D
-
 from django.conf import settings
 from django.core import mail
 from django.urls import reverse
 from django.test import tag
-from mock import patch
 from oscar.core.loading import get_model
 from oscar.test import factories
 from rest_framework import status
 from rest_framework.test import APITestCase
 import datetime
 import requests  # Needed for external calls
-
 from cybersource.models import CyberSourceReply
 from ..constants import DECISION_REVIEW, DECISION_ACCEPT
 from .utils import retry
@@ -222,8 +218,8 @@ class BaseCheckoutTest(APITestCase):
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout using mocked SOAP integration"""
 
-    @patch('cybersource.methods.Bluefin.log_soap_response')
-    @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
     @retry(AssertionError)
     def test_checkout_process(self, run_transaction, log_soap_response):
         """Full checkout process using minimal api calls"""
@@ -265,8 +261,8 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.check_finished_order(order_number, product.id)
 
 
-    @patch('cybersource.methods.Bluefin.log_soap_response')
-    @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
     @retry(AssertionError)
     def test_decision_manager_review_auth(self, run_transaction, log_soap_response):
         product = self.create_product()
@@ -318,8 +314,8 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.check_finished_order(order_number, product.id, status='REVIEW')
 
 
-    @patch('cybersource.methods.Bluefin.log_soap_response')
-    @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
     @retry(AssertionError)
     def test_add_product_during_auth(self, run_transaction, log_soap_response):
         """Test attempting to add a product during the authorize flow"""
@@ -400,8 +396,8 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
 
-    @patch('cybersource.methods.Bluefin.log_soap_response')
-    @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
     @retry(AssertionError)
     def test_free_product(self, run_transaction, log_soap_response):
         """Full checkout process using minimal api calls"""
@@ -825,7 +821,7 @@ class CSReplyViewTest(BaseCheckoutTest):
         return order_number
 
 
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_invalid_signature(self, order_payment_authorized):
         """Invalid signature should result in 400 Bad Request"""
         order_number = self.prepare_order()
@@ -841,7 +837,7 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Pending', 'Should not authorize')
 
 
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_invalid_request_type(self, order_payment_authorized):
         """Bad request type should result in 400 Bad Request"""
         order_number = self.prepare_order()
@@ -857,7 +853,7 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Pending', 'Should not authorize')
 
 
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_invalid_reference_number(self, order_payment_authorized):
         """Mismatched reference number should result in 400 Bad Request"""
         order_number = self.prepare_order()
@@ -870,7 +866,7 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Pending')
 
 
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_review_card(self, order_payment_authorized):
         """Review card should be treated like a decline and result in redirect to failure page"""
         order_number = self.prepare_order()
@@ -885,7 +881,7 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Payment Declined')
 
 
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_declined_card(self, order_payment_authorized):
         """Declined card should result in redirect to failure page"""
         order_number = self.prepare_order()
@@ -901,7 +897,7 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_soap_declined_auth(self, order_payment_authorized):
         """Declined auth should should result in redirect to failure page"""
         order_number = self.prepare_order()
@@ -915,8 +911,8 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(order_payment_authorized.call_count, 0, 'Should not trigger signal')
         self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Payment Declined')
 
-    @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
-    @patch('oscarapicheckout.signals.order_payment_authorized.send')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_declined_auth(self, order_payment_authorized, run_transaction):
         """Declined auth should should result in redirect to failure page"""
         order_number = self.prepare_order()
@@ -943,9 +939,9 @@ class CSReplyViewTest(BaseCheckoutTest):
 class CybersourceMethodTest(BaseCheckoutTest):
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @patch('cybersource.signals.pre_build_auth_request.send')
-    @patch('cybersource.signals.pre_build_get_token_request.send')
-    @patch('oscarapicheckout.signals.pre_calculate_total.send')
+    @mock.patch('cybersource.signals.pre_build_auth_request.send')
+    @mock.patch('cybersource.signals.pre_build_get_token_request.send')
+    @mock.patch('oscarapicheckout.signals.pre_calculate_total.send')
     def test_request_auth_soap_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request):
         product = self.create_product()
 
@@ -1004,10 +1000,10 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.42')
         self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
 
-    @patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
-    @patch('cybersource.signals.pre_build_auth_request.send')
-    @patch('cybersource.signals.pre_build_get_token_request.send')
-    @patch('oscarapicheckout.signals.pre_calculate_total.send')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    @mock.patch('cybersource.signals.pre_build_auth_request.send')
+    @mock.patch('cybersource.signals.pre_build_get_token_request.send')
+    @mock.patch('oscarapicheckout.signals.pre_calculate_total.send')
     def test_request_auth_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request,
                                        run_transaction):
         product = self.create_product()

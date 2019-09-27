@@ -1,6 +1,5 @@
 from django.utils.translation import gettext_lazy as _
 from oscar.defaults import *  # noqa
-from oscar import OSCAR_MAIN_TEMPLATE_DIR, get_core_apps
 from psycopg2cffi import compat
 import os
 
@@ -28,6 +27,7 @@ FERNET_KEYS = [
 ]
 
 INSTALLED_APPS = [
+    # Core Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -37,15 +37,52 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
+
+    # django-oscar
+    'oscar',
+    'oscar.apps.analytics',
+    'oscar.apps.checkout',
+    'oscar.apps.address',
+    'oscar.apps.shipping',
+    'oscar.apps.catalogue',
+    'oscar.apps.catalogue.reviews',
+    'oscar.apps.partner',
+    'oscar.apps.basket',
+    'payment',  # 'oscar.apps.payment',
+    'oscar.apps.offer',
+    'order',  # 'oscar.apps.order',
+    'oscar.apps.customer',
+    'oscar.apps.search',
+    'oscar.apps.voucher',
+    'oscar.apps.wishlists',
+    'oscar.apps.dashboard',
+    'oscar.apps.dashboard.reports',
+    'oscar.apps.dashboard.users',
+    'oscar.apps.dashboard.orders',
+    'oscar.apps.dashboard.catalogue',
+    'oscar.apps.dashboard.offers',
+    'oscar.apps.dashboard.partners',
+    'oscar.apps.dashboard.pages',
+    'oscar.apps.dashboard.ranges',
+    'oscar.apps.dashboard.reviews',
+    'oscar.apps.dashboard.vouchers',
+    'oscar.apps.dashboard.communications',
+    'oscar.apps.dashboard.shipping',
+
+    # 3rd-party apps that oscar depends on
     'widget_tweaks',
+    'haystack',
+    'treebeard',
+    'sorl.thumbnail',
+    'django_tables2',
+
+    # django-oscar-api
+    'rest_framework',
     'oscarapi',
+
     'oscarapicheckout',
     'cybersource',
-] + get_core_apps([
-    'order',
-    'payment',
-])
-
+]
 
 MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
@@ -59,13 +96,10 @@ MIDDLEWARE = (
     'oscar.apps.basket.middleware.BasketMiddleware',
 )
 
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            OSCAR_MAIN_TEMPLATE_DIR
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,7 +109,6 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',
                 'oscar.apps.search.context_processors.search_form',
-                'oscar.apps.promotions.context_processors.promotions',
                 'oscar.apps.checkout.context_processors.checkout',
                 'oscar.apps.customer.notifications.context_processors.notifications',
                 'oscar.core.context_processors.metadata',
@@ -83,7 +116,6 @@ TEMPLATES = [
         },
     },
 ]
-
 
 DATABASES = {
     'default': {
@@ -109,13 +141,11 @@ CACHES = {
     }
 }
 
-
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'public', 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public', 'media')
-
 
 # Order Status Pipeline
 # Needed by oscarapicheckout
@@ -126,7 +156,6 @@ ORDER_STATUS_AUTHORIZED = 'Authorized'
 # Other statuses
 ORDER_STATUS_SHIPPED = 'Shipped'
 ORDER_STATUS_CANCELED = 'Canceled'
-
 
 OSCAR_INITIAL_ORDER_STATUS = ORDER_STATUS_PENDING
 OSCARAPI_INITIAL_ORDER_STATUS = ORDER_STATUS_PENDING
@@ -148,7 +177,6 @@ OSCAR_LINE_STATUS_PIPELINE = {
 OSCAR_ALLOW_ANON_CHECKOUT = True
 OSCAR_DEFAULT_CURRENCY = 'USD'
 OSCARAPI_BLOCK_ADMIN_API_ACCESS = False
-
 
 # Cybersource Config
 CYBERSOURCE_ORG_ID = 'someorg'
