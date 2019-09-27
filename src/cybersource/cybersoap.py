@@ -1,12 +1,10 @@
-import logging
-import soap
-
-from cybersource.actions import PRECISION
-from .constants import DECISION_ERROR, TERMINAL_DESCRIPTOR, CHECKOUT_FINGERPRINT_SESSION_ID
-from . import signals
-
 from suds.wsse import Security
 from suds.wsse import UsernameToken
+from .actions import PRECISION
+from .constants import DECISION_ERROR, TERMINAL_DESCRIPTOR, CHECKOUT_FINGERPRINT_SESSION_ID
+from . import signals
+import logging
+import soap
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 from django.test import TestCase
-
 from ..models import CyberSourceReply, PaymentToken, SecureAcceptanceProfile
 from .factories import build_accepted_token_reply_data
 

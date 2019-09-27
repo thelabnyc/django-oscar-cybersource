@@ -33,7 +33,6 @@ Jinja2==2.10.1
 lxml==4.3.3
 MarkupSafe==1.1.1
 mccabe==0.6.1
-mock==2.0.0
 packaging==19.0
 pbr==5.2.0
 phonenumbers==8.10.11

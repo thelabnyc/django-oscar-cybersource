@@ -13,9 +13,9 @@ packages = find_packages('src')
 
 install_requires = [
     'django-fernet-fields>=0.5',
-    'django-oscar-api-checkout>=0.5.1',
-    'django-oscar-api>=1.4.0,<2.0.0',
-    'django-oscar>=1.6,<2.0.0',
+    'django-oscar-api-checkout>=0.6.0b1',
+    'django-oscar-api>=2.0.0',
+    'django-oscar>=2.0.0',
     'lxml>=4.1.1',
     'phonenumbers>=8.8.8',
     'python-dateutil>=2.8.0',
@@ -26,15 +26,16 @@ extras_require = {
         'beautifulsoup4>=4.6.0',
         'coverage>=4.4.2',
         'flake8>=3.5.0',
+        'instrumented-soap==1.1.1',
         'psycopg2cffi>=2.7.7',
         'PyYAML>=3.12',
         'requests>=2.18.4',
-        'sphinx>=1.5.2',
+        'sorl-thumbnail>=11.04',
         'sphinx-rtd-theme>=0.4.3',
+        'sphinx>=1.5.2',
+        'suds-jurko==0.6',
         'tox>=2.6.0',
         'versiontag>=1.2.0',
-        'suds-jurko==0.6',
-        'instrumented-soap==1.1.1',
     ],
 }
 
