@@ -7,6 +7,7 @@ Changelog
 ------------------
 - Add support for django-oscar 2.x.
 - Drop support for django-oscar 1.x.
+- Fix bug causing Transaction.reference to refer to the payment-token transaction instead of the authorization transaction.
 
 4.0.2
 ------------------
