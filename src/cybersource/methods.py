@@ -121,82 +121,16 @@ class Cybersource(PaymentMethod):
         token_string = data.get('payment_token')
         card_num = data.get('req_card_number')
         card_type = data.get('req_card_type')
-
-        # Create the payment token
-        if not PaymentToken.objects.filter(token=token_string).exists():
+        try:
+            token = PaymentToken.objects.filter(token=token_string).get()
+        except PaymentToken.DoesNotExist:
             token = PaymentToken(
                 log=reply_log_entry,
                 token=token_string,
                 masked_card_number=card_num,
                 card_type=card_type)
             token.save()
-
-
-    def record_successful_authorization(self, reply_log_entry, order, data):
-        """Payment Step 3: Record a successful authorization"""
-        token_string = data.get('payment_token')
-        transaction_id = data.get('transaction_id')
-        decision = reply_log_entry.get_decision()
-        request_token = data.get('request_token')
-        signed_date_time = data.get('signed_date_time')
-        req_amount = Decimal(data.get('req_amount', '0'))
-
-        # assuming these are equal since authorization succeeded
-        auth_amount = req_amount
-
-        source = self.get_source(order, transaction_id)
-
-        try:
-            token = PaymentToken.objects.get(token=token_string)
-        except PaymentToken.DoesNotExist:
-            return Declined(req_amount, source_id=source.pk)
-
-        source.amount_allocated += auth_amount
-        source.save()
-
-        transaction = Transaction()
-        transaction.log = reply_log_entry
-        transaction.source = source
-        transaction.token = token
-        transaction.txn_type = Transaction.AUTHORISE
-        transaction.amount = req_amount
-        transaction.reference = transaction_id
-        transaction.status = decision
-        transaction.request_token = request_token
-        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
-        transaction.save()
-
-        event = self.make_authorize_event(order, auth_amount, transaction_id)
-        for line in order.lines.all():
-            self.make_event_quantity(event, line, line.quantity)
-
-        return Complete(source.amount_allocated, source_id=source.pk)
-
-
-    def record_declined_authorization(self, reply_log_entry, order, data):
-        """Payment Declined in Step 3: Record a failed authorization."""
-        token_string = data.get('payment_token')
-        transaction_id = data.get('transaction_id', '')
-        decision = reply_log_entry.get_decision()
-        request_token = data.get('request_token')
-        signed_date_time = data.get('signed_date_time')
-        req_amount = Decimal(data.get('req_amount', '0'))
-
-        source = self.get_source(order, transaction_id)
-
-        transaction = Transaction()
-        transaction.log = reply_log_entry
-        transaction.source = source
-        transaction.token = PaymentToken.objects.filter(token=token_string).first()
-        transaction.txn_type = Transaction.AUTHORISE
-        transaction.amount = req_amount
-        transaction.reference = transaction_id
-        transaction.status = decision
-        transaction.request_token = request_token
-        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
-        transaction.save()
-
-        return Declined(req_amount, source_id=source.pk)
+        return token, None
 
 
     def _fields(self, operation):
@@ -229,7 +163,6 @@ class Bluefin(PaymentMethod):
     name = settings.SOURCE_TYPE
     code = 'bluefin'
     serializer_class = BluefinPaymentMethodSerializer
-
 
     @staticmethod
     def log_soap_response(request, order, response, card_expiry_date=None):
@@ -276,7 +209,7 @@ class Bluefin(PaymentMethod):
         return cs.lookup_payment_token(payment_token)
 
 
-    def _record_created_payment_token(self, request, order, reply_log_entry, response):
+    def record_created_payment_token(self, request, order, reply_log_entry, response):
         token_string = response.paySubscriptionCreateReply.subscriptionID
         # Lookup more details about the token
         token_details = self.__class__.lookup_token_details(request, order, token_string)
@@ -291,9 +224,9 @@ class Bluefin(PaymentMethod):
         return token, token_details
 
 
-    def _record_successful_authorization(self, reply_log_entry, order, token_string, response):
+    def record_successful_authorization(self, reply_log_entry, order, token_string, response):
         decision = reply_log_entry.get_decision()
-        transaction_id = response.encryptedPayment.referenceID
+        transaction_id = response.requestID
         request_token = response.requestToken
         signed_date_time = response.ccAuthReply.authorizedDateTime
         req_amount = Decimal(response.ccAuthReply.amount)
@@ -310,7 +243,6 @@ class Bluefin(PaymentMethod):
 
         source.amount_allocated += auth_amount
         source.save()
-
         transaction = Transaction()
         transaction.log = reply_log_entry
         transaction.source = source
@@ -322,16 +254,15 @@ class Bluefin(PaymentMethod):
         transaction.request_token = request_token
         transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
         transaction.save()
-
         event = self.make_authorize_event(order, auth_amount)
         for line in order.lines.all():
             self.make_event_quantity(event, line, line.quantity)
-
         return Complete(source.amount_allocated, source_id=source.pk)
 
-    def _record_declined_authorization(self, reply_log_entry, order, token_string, response, amount):
+
+    def record_declined_authorization(self, reply_log_entry, order, token_string, response, amount):
         decision = reply_log_entry.get_decision()
-        transaction_id = response.encryptedPayment.referenceID
+        transaction_id = response.requestID
         request_token = response.requestToken
         signed_date_time = str(timezone.now())  # not available in response.ccAuthReply
         req_amount = amount  # not available in response.ccAuthReply
@@ -352,16 +283,16 @@ class Bluefin(PaymentMethod):
 
         return Declined(req_amount, source_id=source.pk)
 
+
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """ This is the entry point from django-oscar-api-checkout """
         payment_data = kwargs.get('payment_data')
-
         if payment_data is None:
             return Declined(amount)
+        return self.record_bluefin_payment(request, order, method_key, amount, payment_data)
 
-        return self._record_bluefin_payment(request, order, method_key, amount, payment_data)
 
-    def _record_bluefin_payment(self, request, order, method_key, amount, payment_data):
+    def record_bluefin_payment(self, request, order, method_key, amount, payment_data):
         # Allow application to include extra, arbitrary fields in the request to CS
         extra_fields = {}
         signals.pre_build_get_token_request.send(
@@ -383,34 +314,32 @@ class Bluefin(PaymentMethod):
         response = cs.get_token_encrypted(payment_data)
         reply_log_entry = self.__class__.log_soap_response(request, order, response)
 
-        if response.decision == DECISION_ACCEPT:
-            token, token_details = self._record_created_payment_token(request, order, reply_log_entry, response)
-            expiry_date = "{month}-{year}".format(
-                month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
-                year=token_details.paySubscriptionRetrieveReply.cardExpirationYear)
-            reply_log_entry.req_card_expiry_date = expiry_date
-            reply_log_entry.save()
-
-            # Authorize via SOAP
-            response = cs.authorize_encrypted(payment_data, amount)
-            reply_log_entry = self.__class__.log_soap_response(request, order, response,
-                card_expiry_date=expiry_date)
-
-            # If authorization was successful, log it and redirect to the success page.
-            if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
-                new_state = self._record_successful_authorization(reply_log_entry, order, token.token, response)
-
-                if response.decision == DECISION_REVIEW:
-                    create_review_order_note(order, response.encryptedPayment.referenceID)
-
-                return new_state
-            else:
-                # Authorization failed
-                new_state = self._record_declined_authorization(reply_log_entry, order, token.token, response, amount)
-                mark_declined(order, request, method_key, reply_log_entry)
-                return new_state
-
-        else:
-            # Payment token was not created
+        # If token creation was not successful, return declined.
+        if response.decision != DECISION_ACCEPT:
             mark_declined(order, request, method_key, reply_log_entry)
             return Declined(amount)
+
+        # Record the new payment token
+        token, token_details = self.record_created_payment_token(request, order, reply_log_entry, response)
+        expiry_date = "{month}-{year}".format(
+            month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
+            year=token_details.paySubscriptionRetrieveReply.cardExpirationYear)
+        reply_log_entry.req_card_expiry_date = expiry_date
+        reply_log_entry.save()
+
+        # Attempt to authorize payment
+        response = cs.authorize_encrypted(payment_data, amount)
+        reply_log_entry = self.__class__.log_soap_response(request, order, response,
+            card_expiry_date=expiry_date)
+
+        # If authorization was not successful, log it and redirect to the failed page.
+        if response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
+            new_state = self.record_declined_authorization(reply_log_entry, order, token.token, response, amount)
+            mark_declined(order, request, method_key, reply_log_entry)
+            return new_state
+
+        # Authorization was successful! Log it and update he order state
+        new_state = self.record_successful_authorization(reply_log_entry, order, token.token, response)
+        if response.decision == DECISION_REVIEW:
+            create_review_order_note(order, response.requestID)
+        return new_state

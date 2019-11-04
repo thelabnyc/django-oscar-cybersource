@@ -140,42 +140,45 @@ class CyberSourceReplyView(APIView):
         # Fetch the related order
         order = self._get_order(request)
         method_key = self._get_method_key(request)
+        create_token_resp_data = request.data
 
         # Figure out what status the order is in.
-        decision = reply_log_entry.get_decision()
+        token_decision = reply_log_entry.get_decision()
 
         # Check if the payment token was actually created or not.
-        if decision == DECISION_ACCEPT:
-            Cybersource().record_created_payment_token(reply_log_entry, request.data)
-            cs = CyberSourceSoap(
-                settings.CYBERSOURCE_WSDL,
-                settings.MERCHANT_ID,
-                settings.CYBERSOURCE_SOAP_KEY,
-                request,
-                order,
-                method_key)
-
-            response = cs.authorize()
-            reply_log_entry = Bluefin.log_soap_response(request, order, response)
-
-            # If authorization was successful, log it and redirect to the success page.
-            if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
-                new_state = Cybersource().record_successful_authorization(reply_log_entry, order, request.data)
-                utils.update_payment_method_state(order, request, method_key, new_state)
-
-                if response.decision == DECISION_REVIEW:
-                    create_review_order_note(order, request.data.get('transaction_id'))
-
-                return redirect(settings.REDIRECT_SUCCESS)
-            else:
-                # Authorization was declined
-                mark_declined(order, request, method_key, reply_log_entry)
-                return redirect(settings.REDIRECT_FAIL)
-
-        else:
+        if token_decision != DECISION_ACCEPT:
             # Payment token was not created
             mark_declined(order, request, method_key, reply_log_entry)
             return redirect(settings.REDIRECT_FAIL)
+
+        # Record the new payment token
+        token, _ = Cybersource().record_created_payment_token(reply_log_entry, create_token_resp_data)
+
+        # Try to authorize the payment
+        cs = CyberSourceSoap(
+            settings.CYBERSOURCE_WSDL,
+            settings.MERCHANT_ID,
+            settings.CYBERSOURCE_SOAP_KEY,
+            request,
+            order,
+            method_key)
+        auth_response = cs.authorize()
+        auth_reply_log_entry = Bluefin.log_soap_response(request, order, auth_response)
+
+        # If authorization was declined, log it and redirect to the failure page.
+        if auth_response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
+            Bluefin().record_declined_authorization(auth_reply_log_entry, order, token.token, auth_response, '0.00')
+            mark_declined(order, request, method_key, auth_reply_log_entry)
+            return redirect(settings.REDIRECT_FAIL)
+
+        # If authorization was successful, log it and redirect to the success page.
+        new_state = Bluefin().record_successful_authorization(auth_reply_log_entry, order, token.token, auth_response)
+        utils.update_payment_method_state(order, request, method_key, new_state)
+
+        if auth_response.decision == DECISION_REVIEW:
+            create_review_order_note(order, auth_response.requestID)
+        return redirect(settings.REDIRECT_SUCCESS)
+
 
 
     def _get_order(self, request):

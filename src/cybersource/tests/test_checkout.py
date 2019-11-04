@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core import mail
 from django.urls import reverse
 from django.test import tag
+from django.utils import timezone
 from oscar.core.loading import get_model
 from oscar.test import factories
 from rest_framework import status
@@ -156,17 +157,6 @@ class BaseCheckoutTest(APITestCase):
         return self.do_cs_reply(resp)
 
 
-    def do_cs_auth(self, cs_url, fields, extra_fields={}):
-        cs_data = {}
-        for field in fields:
-            if not field['editable'] or field['key'] not in cs_data:
-                cs_data[field['key']] = field['value']
-        cs_data.update(extra_fields)
-        resp = requests.post(cs_url, cs_data)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        return self.do_cs_reply(resp)
-
-
     def check_finished_order(self, number, product_id, quantity=1, status=DECISION_ACCEPT, card_last4='1111'):
         # Order exists and was paid for
         self.assertEqual(Order.objects.all().count(), 1)
@@ -243,8 +233,16 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
         self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
 
+        run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '10.00'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
         run_transaction.return_value.decision = 'ACCEPT'
         run_transaction.return_value.merchantReferenceCode = order_number
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
         log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
@@ -296,8 +294,15 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
         self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
 
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '10.00'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
         run_transaction.return_value.decision = 'REVIEW'
         run_transaction.return_value.merchantReferenceCode = order_number
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
         log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
@@ -346,8 +351,16 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['order_status'], 'Pending')
         self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
 
+        run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '10.00'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
         run_transaction.return_value.decision = 'ACCEPT'
         run_transaction.return_value.merchantReferenceCode = order_number
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
         log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
@@ -419,8 +432,17 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['order_status'], 'Pending')
         self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
 
+        run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '0.00'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
         run_transaction.return_value.decision = 'ACCEPT'
+        run_transaction.return_value.reasonCode = '100'
         run_transaction.return_value.merchantReferenceCode = order_number
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
         log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
@@ -640,7 +662,7 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
 
         # don't expect a card_last4, since we're using encrypted card info
-        self.check_finished_order(order_number, product.id, card_last4='')
+        self.check_finished_order(order_number, product.id)
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
@@ -797,7 +819,7 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
 
-        self.check_finished_order(order_number, product.id, status='REVIEW', card_last4='')
+        self.check_finished_order(order_number, product.id, status='REVIEW')
 
 
 class CSReplyViewTest(BaseCheckoutTest):
@@ -919,10 +941,13 @@ class CSReplyViewTest(BaseCheckoutTest):
 
         data = cs_factories.build_accepted_token_reply_data(order_number)
         data = cs_factories.sign_reply_data(data)
+        run_transaction.return_value.encryptedPayment.side_effect = AttributeError
         run_transaction.return_value.ccAuthReply.avsCode = 'Y'
         run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
         run_transaction.return_value.ccAuthReply.processorResponse = 'A'
         run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '10.42'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
         run_transaction.return_value.decision = 'REJECT'
         run_transaction.return_value.reasonCode = '200'
         run_transaction.return_value.merchantReferenceCode = '118031289162'
@@ -1099,6 +1124,8 @@ class CybersourceMethodTest(BaseCheckoutTest):
         run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
         run_transaction.return_value.ccAuthReply.processorResponse = 'A'
         run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '10.42'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
         run_transaction.return_value.decision = 'ACCEPT'
         run_transaction.return_value.reasonCode = '100'
         run_transaction.return_value.merchantReferenceCode = '118031289162'
