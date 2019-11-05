@@ -167,7 +167,8 @@ class CyberSourceReplyView(APIView):
 
         # If authorization was declined, log it and redirect to the failure page.
         if auth_response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
-            Bluefin().record_declined_authorization(auth_reply_log_entry, order, token.token, auth_response, '0.00')
+            amount = create_token_resp_data.get('req_amount', '0.00')
+            Bluefin().record_declined_authorization(auth_reply_log_entry, order, token.token, auth_response, amount)
             mark_declined(order, request, method_key, auth_reply_log_entry)
             return redirect(settings.REDIRECT_FAIL)
 
