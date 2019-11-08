@@ -83,6 +83,24 @@ class CyberSourceReplyView(APIView):
         if not self.is_request_valid(request):
             raise SuspiciousOperation('Bad Signature')
 
+        # Resume Session using the encrypted session ID in the Cybersource request
+        # Why is this needed?
+        # Django 2.2 starts defaulting to sending cookies as SameSite=Lax. Even if you disable that
+        # behavior, Chrome>=v80 will treat all cookies as SameSite=Lax.
+        #
+        # When the session cookie is set to SameSite=Lax, the cookie won't be sent to Django by the
+        # Cybersource secure acceptance form POST (the POST which triggers this view). That breaks
+        # the mechanism that we use to keep track of checkout payment state.
+        #
+        # To get around that we store the (encrypted) session ID as merchant defined data sent to
+        # Cybersource. Cybersource then sends us that value back with their reply, where we decrypt
+        # it, and use it to rehydrate the user's real session.
+        session_id_field_name = 'req_{}'.format(actions.OrderAction.session_id_field_name)
+        encrypted_session_id = request.data.get(session_id_field_name)
+        session_id = actions.decrypt_session_id(encrypted_session_id)
+        request.session._session_key = session_id
+        delattr(request.session, '_session_cache')
+
         # Record in reply log
         log = self.log_response(request)
 
@@ -91,6 +109,9 @@ class CyberSourceReplyView(APIView):
         handler = self.get_handler_fn(trans_type)
         with transaction.atomic():
             resp = handler(request, log)
+
+        # Save session and return response
+        request.session.save()
         return resp
 
 

@@ -1,11 +1,29 @@
 from decimal import Decimal
 from datetime import datetime
+from django.utils.encoding import force_bytes, force_text
+from fernet_fields import EncryptedTextField
 from . import settings, signature, models
 import random
 import time
 import re
 
 PRECISION = Decimal('0.01')
+
+
+def encrypt_session_id(session_id):
+    fernet = EncryptedTextField().fernet
+    session_id_bytes = force_bytes(session_id)
+    encrypted_bytes = fernet.encrypt(session_id_bytes)
+    encrypted_str = force_text(encrypted_bytes)
+    return encrypted_str
+
+
+def decrypt_session_id(encrypted_str):
+    fernet = EncryptedTextField().fernet
+    encrypted_bytes = force_bytes(encrypted_str)
+    session_id_bytes = fernet.decrypt(encrypted_bytes)
+    session_id = force_text(session_id_bytes)
+    return session_id
 
 
 class SecureAcceptanceAction(object):
@@ -160,11 +178,13 @@ class BillingAddressMixin(object):
 
 class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMixin):
     method_key_field_name = 'merchant_defined_data50'
+    session_id_field_name = 'merchant_secure_data4'  # Use secure_data4 because it has a 2000 char length limit, as opposed to 100 char.
 
     """
     Abstract SecureAcceptanceAction for action's related to orders.
     """
-    def __init__(self, order, method_key, amount, server_hostname, **kwargs):
+    def __init__(self, session_id, order, method_key, amount, server_hostname, **kwargs):
+        self.session_id = session_id
         self.order = order
         self.method_key = method_key
         self.amount = amount
@@ -188,6 +208,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
             'customer_ip_address',
             'device_fingerprint_id',
             self.method_key_field_name,
+            self.session_id_field_name,
         ])
         return fields
 
@@ -208,6 +229,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
         data['reference_number'] = str(self.order.number)
         data['currency'] = self.order.currency
         data[self.method_key_field_name] = self.method_key
+        data[self.session_id_field_name] = encrypt_session_id(self.session_id)
         data['amount'] = str(self.amount.quantize(PRECISION))
 
         # Add shipping and billing info
@@ -254,27 +276,3 @@ class CreatePaymentToken(OrderAction):
             'card_cvn',
         ])
         return fields
-
-
-class AuthorizePaymentToken(OrderAction):
-    transaction_type = 'authorization'
-    url = settings.ENDPOINT_PAY
-
-    def __init__(self, token_string, order, method_key, amount, server_hostname, **kwargs):
-        self.token_string = token_string
-        super().__init__(order, method_key, amount, server_hostname, **kwargs)
-
-
-    @property
-    def signed_field_names(self):
-        fields = super().signed_field_names
-        fields = fields | set([
-            'payment_token',
-        ])
-        return fields
-
-
-    def build_signed_data(self):
-        data = super().build_signed_data()
-        data['payment_token'] = self.token_string
-        return data

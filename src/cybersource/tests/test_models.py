@@ -5,7 +5,7 @@ from .factories import build_accepted_token_reply_data
 
 class PaymentTokenTest(TestCase):
     def test_log_data_parsing(self):
-        data = build_accepted_token_reply_data('S123456789')
+        data = build_accepted_token_reply_data('S123456789', '')
         log = CyberSourceReply.objects.create(
             data=data,
             auth_avs_code=data.get('auth_avs_code'),

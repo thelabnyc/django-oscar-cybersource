@@ -2,6 +2,7 @@ from datetime import datetime
 from random import randrange
 from ..signature import SecureAcceptanceSigner
 from ..models import SecureAcceptanceProfile
+from ..actions import encrypt_session_id
 import uuid
 
 
@@ -9,7 +10,7 @@ def get_sa_profile():
     return SecureAcceptanceProfile.get_profile('testserver')
 
 
-def build_accepted_token_reply_data(order_number):
+def build_accepted_token_reply_data(order_number, session_id):
     data = {
         "decision": "ACCEPT",
         "payment_token": "4600379961546299901519",
@@ -50,6 +51,7 @@ def build_accepted_token_reply_data(order_number):
         "req_ship_to_surname": "Smith",
         "req_transaction_type": "create_payment_token",
         "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
+        "req_merchant_secure_data4": encrypt_session_id(session_id),
         "request_token": "Ahj/7wSR8sYxolZgxwyeIkG7lw3ZNnDmLNjMqcSPOS4lfDoTAFLiV8OhM0glqN4vpQyaSZbpAd0+3AnI+WMY0SswY4ZPAAAALRaM",
         "transaction_id": str(randrange(0, 99999999999999999999)),
         "utf8": "✓",
@@ -57,7 +59,7 @@ def build_accepted_token_reply_data(order_number):
     return data
 
 
-def build_accepted_auth_reply_data(order_number):
+def build_accepted_auth_reply_data(order_number, session_id):
     data = {
         "auth_amount": "99.99",
         "auth_avs_code": "X",
@@ -115,6 +117,7 @@ def build_accepted_auth_reply_data(order_number):
         "req_ship_to_surname": "Smith",
         "req_transaction_type": "authorization",
         "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
+        "req_merchant_secure_data4": encrypt_session_id(session_id),
         "request_token": "Ahj/7wSR8sYxolZgxwyeIkG7lw3ZNnDmLNjMqcSPOS4lfDoTAFLiV8OhM0glqN4vpQyaSZbpAd0+3AnI+WMY0SswY4ZPAAAALRaM",
         "score_bin_country": "US",
         "score_card_issuer": "JPMORGAN CHASE BANK, N.A.",
@@ -139,7 +142,7 @@ def build_accepted_auth_reply_data(order_number):
     return data
 
 
-def build_review_token_reply_data(order_number):
+def build_review_token_reply_data(order_number, session_id):
     data = {
         "decision": "REVIEW",
         "message": "Decision is REVIEW.",
@@ -183,13 +186,14 @@ def build_review_token_reply_data(order_number):
         "req_transaction_type": "create_payment_token",
         "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
         "request_token": "Ahj77wSR8sY0PySenECSIpcaMXXZAClxoxddkaQR1G8vpJl6SZbpAd0+2AnI+WMaH5JPTiBJAAAA9hKE",
+        "req_merchant_secure_data4": encrypt_session_id(session_id),
         "transaction_id": str(randrange(0, 99999999999999999999)),
         "utf8": "✓",
     }
     return data
 
 
-def build_declined_token_reply_data(order_number):
+def build_declined_token_reply_data(order_number, session_id):
     data = {
         "decision": "DECLINE",
         "message": "We encountered a Paymentech problem: Reason: Processor Decline.",
@@ -233,13 +237,14 @@ def build_declined_token_reply_data(order_number):
         "req_transaction_type": "create_payment_token",
         "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
         "request_token": "Ahj77wSR8sY0PySenECSIpcaMXXZAClxoxddkaQR1G8vpJl6SZbpAd0+2AnI+WMaH5JPTiBJAAAA9hKE",
+        "req_merchant_secure_data4": encrypt_session_id(session_id),
         "transaction_id": str(randrange(0, 99999999999999999999)),
         "utf8": "✓",
     }
     return data
 
 
-def build_declined_auth_reply_data(order_number):
+def build_declined_auth_reply_data(order_number, session_id):
     data = {
         "auth_avs_code": "X",
         "auth_avs_code_raw": "I1",
@@ -289,13 +294,14 @@ def build_declined_auth_reply_data(order_number):
         "req_transaction_type": "authorization",
         "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
         "request_token": "Ahj77wSR8sY0PySenECSIpcaMXXZAClxoxddkaQR1G8vpJl6SZbpAd0+2AnI+WMaH5JPTiBJAAAA9hKE",
+        "req_merchant_secure_data4": encrypt_session_id(session_id),
         "transaction_id": str(randrange(0, 99999999999999999999)),
         "utf8": "✓",
     }
     return data
 
 
-def build_dmreview_auth_reply_data(order_number):
+def build_dmreview_auth_reply_data(order_number, session_id):
     data = {
         "auth_amount": "99.99",
         "auth_avs_code": "X",
@@ -354,6 +360,7 @@ def build_dmreview_auth_reply_data(order_number):
         "req_transaction_type": "authorization",
         "req_transaction_uuid": str(randrange(100000000000, 999999999999)),
         "request_token": "Ahj/7wSR8sYxolZgxwyeIkG7lw3ZNnDmLNjMqcSPOS4lfDoTAFLiV8OhM0glqN4vpQyaSZbpAd0+3AnI+WMY0SswY4ZPAAAALRaM",
+        "req_merchant_secure_data4": encrypt_session_id(session_id),
         "score_bin_country": "US",
         "score_card_issuer": "JPMORGAN CHASE BANK, N.A.",
         "score_card_scheme": "VISA CREDIT",

@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.conf import settings as django_settings
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
@@ -94,7 +95,9 @@ class Cybersource(PaymentMethod):
             method_key=method_key)
 
         # Build the data for CyberSource transaction
+        session_id = request.COOKIES.get(django_settings.SESSION_COOKIE_NAME)
         operation = actions.CreatePaymentToken(
+            session_id=session_id,
             order=order,
             method_key=method_key,
             amount=amount,

@@ -846,8 +846,11 @@ class CSReplyViewTest(BaseCheckoutTest):
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_invalid_signature(self, order_payment_authorized):
         """Invalid signature should result in 400 Bad Request"""
+        session = self.client.session
+        session.save()
+
         order_number = self.prepare_order()
-        data = cs_factories.build_declined_token_reply_data(order_number)
+        data = cs_factories.build_declined_token_reply_data(order_number, session.session_key)
         data = cs_factories.sign_reply_data(data)
 
         data['signature'] = 'abcdef'
@@ -862,8 +865,11 @@ class CSReplyViewTest(BaseCheckoutTest):
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_invalid_request_type(self, order_payment_authorized):
         """Bad request type should result in 400 Bad Request"""
+        session = self.client.session
+        session.save()
+
         order_number = self.prepare_order()
-        data = cs_factories.build_declined_token_reply_data(order_number)
+        data = cs_factories.build_declined_token_reply_data(order_number, session.session_key)
 
         data["req_transaction_type"] = "payment",
 
@@ -878,8 +884,11 @@ class CSReplyViewTest(BaseCheckoutTest):
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_invalid_reference_number(self, order_payment_authorized):
         """Mismatched reference number should result in 400 Bad Request"""
+        session = self.client.session
+        session.save()
+
         order_number = self.prepare_order()
-        data = cs_factories.build_accepted_token_reply_data(order_number + 'ABC')
+        data = cs_factories.build_accepted_token_reply_data(order_number + 'ABC', session.session_key)
         data = cs_factories.sign_reply_data(data)
         url = reverse('cybersource-reply')
         resp = self.client.post(url, data)
@@ -891,8 +900,11 @@ class CSReplyViewTest(BaseCheckoutTest):
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_review_card(self, order_payment_authorized):
         """Review card should be treated like a decline and result in redirect to failure page"""
+        session = self.client.session
+        session.save()
+
         order_number = self.prepare_order()
-        data = cs_factories.build_review_token_reply_data(order_number)
+        data = cs_factories.build_review_token_reply_data(order_number, session.session_key)
         data = cs_factories.sign_reply_data(data)
         url = reverse('cybersource-reply')
 
@@ -906,8 +918,11 @@ class CSReplyViewTest(BaseCheckoutTest):
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_declined_card(self, order_payment_authorized):
         """Declined card should result in redirect to failure page"""
+        session = self.client.session
+        session.save()
+
         order_number = self.prepare_order()
-        data = cs_factories.build_declined_token_reply_data(order_number)
+        data = cs_factories.build_declined_token_reply_data(order_number, session.session_key)
         data = cs_factories.sign_reply_data(data)
         url = reverse('cybersource-reply')
 
@@ -922,9 +937,12 @@ class CSReplyViewTest(BaseCheckoutTest):
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
     def test_soap_declined_auth(self, order_payment_authorized):
         """Declined auth should should result in redirect to failure page"""
+        session = self.client.session
+        session.save()
+
         order_number = self.prepare_order()
 
-        data = cs_factories.build_accepted_token_reply_data(order_number)
+        data = cs_factories.build_accepted_token_reply_data(order_number, session.session_key)
         data = cs_factories.sign_reply_data(data)
         url = reverse('cybersource-reply')
         resp = self.client.post(url, data)
@@ -939,7 +957,10 @@ class CSReplyViewTest(BaseCheckoutTest):
         """Declined auth should should result in redirect to failure page"""
         order_number = self.prepare_order()
 
-        data = cs_factories.build_accepted_token_reply_data(order_number)
+        session = self.client.session
+        session.save()
+
+        data = cs_factories.build_accepted_token_reply_data(order_number, session.session_key)
         data = cs_factories.sign_reply_data(data)
         run_transaction.return_value.encryptedPayment.side_effect = AttributeError
         run_transaction.return_value.ccAuthReply.avsCode = 'Y'
