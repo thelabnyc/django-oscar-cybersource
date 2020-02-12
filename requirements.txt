@@ -15,7 +15,6 @@ django-oscar==1.6.7
 django-oscar-api==1.5.4
 django-oscar-api-checkout==0.5.0
 django-phonenumber-field==2.0.1
-django-statsd-mozilla==0.4.0
 django-tables2==1.21.2
 django-treebeard==4.3
 django-widget-tweaks==1.4.3
@@ -64,7 +63,6 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.2
 sphinxcontrib-serializinghtml==1.1.3
 sqlparse==0.3.0
-statsd==3.3.0
 suds-jurko==0.6
 text-unidecode==1.2
 toml==0.10.0
