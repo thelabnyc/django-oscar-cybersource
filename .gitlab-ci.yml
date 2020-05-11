@@ -59,7 +59,7 @@ test_pypy3:
   stage: test
   tags:
     - django-oscar
-  image: pypy:3-5
+  image: pypy:latest
   script:
     - pip install tox
     - tox -e 'pypy3-django{220}-drf{39,310}-oscar{20}'
