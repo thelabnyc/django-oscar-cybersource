@@ -4,7 +4,7 @@ django-oscar-cybersource
 
 |  |build| |coverage| |license| |kit| |format|
 
-This package is to handle integration between django-oscar based e-commerce sites and `Cybersource Secure Acceptance Silent Order POST <http://apps.cybersource.com/library/documentation/dev_guides/Secure_Acceptance_SOP/Secure_Acceptance_SOP.pdf>`_.
+This package is to handle integration between django-oscar based e-commerce sites and `Secure Acceptance Checkout API <https://developer.cybersource.com/library/documentation/dev_guides/Secure_Acceptance_Checkout_API/Secure_Acceptance_Checkout_API.pdf>`_.
 
 **Full Documentation**: https://django-oscar-cybersource.readthedocs.io
 
