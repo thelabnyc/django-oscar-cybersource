@@ -3,6 +3,10 @@
 Changelog
 =========
 
+6.0.1
+------------------
+- Fix test suite issues by mocking Cybersource SA requests
+
 6.0.0
 ------------------
 - Remove StatsD metrics
