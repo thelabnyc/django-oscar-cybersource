@@ -13,7 +13,7 @@ packages = find_packages('src')
 
 install_requires = [
     'django-fernet-fields>=0.5',
-    'django-oscar-api-checkout>=0.6.0b1',
+    'django-oscar-api-checkout>=1.1.0',
     'django-oscar-api>=2.0.0',
     'django-oscar>=2.0.0',
     'lxml>=4.1.1',
@@ -23,13 +23,11 @@ install_requires = [
 
 extras_require = {
     'development': [
-        'beautifulsoup4>=4.6.0',
         'coverage>=4.4.2',
         'flake8>=3.5.0',
         'instrumented-soap==1.1.1',
         'psycopg2cffi>=2.7.7',
         'PyYAML>=3.12',
-        'requests>=2.18.4',
         'sorl-thumbnail>=11.04',
         'sphinx-rtd-theme>=0.4.3',
         'sphinx>=1.5.2',
@@ -59,15 +57,11 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
-        'Framework :: Django :: 1.11',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: ISC License (ISCL)',
         'Operating System :: Unix',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
     ],
     author='Craig Weber',
     author_email='crgwbr@gmail.com',

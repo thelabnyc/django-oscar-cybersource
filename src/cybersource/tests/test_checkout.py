@@ -1,17 +1,16 @@
 from unittest import skipUnless, mock
-from bs4 import BeautifulSoup
 from decimal import Decimal as D
 from django.conf import settings
 from django.core import mail
 from django.urls import reverse
 from django.test import tag
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from oscar.core.loading import get_model
 from oscar.test import factories
 from rest_framework import status
 from rest_framework.test import APITestCase
 import datetime
-import requests  # Needed for external calls
 from cybersource.models import CyberSourceReply
 from ..constants import DECISION_REVIEW, DECISION_ACCEPT
 from .utils import retry
@@ -130,31 +129,50 @@ class BaseCheckoutTest(APITestCase):
         return self.client.get(reverse('api-payment'))
 
 
-    def do_cs_reply(self, cs_resp):
-        soup = BeautifulSoup(cs_resp.content, 'html.parser')
-        form_data = {}
-        for element in soup.find_all('input'):
-            form_data[element['name']] = element['value']
-        # We have the data from cybersource, send it to our cybersource callback
-        url = reverse('cybersource-reply')
-        return self.client.post(url, form_data)
-
-
     def do_cs_get_token(self, cs_url, fields, extra_fields={}):
         next_year = datetime.date.today().year + 1
-        cs_data = {
+        cs_req_data = {
             'card_type': '001',
             'card_number': '4111111111111111',
             'card_cvn': '123',
             'card_expiry_date': '12-{}'.format(next_year),
         }
         for field in fields:
-            if not field['editable'] or field['key'] not in cs_data:
-                cs_data[field['key']] = field['value']
-        cs_data.update(extra_fields)
-        resp = requests.post(cs_url, cs_data)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        return self.do_cs_reply(resp)
+            if not field['editable'] or field['key'] not in cs_req_data:
+                cs_req_data[field['key']] = field['value']
+        cs_req_data.update(extra_fields)
+        cs_resp_data = self._build_cs_get_token_response(cs_req_data)
+        url = reverse('cybersource-reply')
+        return self.client.post(url, cs_resp_data)
+
+
+    def _build_cs_get_token_response(self, token_request_data):
+        token_resp_data = {}
+        # Pass through req_* properties
+        for key, value in token_request_data.items():
+            token_resp_data[f'req_{key}'] = value
+        # Mask Card data
+        token_resp_data['req_card_number'] = 'xxxxxxxxxxxx' + token_resp_data['req_card_number'][-4:]
+        token_resp_data.pop('req_card_cvn', None)
+        # Add auth fields
+        token_resp_data["auth_amount"] = token_request_data.get('amount', '0.00')
+        token_resp_data["auth_avs_code"] = "Y"
+        token_resp_data["auth_avs_code_raw"] = "Y"
+        token_resp_data["auth_code"] = "00000D"
+        token_resp_data["auth_cv_result"] = "M"
+        token_resp_data["auth_cv_result_raw"] = "M"
+        token_resp_data["auth_response"] = "85"
+        token_resp_data["auth_time"] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        token_resp_data["decision"] = "ACCEPT"
+        token_resp_data["message"] = "Request was processed successfully."
+        token_resp_data["payment_token"] = get_random_string(16)
+        token_resp_data["reason_code"] = "100"
+        token_resp_data["request_token"] = get_random_string(80)
+        token_resp_data["transaction_id"] = get_random_string(22, allowed_chars='0123456789')
+        # Sign and return data
+        cs_factories.sign_reply_data(token_resp_data)
+        token_resp_data["utf8"] = "✓"
+        return token_resp_data
 
 
     def check_finished_order(self, number, product_id, quantity=1, status=DECISION_ACCEPT, card_last4='1111'):
@@ -1022,7 +1040,6 @@ class CybersourceMethodTest(BaseCheckoutTest):
         self.assertEqual(pre_build_get_token_request.call_count, 1)
 
         action = resp.data['payment_method_states']['cybersource']['required_action']
-        cs_url = action['url']
         data = {}
         for field in action['fields']:
             data[field['key']] = field['value']
@@ -1032,9 +1049,8 @@ class CybersourceMethodTest(BaseCheckoutTest):
         data['card_expiry_date'] = '12-2020'
         data['card_number'] = '4111111111111111'
         data['card_type'] = '001'
-        resp = requests.post(cs_url, data)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        resp = self.do_cs_reply(resp)
+        cs_resp_data = self._build_cs_get_token_response(data)
+        resp = self.client.post(reverse('cybersource-reply'), cs_resp_data)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
         self.assertEqual(pre_build_auth_request.call_count, 1)
 
@@ -1138,8 +1154,6 @@ class CybersourceMethodTest(BaseCheckoutTest):
         data['card_expiry_date'] = '12-2020'
         data['card_number'] = '4111111111111111'
         data['card_type'] = '001'
-        resp = requests.post(cs_url, data)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         run_transaction.return_value.ccAuthReply.avsCode = 'Y'
         run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
@@ -1152,7 +1166,9 @@ class CybersourceMethodTest(BaseCheckoutTest):
         run_transaction.return_value.merchantReferenceCode = '118031289162'
         run_transaction.return_value.requestToken = 'foobar'
         run_transaction.return_value.requestID = '5579568773646201204011'
-        resp = self.do_cs_reply(resp)
+
+        cs_resp_data = self._build_cs_get_token_response(data)
+        resp = self.client.post(reverse('cybersource-reply'), cs_resp_data)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
         self.assertEqual(pre_build_auth_request.call_count, 1)
 
