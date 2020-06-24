@@ -150,7 +150,7 @@ class BaseCheckoutTest(APITestCase):
         token_resp_data = {}
         # Pass through req_* properties
         for key, value in token_request_data.items():
-            token_resp_data[f'req_{key}'] = value
+            token_resp_data['req_{}'.format(key)] = value
         # Mask Card data
         token_resp_data['req_card_number'] = 'xxxxxxxxxxxx' + token_resp_data['req_card_number'][-4:]
         token_resp_data.pop('req_card_cvn', None)
