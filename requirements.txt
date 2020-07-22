@@ -49,7 +49,6 @@ python-dateutil==2.8.0
 pytz==2019.1
 PyYAML==5.1
 requests==2.21.0
-six==1.12.0
 snowballstemmer==1.2.1
 sorl-thumbnail==12.4.1
 soupsieve==1.9.1

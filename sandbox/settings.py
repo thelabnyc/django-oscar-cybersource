@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # django-oscar
     'oscar',
     'oscar.apps.analytics',
+    'oscar.apps.communication',
     'oscar.apps.checkout',
     'oscar.apps.address',
     'oscar.apps.shipping',
@@ -110,7 +111,7 @@ TEMPLATES = [
                 'django.template.context_processors.i18n',
                 'oscar.apps.search.context_processors.search_form',
                 'oscar.apps.checkout.context_processors.checkout',
-                'oscar.apps.customer.notifications.context_processors.notifications',
+                'oscar.apps.communication.notifications.context_processors.notifications',
                 'oscar.core.context_processors.metadata',
             ],
         },
