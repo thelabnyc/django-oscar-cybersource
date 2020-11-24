@@ -35,7 +35,7 @@ packaging==19.0
 pbr==5.2.0
 phonenumbers==8.10.11
 phonenumberslite==8.10.11
-Pillow==6.0.0
+Pillow==7.1.0
 pluggy==0.11.0
 psycopg2cffi==2.8.1
 purl==1.5
