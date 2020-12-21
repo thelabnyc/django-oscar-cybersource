@@ -319,7 +319,6 @@ class Bluefin(PaymentMethod):
 
         # If token creation was not successful, return declined.
         if response.decision != DECISION_ACCEPT:
-            mark_declined(order, request, method_key, reply_log_entry)
             return Declined(amount)
 
         # Record the new payment token
@@ -338,7 +337,6 @@ class Bluefin(PaymentMethod):
         # If authorization was not successful, log it and redirect to the failed page.
         if response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = self.record_declined_authorization(reply_log_entry, order, token.token, response, amount)
-            mark_declined(order, request, method_key, reply_log_entry)
             return new_state
 
         # Authorization was successful! Log it and update he order state
