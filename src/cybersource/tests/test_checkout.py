@@ -274,6 +274,61 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.check_finished_order(order_number, product.id)
 
 
+    @mock.patch('oscarapicheckout.signals.order_payment_declined.send')
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
+    @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
+    def test_checkout_process_declined_auth(self, run_transaction, log_soap_response, send_order_payment_declined_signal):
+        """Full checkout process using minimal api calls"""
+        product = self.create_product()
+
+        self.assertEqual(send_order_payment_declined_signal.call_count, 0)
+
+        resp = self.do_get_basket()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        basket_id = resp.data['id']
+
+        resp = self.do_add_to_basket(product.id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.do_checkout(basket_id)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        order_number = resp.data['number']
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
+
+        run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+        run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+        run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+        run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+        run_transaction.return_value.ccAuthReply.amount = '10.00'
+        run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
+        run_transaction.return_value.decision = 'REJECT'
+        run_transaction.return_value.reasonCode = '481'
+        run_transaction.return_value.merchantReferenceCode = order_number
+        run_transaction.return_value.requestToken = 'foobar'
+        run_transaction.return_value.requestID = '5579568773646201204011'
+        log_soap_response.side_effect = mock_log_soap_response
+
+        action = resp.data['payment_method_states']['cybersource']['required_action']
+        resp = self.do_cs_get_token(action['url'], action['fields'])
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+
+        resp = self.do_fetch_payment_states()
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['order_status'], 'Payment Declined')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Declined')
+        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
+        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
+
+        # Make sure order_payment_declined signal was triggered exactly once
+        self.assertEqual(send_order_payment_declined_signal.call_count, 1)
+
+
     @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
     def test_decision_manager_review_auth(self, run_transaction, log_soap_response):
@@ -471,9 +526,12 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout"""
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    def test_bluefin_checkout_ok(self):
+    @mock.patch('oscarapicheckout.signals.order_payment_declined.send')
+    def test_bluefin_checkout_ok(self, send_order_payment_declined_signal):
         """Full Bluefin checkout process"""
         product = self.create_product()
+
+        self.assertEqual(send_order_payment_declined_signal.call_count, 0)
 
         resp = self.do_get_basket()
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -507,12 +565,16 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
 
         # don't expect a card_last4, since we're using encrypted card info
         self.check_finished_order(order_number, product.id)
+        self.assertEqual(send_order_payment_declined_signal.call_count, 0)
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    def test_bluefin_expired(self):
+    @mock.patch('oscarapicheckout.signals.order_payment_declined.send')
+    def test_bluefin_expired(self, send_order_payment_declined_signal):
         """Full Bluefin checkout process with expired card"""
         product = self.create_product()
+
+        self.assertEqual(send_order_payment_declined_signal.call_count, 0)
 
         resp = self.do_get_basket()
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -542,6 +604,8 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.data['payment_method_states']['bluefin']['status'], 'Declined')
         self.assertEqual(resp.data['payment_method_states']['bluefin']['amount'], '10.00')
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
+
+        self.assertEqual(send_order_payment_declined_signal.call_count, 1)
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
