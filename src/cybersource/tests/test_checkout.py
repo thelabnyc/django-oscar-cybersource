@@ -3,7 +3,6 @@ from decimal import Decimal as D
 from django.conf import settings
 from django.core import mail
 from django.urls import reverse
-from django.test import tag
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from oscar.core.loading import get_model
@@ -13,8 +12,8 @@ from rest_framework.test import APITestCase
 import datetime
 from cybersource.models import CyberSourceReply
 from ..constants import DECISION_REVIEW, DECISION_ACCEPT
-from .utils import retry
 from . import factories as cs_factories
+import uuid
 
 Basket = get_model('basket', 'Basket')
 Product = get_model('catalogue', 'Product')
@@ -222,13 +221,11 @@ class BaseCheckoutTest(APITestCase):
                              'reject the transaction.' % transactions[0].reference)
 
 
-@tag('integration', 'slow')
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout using mocked SOAP integration"""
 
     @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
-    @retry(AssertionError)
     def test_checkout_process(self, run_transaction, log_soap_response):
         """Full checkout process using minimal api calls"""
         product = self.create_product()
@@ -279,7 +276,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
     @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
-    @retry(AssertionError)
     def test_decision_manager_review_auth(self, run_transaction, log_soap_response):
         product = self.create_product()
 
@@ -339,7 +335,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
     @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
-    @retry(AssertionError)
     def test_add_product_during_auth(self, run_transaction, log_soap_response):
         """Test attempting to add a product during the authorize flow"""
         product = self.create_product()
@@ -397,7 +392,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(basket2, basket3)
 
 
-    @retry(AssertionError)
     def test_pay_for_nothing(self):
         """Test attempting to pay for an empty basket"""
         resp = self.do_get_basket()
@@ -408,7 +402,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.assertEqual(resp.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
 
-    @retry(AssertionError)
     def test_manipulate_total_pre_auth(self):
         """Test attempting to manipulate basket price when requesting an auth form"""
         product = self.create_product()
@@ -429,7 +422,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
     @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction')
-    @retry(AssertionError)
     def test_free_product(self, run_transaction, log_soap_response):
         """Full checkout process using minimal api calls"""
         product = self.create_product(price=D('0.00'))
@@ -474,179 +466,11 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.check_finished_order(order_number, product.id)
 
 
-@tag('integration', 'slow')
-class CheckoutSOAPIntegrationTest(BaseCheckoutTest):
-    """Full Integration Test of Checkout using real SOAP authorization"""
 
-    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
-    def test_checkout_process(self):
-        """Full checkout process using minimal api calls"""
-        product = self.create_product()
-
-        resp = self.do_get_basket()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket_id = resp.data['id']
-
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        resp = self.do_checkout(basket_id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        order_number = resp.data['number']
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        resp = self.do_cs_get_token(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Authorized')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
-
-        self.check_finished_order(order_number, product.id)
-
-    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
-    def test_decision_manager_review_auth(self):
-        product = self.create_product()
-
-        resp = self.do_get_basket()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket_id = resp.data['id']
-
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        resp = self.do_checkout(basket_id, extra_data={
-            "shipping_address": {
-                "first_name": "Joe",
-                "last_name": "Review",  # trigger a review, per a custom rule in CyberSource admin
-                "line1": "234 5th Ave",
-                "line4": "Manhattan",
-                "postcode": "10001",
-                "state": "NY",
-                "country": reverse('country-detail', args=['US']),
-                "phone_number": "+1 (717) 467-1111",
-            },
-        })
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        order_number = resp.data['number']
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        resp = self.do_cs_get_token(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Authorized')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['status'], 'Consumed')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '10.00')
-        self.assertIsNone(resp.data['payment_method_states']['cybersource']['required_action'])
-
-        self.check_finished_order(order_number, product.id, status='REVIEW')
-
-    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
-    def test_add_product_during_auth(self):
-        """Test attempting to add a product during the authorize flow"""
-        product = self.create_product()
-
-        resp = self.do_get_basket()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket_id = resp.data['id']
-
-        # Adding a product here should succeed
-        resp = self.do_add_to_basket(product.id)
-        basket1 = resp.data['id']
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        resp = self.do_checkout(basket_id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        order_number = resp.data['number']
-
-        # Adding a product here should go to a new basket, not the one we're auth'ing
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket2 = resp.data['id']
-        self.assertNotEqual(basket1, basket2)
-
-        # Finish checkout process
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        resp = self.do_cs_get_token(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Authorized')
-        self.check_finished_order(order_number, product.id)
-
-        # Adding a product here should go to basket2, not basket1
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket3 = resp.data['id']
-        self.assertEqual(basket2, basket3)
-
-    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
-    def test_free_product(self):
-        """Full checkout process using minimal api calls"""
-        product = self.create_product(price=D('0.00'))
-
-        resp = self.do_get_basket()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        basket_id = resp.data['id']
-
-        resp = self.do_add_to_basket(product.id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        resp = self.do_checkout(basket_id)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        order_number = resp.data['number']
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Pending')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['required_action']['name'], 'get-token')
-
-        action = resp.data['payment_method_states']['cybersource']['required_action']
-        resp = self.do_cs_get_token(action['url'], action['fields'])
-        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
-
-        resp = self.do_fetch_payment_states()
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['order_status'], 'Authorized')
-        self.assertEqual(resp.data['payment_method_states']['cybersource']['amount'], '0.00')
-        self.check_finished_order(order_number, product.id)
-
-
-@tag('integration', 'slow')
 class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout"""
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
     def test_bluefin_checkout_ok(self):
         """Full Bluefin checkout process"""
         product = self.create_product()
@@ -663,9 +487,11 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
             "payment": {
                 "bluefin": {
                     "enabled": True,
-                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
-                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
-                                    "0E004A80000610D203"
+                    "payment_data": (
+                        "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
+                        "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
+                        "0E004A80000610D203"
+                    )
                 }
             }
         })
@@ -684,7 +510,6 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
     def test_bluefin_expired(self):
         """Full Bluefin checkout process with expired card"""
         product = self.create_product()
@@ -701,9 +526,11 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
             "payment": {
                 "bluefin": {
                     "enabled": True,
-                    "payment_data": "02A600C0170018008292;4111********1111=1812?*F34830CD08A5756641F0013117D267339592"
-                                    "342CE5A3832200000000000000000000000000000000000000003834335531313837393262994996"
-                                    "0E004A8000071A6803"
+                    "payment_data": (
+                        "02A600C0170018008292;4111********1111=1812?*F34830CD08A5756641F0013117D267339592"
+                        "342CE5A3832200000000000000000000000000000000000000003834335531313837393262994996"
+                        "0E004A8000071A6803"
+                    )
                 }
             }
         })
@@ -718,7 +545,6 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
     def test_bluefin_bad_data(self):
         """Full Bluefin checkout process with bad payment data"""
         product = self.create_product()
@@ -750,7 +576,6 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
     def test_bluefin_decline(self):
         """Full Bluefin checkout process with decline"""
         product = self.create_product()
@@ -767,9 +592,11 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
             "payment": {
                 "bluefin": {
                     "enabled": True,
-                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
-                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
-                                    "0E004A80000610D203"
+                    "payment_data": (
+                        "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
+                        "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
+                        "0E004A80000610D203"
+                    )
                 }
             },
             "shipping_address": {
@@ -794,7 +621,6 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
 
 
     @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
-    @retry(AssertionError)
     def test_bluefin_decision_manager_review_auth(self):
         """Full Bluefin checkout process with review"""
         product = self.create_product()
@@ -811,9 +637,11 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
             "payment": {
                 "bluefin": {
                     "enabled": True,
-                    "payment_data": "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
-                                    "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
-                                    "0E004A80000610D203"
+                    "payment_data": (
+                        "02A600C0170018008292;4111********1111=5012?*1773F3F449C0B83318721C1837DA42160EBE"
+                        "B56AB3979BE800000000000000000000000000000000000000003834335531313837393262994996"
+                        "0E004A80000610D203"
+                    )
                 }
             },
             "shipping_address": {
@@ -838,6 +666,7 @@ class BluefinCheckoutIntegrationTest(BaseCheckoutTest):
         self.assertIsNone(resp.data['payment_method_states']['bluefin']['required_action'])
 
         self.check_finished_order(order_number, product.id, status='REVIEW')
+
 
 
 class CSReplyViewTest(BaseCheckoutTest):
@@ -951,10 +780,12 @@ class CSReplyViewTest(BaseCheckoutTest):
         self.assertEqual(self.do_fetch_payment_states().data['order_status'], 'Payment Declined')
 
 
-    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('oscarapicheckout.signals.order_payment_authorized.send')
-    def test_soap_declined_auth(self, order_payment_authorized):
+    def test_soap_declined_auth(self, order_payment_authorized, log_soap_response):
         """Declined auth should should result in redirect to failure page"""
+        log_soap_response.side_effect = mock_log_soap_response
+
         session = self.client.session
         session.save()
 
@@ -962,8 +793,18 @@ class CSReplyViewTest(BaseCheckoutTest):
 
         data = cs_factories.build_accepted_token_reply_data(order_number, session.session_key)
         data = cs_factories.sign_reply_data(data)
-        url = reverse('cybersource-reply')
-        resp = self.client.post(url, data)
+
+        with mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction') as run_transaction:
+            # Setup mock auth response
+            run_transaction.return_value.ccAuthReply.amount = "10.42"
+            run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
+            run_transaction.return_value.decision = 'REJECT'
+            run_transaction.return_value.reasonCode = 481
+            run_transaction.return_value.requestToken = 'foobar'
+            run_transaction.return_value.requestID = str(uuid.uuid4())
+
+            url = reverse('cybersource-reply')
+            resp = self.client.post(url, data)
 
         self.assertRedirects(resp, reverse('checkout:index'), fetch_redirect_response=False)
         self.assertEqual(order_payment_authorized.call_count, 0, 'Should not trigger signal')
@@ -1002,11 +843,13 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 class CybersourceMethodTest(BaseCheckoutTest):
 
-    @skipUnless(DO_SOAP, "No SOAP keys, skipping integration test.")
+    @mock.patch('cybersource.methods.Bluefin.log_soap_response')
     @mock.patch('cybersource.signals.pre_build_auth_request.send')
     @mock.patch('cybersource.signals.pre_build_get_token_request.send')
     @mock.patch('oscarapicheckout.signals.pre_calculate_total.send')
-    def test_request_auth_soap_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request):
+    def test_request_auth_soap_form_success(self, pre_calculate_total, pre_build_get_token_request, pre_build_auth_request, log_soap_response):
+        log_soap_response.side_effect = mock_log_soap_response
+
         product = self.create_product()
 
         resp = self.do_get_basket()
@@ -1046,11 +889,24 @@ class CybersourceMethodTest(BaseCheckoutTest):
 
         # Move onto step 2, authorize
         data['card_cvn'] = '123'
-        data['card_expiry_date'] = '12-2020'
+        data['card_expiry_date'] = '12-2050'
         data['card_number'] = '4111111111111111'
         data['card_type'] = '001'
         cs_resp_data = self._build_cs_get_token_response(data)
-        resp = self.client.post(reverse('cybersource-reply'), cs_resp_data)
+        with mock.patch('cybersource.cybersoap.CyberSourceSoap._run_transaction') as run_transaction:
+            # Setup mock auth response
+            run_transaction.return_value.ccAuthReply.avsCode = 'Y'
+            run_transaction.return_value.ccAuthReply.authorizationCode = '123456'
+            run_transaction.return_value.ccAuthReply.processorResponse = 'A'
+            run_transaction.return_value.ccAuthReply.reconciliationID = '6145792756'
+            run_transaction.return_value.ccAuthReply.amount = "10.42"
+            run_transaction.return_value.ccAuthReply.authorizedDateTime = timezone.now().isoformat()
+            run_transaction.return_value.decision = 'ACCEPT'
+            run_transaction.return_value.reasonCode = 100
+            run_transaction.return_value.requestToken = 'foobar'
+            run_transaction.return_value.requestID = str(uuid.uuid4())
+            # Submit
+            resp = self.client.post(reverse('cybersource-reply'), cs_resp_data)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
         self.assertEqual(pre_build_auth_request.call_count, 1)
 
@@ -1151,7 +1007,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
 
         # Move onto step 2, authorize
         data['card_cvn'] = '123'
-        data['card_expiry_date'] = '12-2020'
+        data['card_expiry_date'] = '12-2050'
         data['card_number'] = '4111111111111111'
         data['card_type'] = '001'
 

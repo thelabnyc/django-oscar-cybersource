@@ -21,6 +21,15 @@ LANGUAGES = (
 ROOT_URLCONF = 'urls'
 ALLOWED_HOSTS = ['*']
 
+# Configure JUnit XML output
+TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+_tox_env_name = os.environ.get('TOX_ENV_NAME')
+if _tox_env_name:
+    TEST_OUTPUT_DIR = os.path.join(BASE_DIR, f'../junit-{_tox_env_name}/')
+else:
+    TEST_OUTPUT_DIR = os.path.join(BASE_DIR, '../junit/')
+
+
 # Used to encrypt secure acceptance profiles in the database
 FERNET_KEYS = [
     'epM8Bk2YJlLVLsHqUlriW0Ma7rDpPfHMrAhmxmwdbVqqdgPNEqzeYYxheLdKLPe',

@@ -196,7 +196,6 @@ class CyberSourceReplyView(APIView):
         # If authorization was successful, log it and redirect to the success page.
         new_state = Bluefin().record_successful_authorization(auth_reply_log_entry, order, token.token, auth_response)
         utils.update_payment_method_state(order, request, method_key, new_state)
-
         if auth_response.decision == DECISION_REVIEW:
             create_review_order_note(order, auth_response.requestID)
         return redirect(settings.REDIRECT_SUCCESS)
