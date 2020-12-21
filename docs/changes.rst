@@ -3,6 +3,14 @@
 Changelog
 =========
 
+7.0.1
+------------------
+- Fix bug causing Bluefin to trigger payment declined signal twice per declined order.
+
+7.0.0
+------------------
+- Support django-oscar 2.1
+
 6.0.1
 ------------------
 - Fix test suite issues by mocking Cybersource SA requests
