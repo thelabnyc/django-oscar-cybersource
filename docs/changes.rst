@@ -3,6 +3,10 @@
 Changelog
 =========
 
+8.0.0
+------------------
+- Oscar 3.0 Compatibility
+
 7.0.1
 ------------------
 - Fix bug causing Bluefin to trigger payment declined signal twice per declined order.
