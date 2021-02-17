@@ -70,7 +70,7 @@ class BaseCheckoutTest(APITestCase):
             currency='USD',
             product=product,
             num_in_stock=10,
-            price_excl_tax=price)
+            price=price)
         factories.create_purchase_info(record)
         return product
 
