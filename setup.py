@@ -13,9 +13,9 @@ packages = find_packages('src')
 
 install_requires = [
     'django>=2.2',
-    'django-oscar>=2.1',
+    'django-oscar>=3.0',
     'django-oscar-api>=2.0.0',
-    'django-oscar-api-checkout>=2.0.0b2',
+    'django-oscar-api-checkout>=3.0.0b1',
     'django-fernet-fields>=0.5',
     'lxml>=4.1.1',
     'phonenumbers>=8.8.8',
