@@ -10,7 +10,11 @@ Once a user has added items to his or her basket, your client-side application m
 
 1. Checkout using django-oscar-api-checkout's checkout view.
     a. This POST will freeze the basket and create an order.
-2. The client JS should accept then call django-oscar-api-checkout's payment-statuses view, fill in the fields marked as editable, create a form tag with hidden elements for each field, append the form to the document, and submit it as a POST.
+2. The client JS should then
+   a. GET django-oscar-api-checkout's payment-states view
+   b. Use the returned `payment_method_statuses` response data to build a request to Cybersource
+     i. create a form tag with hidden elements for each `editable` field in `payment_method_statuses.cybersource.required_next_action.fields` and set form `action` to the url found in `payment_method_statuses.cybersource.required_next_action.url`
+   c. appendthe form to the document, and submit it as a `POST`
 3. Cybersource will use the data from this POST to either accept or decline the authorization attempt on the user's credit card and redirect the user back to the customer response page, which we earlier set as https://www.my-host.com/api/cybersource/cybersource-reply/.
 4. The Cybersource reply view will parse the response data and take action on it.
     1. Ensure the HMAC signature was valid, returning `400 Bad Request` is it isn't.
@@ -57,7 +61,7 @@ The response code will indicate success or not. Now fetch the payment states end
 
     GET `/api/checkout/payment-states`
 
-The response to this POST will look something like this.::
+The response to this request will look something like this.::
 
     {
         "order_status": "Pending",
