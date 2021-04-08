@@ -6,7 +6,7 @@ cffi==1.12.3
 chardet==3.0.4
 coverage==4.5.3
 cryptography==2.6.1
-Django==2.2.1
+Django==2.2.20
 django-extra-views==0.11.0
 django-fernet-fields==0.6
 django-haystack==2.8.1
