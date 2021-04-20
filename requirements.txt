@@ -39,7 +39,7 @@ Pillow==6.0.0
 pluggy==0.11.0
 psycopg2cffi==2.8.1
 purl==1.5
-py==1.8.0
+py==1.10.0
 pycodestyle==2.5.0
 pycparser==2.19
 pyflakes==2.1.1
