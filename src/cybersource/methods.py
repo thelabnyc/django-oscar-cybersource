@@ -216,6 +216,8 @@ class Bluefin(PaymentMethod):
         token_string = response.paySubscriptionCreateReply.subscriptionID
         # Lookup more details about the token
         token_details = self.__class__.lookup_token_details(request, order, token_string)
+        if token_details is None:
+            return None, None
         # Create the payment token
         if not PaymentToken.objects.filter(token=token_string).exists():
             token = PaymentToken(
@@ -323,6 +325,8 @@ class Bluefin(PaymentMethod):
 
         # Record the new payment token
         token, token_details = self.record_created_payment_token(request, order, reply_log_entry, response)
+        if token is None or token_details is None:
+            return Declined(amount)
         expiry_date = "{month}-{year}".format(
             month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
             year=token_details.paySubscriptionRetrieveReply.cardExpirationYear)
