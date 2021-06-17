@@ -3,6 +3,10 @@
 Changelog
 =========
 
+8.1.1
+------------------
+- Fix bug in handling of Cybersource SOAP API downtime.
+
 8.1.0
 ------------------
 - Oscar 3.1 Compatibility
