@@ -12,7 +12,7 @@ def assign_orders(apps, schema_editor):
     Order = apps.get_model("order", "Order")
     for reply in CyberSourceReply.objects.filter(order=None).all():
         try:
-            order = Order.objects.get(number=reply.data.get('req_reference_number'))
+            order = Order.objects.get(number=reply.data.get("req_reference_number"))
             reply.order = order
             reply.save()
         except Order.DoesNotExist:
@@ -22,7 +22,7 @@ def assign_orders(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cybersource', '0002_cybersourcereply_order'),
+        ("cybersource", "0002_cybersourcereply_order"),
     ]
 
     operations = [

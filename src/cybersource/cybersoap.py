@@ -1,7 +1,11 @@
 from suds.wsse import Security
 from suds.wsse import UsernameToken
 from .actions import PRECISION
-from .constants import DECISION_ERROR, TERMINAL_DESCRIPTOR, CHECKOUT_FINGERPRINT_SESSION_ID
+from .constants import (
+    DECISION_ERROR,
+    TERMINAL_DESCRIPTOR,
+    CHECKOUT_FINGERPRINT_SESSION_ID,
+)
 from . import signals
 import logging
 import soap
@@ -21,8 +25,16 @@ class CyberSourceSoap(object):
     Toolkit API => Generate Key. It is be secret and not be checked into source-control. Treat this like a password.
     """
 
-    def __init__(self, wsdl, merchant_id, transaction_security_key, request, order, method_key,
-                 soap_log_prefix='CYBERSOURCE'):
+    def __init__(
+        self,
+        wsdl,
+        merchant_id,
+        transaction_security_key,
+        request,
+        order,
+        method_key,
+        soap_log_prefix="CYBERSOURCE",
+    ):
         self.merchant_id = merchant_id
         self.request = request
         self.order = order
@@ -39,22 +51,26 @@ class CyberSourceSoap(object):
         self.client.set_options(wsse=security)
 
     def _get_token(self):
-        return self.request.data.get('payment_token')
+        return self.request.data.get("payment_token")
 
     def lookup_payment_token(self, token):
-        self._prep_transaction('paySubscriptionRetrieveService')
+        self._prep_transaction("paySubscriptionRetrieveService")
         # Add token info
-        self.data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
-        self.data['recurringSubscriptionInfo'].subscriptionID = token
+        self.data["recurringSubscriptionInfo"] = self.client.factory.create(
+            "ns0:recurringSubscriptionInfo"
+        )
+        self.data["recurringSubscriptionInfo"].subscriptionID = token
         return self._run_transaction()
 
     def authorize(self):
-        """ Authorize with a token """
-        self._prep_transaction('ccAuthService')
+        """Authorize with a token"""
+        self._prep_transaction("ccAuthService")
 
         # Add token info
-        self.data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
-        self.data['recurringSubscriptionInfo'].subscriptionID = self._get_token()
+        self.data["recurringSubscriptionInfo"] = self.client.factory.create(
+            "ns0:recurringSubscriptionInfo"
+        )
+        self.data["recurringSubscriptionInfo"].subscriptionID = self._get_token()
 
         # Add extra fields
         self._add_signal(signals.pre_build_auth_request)
@@ -62,37 +78,43 @@ class CyberSourceSoap(object):
         return self._run_transaction()
 
     def get_token_encrypted(self, encrypted):
-        """ Get a token using encrypted card number """
+        """Get a token using encrypted card number"""
         if encrypted is None:
             return DECISION_ERROR, None, None
 
-        self._prep_transaction('paySubscriptionCreateService')
+        self._prep_transaction("paySubscriptionCreateService")
 
         # Add encrypted data
-        self.data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
-        self.data['encryptedPayment'].data = encrypted
-        self.data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
+        self.data["encryptedPayment"] = self.client.factory.create(
+            "ns0:encryptedPayment"
+        )
+        self.data["encryptedPayment"].data = encrypted
+        self.data["encryptedPayment"].descriptor = TERMINAL_DESCRIPTOR
 
         # Add extra fields
         self._add_signal(signals.pre_build_get_token_request)
 
         # Add token request
-        self.data['recurringSubscriptionInfo'] = self.client.factory.create('ns0:recurringSubscriptionInfo')
-        self.data['recurringSubscriptionInfo'].frequency = 'on-demand'
+        self.data["recurringSubscriptionInfo"] = self.client.factory.create(
+            "ns0:recurringSubscriptionInfo"
+        )
+        self.data["recurringSubscriptionInfo"].frequency = "on-demand"
 
         return self._run_transaction()
 
     def authorize_encrypted(self, encrypted, amount=None):
-        """ Authorize using encrypted card number """
+        """Authorize using encrypted card number"""
         if encrypted is None:
             return DECISION_ERROR, None, None
 
-        self._prep_transaction('ccAuthService', amount)
+        self._prep_transaction("ccAuthService", amount)
 
         # Add encrypted data
-        self.data['encryptedPayment'] = self.client.factory.create('ns0:encryptedPayment')
-        self.data['encryptedPayment'].data = encrypted
-        self.data['encryptedPayment'].descriptor = TERMINAL_DESCRIPTOR
+        self.data["encryptedPayment"] = self.client.factory.create(
+            "ns0:encryptedPayment"
+        )
+        self.data["encryptedPayment"].data = encrypted
+        self.data["encryptedPayment"].descriptor = TERMINAL_DESCRIPTOR
 
         # Add extra fields
         self._add_signal(signals.pre_build_auth_request)
@@ -106,64 +128,73 @@ class CyberSourceSoap(object):
         self._add_order(amount)
 
     def _add_service(self, service):
-        self.data[service] = self.client.factory.create('ns0:{}'.format(service))
+        self.data[service] = self.client.factory.create("ns0:{}".format(service))
         self.data[service]._run = "true"
 
     def _add_merchant(self):
-        if CHECKOUT_FINGERPRINT_SESSION_ID and self.request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID):
-            self.data['deviceFingerprintID'] = self.request.session[CHECKOUT_FINGERPRINT_SESSION_ID]
-        self.data['merchantID'] = self.merchant_id
-        self.data['merchantReferenceCode'] = self.order.number
+        if CHECKOUT_FINGERPRINT_SESSION_ID and self.request.session.get(
+            CHECKOUT_FINGERPRINT_SESSION_ID
+        ):
+            self.data["deviceFingerprintID"] = self.request.session[
+                CHECKOUT_FINGERPRINT_SESSION_ID
+            ]
+        self.data["merchantID"] = self.merchant_id
+        self.data["merchantReferenceCode"] = self.order.number
 
     def _add_order(self, amount=None):
-        self.data['billTo'] = self.client.factory.create('ns0:BillTo')
-        self.data['billTo'].email = self.order.email
-        self.data['billTo'].ipAddress = self.request.META.get('REMOTE_ADDR')
+        self.data["billTo"] = self.client.factory.create("ns0:BillTo")
+        self.data["billTo"].email = self.order.email
+        self.data["billTo"].ipAddress = self.request.META.get("REMOTE_ADDR")
         if self.order.user:
-            self.data['billTo'].customerID = self.order.user.pk
+            self.data["billTo"].customerID = self.order.user.pk
 
         # Add order billing data
         if self.order.billing_address:
-            self.data['billTo'].firstName = self.order.billing_address.first_name
-            self.data['billTo'].lastName = self.order.billing_address.last_name
-            self.data['billTo'].street1 = self.order.billing_address.line1
-            self.data['billTo'].street2 = self.order.billing_address.line2
-            self.data['billTo'].city = self.order.billing_address.line4
-            self.data['billTo'].state = self.order.billing_address.state
-            self.data['billTo'].postalCode = self.order.billing_address.postcode
-            self.data['billTo'].country = self.order.billing_address.country.iso_3166_1_a2
+            self.data["billTo"].firstName = self.order.billing_address.first_name
+            self.data["billTo"].lastName = self.order.billing_address.last_name
+            self.data["billTo"].street1 = self.order.billing_address.line1
+            self.data["billTo"].street2 = self.order.billing_address.line2
+            self.data["billTo"].city = self.order.billing_address.line4
+            self.data["billTo"].state = self.order.billing_address.state
+            self.data["billTo"].postalCode = self.order.billing_address.postcode
+            self.data[
+                "billTo"
+            ].country = self.order.billing_address.country.iso_3166_1_a2
 
         # Add order shipping data
         if self.order.shipping_address:
-            self.data['shipTo'] = self.client.factory.create('ns0:ShipTo')
-            self.data['shipTo'].phoneNumber = self.order.shipping_address.phone_number
-            self.data['shipTo'].firstName = self.order.shipping_address.first_name
-            self.data['shipTo'].lastName = self.order.shipping_address.last_name
-            self.data['shipTo'].street1 = self.order.shipping_address.line1
-            self.data['shipTo'].street2 = self.order.shipping_address.line2
-            self.data['shipTo'].city = self.order.shipping_address.line4
-            self.data['shipTo'].state = self.order.shipping_address.state
-            self.data['shipTo'].postalCode = self.order.shipping_address.postcode
-            self.data['shipTo'].country = self.order.shipping_address.country.iso_3166_1_a2
+            self.data["shipTo"] = self.client.factory.create("ns0:ShipTo")
+            self.data["shipTo"].phoneNumber = self.order.shipping_address.phone_number
+            self.data["shipTo"].firstName = self.order.shipping_address.first_name
+            self.data["shipTo"].lastName = self.order.shipping_address.last_name
+            self.data["shipTo"].street1 = self.order.shipping_address.line1
+            self.data["shipTo"].street2 = self.order.shipping_address.line2
+            self.data["shipTo"].city = self.order.shipping_address.line4
+            self.data["shipTo"].state = self.order.shipping_address.state
+            self.data["shipTo"].postalCode = self.order.shipping_address.postcode
+            self.data[
+                "shipTo"
+            ].country = self.order.shipping_address.country.iso_3166_1_a2
 
         # Add line items
-        self.data['item'] = []
+        self.data["item"] = []
         i = 0
         for line in self.order.lines.all():
-            item = self.client.factory.create('ns0:Item')
+            item = self.client.factory.create("ns0:Item")
             item._id = str(i)
             item.productName = line.product.title
             item.productSKU = line.partner_sku
             item.quantity = str(line.quantity)
             item.unitPrice = str(line.unit_price_incl_tax.quantize(PRECISION))
-            self.data['item'].append(item)
+            self.data["item"].append(item)
             i += 1
 
         # Add order total data
-        self.data['purchaseTotals'] = self.client.factory.create('ns0:PurchaseTotals')
-        self.data['purchaseTotals'].currency = self.order.currency
-        self.data['purchaseTotals'].grandTotalAmount = amount if amount is not None \
-            else self.request.data.get('req_amount', '0')
+        self.data["purchaseTotals"] = self.client.factory.create("ns0:PurchaseTotals")
+        self.data["purchaseTotals"].currency = self.order.currency
+        self.data["purchaseTotals"].grandTotalAmount = (
+            amount if amount is not None else self.request.data.get("req_amount", "0")
+        )
 
     def _add_signal(self, signal):
         extra_fields = {}
@@ -173,12 +204,15 @@ class CyberSourceSoap(object):
             request=self.request,
             order=self.order,
             token=self._get_token(),
-            method_key=self.method_key)
+            method_key=self.method_key,
+        )
 
-        self.data['merchantDefinedData'] = self.client.factory.create('ns0:MerchantDefinedData')
+        self.data["merchantDefinedData"] = self.client.factory.create(
+            "ns0:MerchantDefinedData"
+        )
 
         for k, v in extra_fields.items():
-            self.data['merchantDefinedData']['field{}'.format(k)] = v
+            self.data["merchantDefinedData"]["field{}".format(k)] = v
 
     def _run_transaction(self):
 
@@ -186,8 +220,11 @@ class CyberSourceSoap(object):
         try:
             response = self.client.service.runTransaction(**self.data)
         except Exception:
-            logger.exception("Failed to run Cybersource SOAP transaction on Order {}".format(self.order.number))
+            logger.exception(
+                "Failed to run Cybersource SOAP transaction on Order {}".format(
+                    self.order.number
+                )
+            )
             response = None
-
 
         return response

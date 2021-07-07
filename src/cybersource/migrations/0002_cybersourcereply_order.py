@@ -9,14 +9,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('order', '0004_auto_20160111_1108'),
-        ('cybersource', '0001_initial'),
+        ("order", "0004_auto_20160111_1108"),
+        ("cybersource", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='order',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='cybersource_replies', to='order.Order'),
+            model_name="cybersourcereply",
+            name="order",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="cybersource_replies",
+                to="order.Order",
+            ),
         ),
     ]

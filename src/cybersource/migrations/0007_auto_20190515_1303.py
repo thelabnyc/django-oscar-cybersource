@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cybersource', '0006_auto_20190515_1259'),
+        ("cybersource", "0006_auto_20190515_1259"),
     ]
 
     operations = [
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                     ALTER TABLE "cybersource_cybersourcereply" ALTER COLUMN "reply_type" DROP DEFAULT;
                     """,
                     [],
-                )
+                ),
             ],
         )
     ]
