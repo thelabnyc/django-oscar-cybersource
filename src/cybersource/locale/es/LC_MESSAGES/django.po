@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-26 20:44+0000\n"
+"POT-Creation-Date: 2021-07-07 14:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,83 +29,83 @@ msgid ""
 "Manager to either accept or reject the transaction."
 msgstr ""
 
-#: cybersource/methods.py:160
+#: cybersource/methods.py:162
 msgid "Missing encrypted payment data."
 msgstr ""
 
-#: cybersource/models.py:18
+#: cybersource/models.py:24
 msgid "Hostname"
 msgstr ""
 
-#: cybersource/models.py:19
+#: cybersource/models.py:29
 msgid "When the request matches this hostname, this profile will be used."
 msgstr ""
 
-#: cybersource/models.py:20
+#: cybersource/models.py:32
 msgid "Profile ID"
 msgstr ""
 
-#: cybersource/models.py:21
+#: cybersource/models.py:33
 msgid "Access Key"
 msgstr ""
 
-#: cybersource/models.py:22
+#: cybersource/models.py:34
 msgid "Secret Key"
 msgstr ""
 
-#: cybersource/models.py:23
+#: cybersource/models.py:36
 msgid "Is Default Profile?"
 msgstr ""
 
-#: cybersource/models.py:24
+#: cybersource/models.py:39
 msgid ""
 "If no profile can be found for a request's hostname, the default profile "
 "will be used."
 msgstr ""
 
-#: cybersource/models.py:27
+#: cybersource/models.py:44
 msgid "Secure Acceptance Profile"
 msgstr ""
 
-#: cybersource/models.py:28
+#: cybersource/models.py:45
 msgid "Secure Acceptance Profiles"
 msgstr ""
 
-#: cybersource/models.py:75
+#: cybersource/models.py:102
 #, python-format
 msgid ""
 "Secure Acceptance Profile hostname=%(hostname)s, profile_id=%(profile_id)s"
 msgstr ""
 
-#: cybersource/models.py:85
+#: cybersource/models.py:110
 msgid "Secure Acceptance"
 msgstr ""
 
-#: cybersource/models.py:86
+#: cybersource/models.py:111
 msgid "SOAP API"
 msgstr ""
 
-#: cybersource/models.py:121
+#: cybersource/models.py:156
 msgid "Date Modified"
 msgstr ""
 
-#: cybersource/models.py:122
+#: cybersource/models.py:157
 msgid "Date Received"
 msgstr ""
 
-#: cybersource/models.py:125
+#: cybersource/models.py:160
 msgid "CyberSource Reply"
 msgstr ""
 
-#: cybersource/models.py:126
+#: cybersource/models.py:161
 msgid "CyberSource Replies"
 msgstr ""
 
-#: cybersource/models.py:130
+#: cybersource/models.py:165
 #, python-format
 msgid "CyberSource Reply %(created)s"
 msgstr ""
 
-#: cybersource/models.py:200 cybersource/models.py:201
+#: cybersource/models.py:261 cybersource/models.py:262
 msgid "Payment Token"
 msgstr ""
