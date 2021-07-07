@@ -18,23 +18,63 @@ class Migration(migrations.Migration):
     operations = [
         HStoreExtension(),
         migrations.CreateModel(
-            name='CyberSourceReply',
+            name="CyberSourceReply",
             fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True, verbose_name='ID', auto_created=True)),
-                ('data', django.contrib.postgres.fields.hstore.HStoreField()),
-                ('date_modified', models.DateTimeField(auto_now=True, verbose_name='Date Modified')),
-                ('date_created', models.DateTimeField(auto_now_add=True, verbose_name='Date Received')),
-                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, related_name='cybersource_replies', on_delete=django.db.models.deletion.SET_NULL, null=True)),  # NOQA
+                (
+                    "id",
+                    models.AutoField(
+                        serialize=False,
+                        primary_key=True,
+                        verbose_name="ID",
+                        auto_created=True,
+                    ),
+                ),
+                ("data", django.contrib.postgres.fields.hstore.HStoreField()),
+                (
+                    "date_modified",
+                    models.DateTimeField(auto_now=True, verbose_name="Date Modified"),
+                ),
+                (
+                    "date_created",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date Received"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        blank=True,
+                        to=settings.AUTH_USER_MODEL,
+                        related_name="cybersource_replies",
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        null=True,
+                    ),
+                ),  # NOQA
             ],
         ),
         migrations.CreateModel(
-            name='PaymentToken',
+            name="PaymentToken",
             fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True, verbose_name='ID', auto_created=True)),
-                ('token', models.CharField(unique=True, max_length=100)),
-                ('masked_card_number', models.CharField(max_length=25)),
-                ('card_type', models.CharField(max_length=10)),
-                ('log', models.ForeignKey(related_name='tokens', to='cybersource.CyberSourceReply', on_delete=models.CASCADE)),
+                (
+                    "id",
+                    models.AutoField(
+                        serialize=False,
+                        primary_key=True,
+                        verbose_name="ID",
+                        auto_created=True,
+                    ),
+                ),
+                ("token", models.CharField(unique=True, max_length=100)),
+                ("masked_card_number", models.CharField(max_length=25)),
+                ("card_type", models.CharField(max_length=10)),
+                (
+                    "log",
+                    models.ForeignKey(
+                        related_name="tokens",
+                        to="cybersource.CyberSourceReply",
+                        on_delete=models.CASCADE,
+                    ),
+                ),
             ],
             bases=(cybersource.models.ReplyLogMixin, models.Model),
         ),

@@ -1,1 +1,1 @@
-default_app_config = 'cybersource.apps.CybersourceConfig'
+default_app_config = "cybersource.apps.CybersourceConfig"

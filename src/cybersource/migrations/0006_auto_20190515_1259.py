@@ -7,98 +7,106 @@ from oscar.models.fields import NullCharField
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cybersource', '0005_auto_20180102_1715'),
+        ("cybersource", "0005_auto_20180102_1715"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='reply_type',
-            field=models.SmallIntegerField(choices=[(1, "Secure Acceptance"), (2, "SOAP")], null=True),
+            model_name="cybersourcereply",
+            name="reply_type",
+            field=models.SmallIntegerField(
+                choices=[(1, "Secure Acceptance"), (2, "SOAP")], null=True
+            ),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='auth_avs_code',
+            model_name="cybersourcereply",
+            name="auth_avs_code",
             field=NullCharField(max_length=20),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='auth_code',
+            model_name="cybersourcereply",
+            name="auth_code",
             field=NullCharField(max_length=20),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='auth_response',
+            model_name="cybersourcereply",
+            name="auth_response",
             field=NullCharField(max_length=20),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='auth_trans_ref_no',
+            model_name="cybersourcereply",
+            name="auth_trans_ref_no",
             field=NullCharField(max_length=128),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='decision',
+            model_name="cybersourcereply",
+            name="decision",
             field=NullCharField(max_length=20),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='message',
+            model_name="cybersourcereply",
+            name="message",
             field=NullCharField(max_length=100),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='reason_code',
+            model_name="cybersourcereply",
+            name="reason_code",
             field=models.IntegerField(null=True),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_bill_to_address_postal_code',
+            model_name="cybersourcereply",
+            name="req_bill_to_address_postal_code",
             field=NullCharField(max_length=64),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_bill_to_forename',
+            model_name="cybersourcereply",
+            name="req_bill_to_forename",
             field=NullCharField(max_length=255),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_bill_to_surname',
+            model_name="cybersourcereply",
+            name="req_bill_to_surname",
             field=NullCharField(max_length=255),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_card_expiry_date',
+            model_name="cybersourcereply",
+            name="req_card_expiry_date",
             field=NullCharField(max_length=10),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_reference_number',
+            model_name="cybersourcereply",
+            name="req_reference_number",
             field=NullCharField(max_length=128),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_transaction_type',
+            model_name="cybersourcereply",
+            name="req_transaction_type",
             field=NullCharField(max_length=20),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='req_transaction_uuid',
+            model_name="cybersourcereply",
+            name="req_transaction_uuid",
             field=NullCharField(max_length=40),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='request_token',
+            model_name="cybersourcereply",
+            name="request_token",
             field=NullCharField(max_length=200),
         ),
         migrations.AddField(
-            model_name='cybersourcereply',
-            name='transaction_id',
+            model_name="cybersourcereply",
+            name="transaction_id",
             field=NullCharField(max_length=64),
         ),
         migrations.AlterField(
-            model_name='secureacceptanceprofile',
-            name='hostname',
-            field=models.CharField(blank=True, help_text='When the request matches this hostname, this profile will be used.', max_length=100, unique=True, verbose_name='Hostname'),
+            model_name="secureacceptanceprofile",
+            name="hostname",
+            field=models.CharField(
+                blank=True,
+                help_text="When the request matches this hostname, this profile will be used.",
+                max_length=100,
+                unique=True,
+                verbose_name="Hostname",
+            ),
         ),
     ]

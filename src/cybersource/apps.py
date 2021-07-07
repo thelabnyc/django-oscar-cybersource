@@ -5,11 +5,10 @@ from oscar.core.application import OscarConfig
 
 
 class CybersourceConfig(OscarConfig):
-    name = 'cybersource'
-    label = 'cybersource'
-    verbose_name = _('Oscar API-Checkout Cybersource Payment Adapter')
-    namespace = 'cybersource'
-
+    name = "cybersource"
+    label = "cybersource"
+    verbose_name = _("Oscar API-Checkout Cybersource Payment Adapter")
+    namespace = "cybersource"
 
     def get_urls(self):
         from .views import (
@@ -17,13 +16,22 @@ class CybersourceConfig(OscarConfig):
             FingerprintRedirectView,
             DecisionManagerNotificationView,
         )
+
         cs_reply = csrf_exempt(CyberSourceReplyView.as_view())
         review_notification = csrf_exempt(DecisionManagerNotificationView.as_view())
         fingerprint = FingerprintRedirectView.as_view()
 
         urlpatterns = [
-            url(r'^cybersource-reply/$', cs_reply, name='cybersource-reply'),
-            url(r'^decision-manager-review-notification/$', review_notification, name='cybersource-review-notification'),
-            url(r'^fingerprint/(?P<url_type>.*)/$', fingerprint, name='cybersource-fingerprint-redirect'),
+            url(r"^cybersource-reply/$", cs_reply, name="cybersource-reply"),
+            url(
+                r"^decision-manager-review-notification/$",
+                review_notification,
+                name="cybersource-review-notification",
+            ),
+            url(
+                r"^fingerprint/(?P<url_type>.*)/$",
+                fingerprint,
+                name="cybersource-fingerprint-redirect",
+            ),
         ]
         return self.post_process_urls(urlpatterns)

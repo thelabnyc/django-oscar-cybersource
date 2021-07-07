@@ -10,7 +10,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        pks = SecureAcceptanceProfile.objects.values_list('pk', flat=True).all()
+        pks = SecureAcceptanceProfile.objects.values_list("pk", flat=True).all()
         for pk in pks:
             try:
                 SecureAcceptanceProfile.objects.get(pk=pk)

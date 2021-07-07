@@ -8,13 +8,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('payment', '0004_auto_20160601_1949'),
+        ("payment", "0004_auto_20160601_1949"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='source',
-            name='reference',
-            field=models.CharField(blank=True, max_length=255, verbose_name='Reference'),
+            model_name="source",
+            name="reference",
+            field=models.CharField(
+                blank=True, max_length=255, verbose_name="Reference"
+            ),
         ),
     ]

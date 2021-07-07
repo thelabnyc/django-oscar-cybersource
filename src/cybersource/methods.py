@@ -17,58 +17,62 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-Transaction = get_model('payment', 'Transaction')
-InvalidOrderStatus = get_class('order.exceptions', 'InvalidOrderStatus')
-OrderNote = get_model('order', 'OrderNote')
+Transaction = get_model("payment", "Transaction")
+InvalidOrderStatus = get_class("order.exceptions", "InvalidOrderStatus")
+OrderNote = get_model("order", "OrderNote")
 
 
 def create_order_note(order, msg):
     return OrderNote.objects.create(
-        note_type=OrderNote.SYSTEM,
-        order=order,
-        message=msg)
+        note_type=OrderNote.SYSTEM, order=order, message=msg
+    )
 
 
 def create_review_order_note(order, transaction_id):
-    """ If an order is under review, add a note explaining why"""
-    msg = _('Transaction %(transaction_id)s is currently under review. Use Decision Manager to either accept or reject the transaction.') % dict(
-        transaction_id=transaction_id)
+    """If an order is under review, add a note explaining why"""
+    msg = _(
+        "Transaction %(transaction_id)s is currently under review. Use Decision Manager to either accept or reject the transaction."
+    ) % dict(transaction_id=transaction_id)
     create_order_note(order, msg)
 
 
 def log_order_exception(order_number, order_status, reply_log_entry):
     logger.exception(
         "Failed to set Order %s to payment declined. Order is current in status %s. Examine CyberSourceReply[%s]",
-        order_number, order_status, reply_log_entry.pk)
+        order_number,
+        order_status,
+        reply_log_entry.pk,
+    )
 
 
 def mark_declined(order, request, method_key, reply_log_entry):
-    amount = Decimal(request.data.get('req_amount', '0.00'))
+    amount = Decimal(request.data.get("req_amount", "0.00"))
     try:
         utils.mark_payment_method_declined(order, request, method_key, amount)
     except InvalidOrderStatus:
         log_order_exception(order.number, order.status, reply_log_entry)
 
 
-def sudsobj_to_dict(sudsobj, key_prefix=''):
+def sudsobj_to_dict(sudsobj, key_prefix=""):
     """Convert Suds object into a flattened dictionary"""
     out = {}
     # Handle lists
     if isinstance(sudsobj, list):
         for i, child in enumerate(sudsobj):
-            child_key = '{}[{}]'.format(key_prefix, i)
+            child_key = "{}[{}]".format(key_prefix, i)
             out.update(sudsobj_to_dict(child, key_prefix=child_key))
         return out
     # Handle Primitives
-    if not hasattr(sudsobj, '__keylist__'):
+    if not hasattr(sudsobj, "__keylist__"):
         out[key_prefix] = sudsobj
         return out
     # Handle Suds Objects
     for parent_key, parent_val in sudsobject.asdict(sudsobj).items():
-        full_parent_key = '{}.{}'.format(key_prefix, parent_key) if key_prefix else parent_key
+        full_parent_key = (
+            "{}.{}".format(key_prefix, parent_key) if key_prefix else parent_key
+        )
         out.update(sudsobj_to_dict(parent_val, key_prefix=full_parent_key))
     return out
-
 
 
 class Cybersource(PaymentMethod):
@@ -78,10 +82,10 @@ class Cybersource(PaymentMethod):
     status initially that requires the client app to make a form post, which in-turn
     redirects back to us. This is a common pattern in PCI SAQ A-EP ecommerce sites.
     """
-    name = settings.SOURCE_TYPE
-    code = 'cybersource'
-    serializer_class = PaymentMethodSerializer
 
+    name = settings.SOURCE_TYPE
+    code = "cybersource"
+    serializer_class = PaymentMethodSerializer
 
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
         """Payment Step 1: Require form POST to Cybersource"""
@@ -92,7 +96,8 @@ class Cybersource(PaymentMethod):
             extra_fields=extra_fields,
             request=request,
             order=order,
-            method_key=method_key)
+            method_key=method_key,
+        )
 
         # Build the data for CyberSource transaction
         session_id = request.COOKIES.get(django_settings.SESSION_COOKIE_NAME)
@@ -101,10 +106,11 @@ class Cybersource(PaymentMethod):
             order=order,
             method_key=method_key,
             amount=amount,
-            server_hostname=request.META.get('HTTP_HOST', ''),
-            customer_ip_address=request.META['REMOTE_ADDR'],
+            server_hostname=request.META.get("HTTP_HOST", ""),
+            customer_ip_address=request.META["REMOTE_ADDR"],
             fingerprint_session_id=request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID),
-            extra_fields=extra_fields)
+            extra_fields=extra_fields,
+        )
 
         # Return form fields to the browser. The browser then needs to fill in the blank
         # fields (like billing data) and submit them as a POST to CyberSource.
@@ -112,18 +118,13 @@ class Cybersource(PaymentMethod):
 
         # Return a response showing we need to post some fields to the given
         # URL to finishing processing this payment method
-        return FormPostRequired(
-            amount=amount,
-            name='get-token',
-            url=url,
-            fields=fields)
-
+        return FormPostRequired(amount=amount, name="get-token", url=url, fields=fields)
 
     def record_created_payment_token(self, reply_log_entry, data):
         """Payment Step 2: Record the generated payment token and require authorization using the token."""
-        token_string = data.get('payment_token')
-        card_num = data.get('req_card_number')
-        card_type = data.get('req_card_type')
+        token_string = data.get("payment_token")
+        card_num = data.get("req_card_number")
+        card_type = data.get("req_card_type")
         try:
             token = PaymentToken.objects.filter(token=token_string).get()
         except PaymentToken.DoesNotExist:
@@ -131,40 +132,40 @@ class Cybersource(PaymentMethod):
                 log=reply_log_entry,
                 token=token_string,
                 masked_card_number=card_num,
-                card_type=card_type)
+                card_type=card_type,
+            )
             token.save()
         return token, None
-
 
     def _fields(self, operation):
         """Helper to convert an operation object into a list of fields and a URL"""
         fields = []
         cs_fields = operation.fields()
-        editable_fields = cs_fields['unsigned_field_names'].split(',')
+        editable_fields = cs_fields["unsigned_field_names"].split(",")
         for key, value in cs_fields.items():
-            fields.append({
-                'key': key,
-                'value': value if isinstance(value, str) else value.decode(),
-                'editable': (key in editable_fields)
-            })
+            fields.append(
+                {
+                    "key": key,
+                    "value": value if isinstance(value, str) else value.decode(),
+                    "editable": (key in editable_fields),
+                }
+            )
 
         return operation.url, fields
-
 
 
 class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
     payment_data = serializers.CharField(max_length=256)
 
     def validate(self, data):
-        if 'payment_data' not in data:
-            raise serializers.ValidationError(_('Missing encrypted payment data.'))
+        if "payment_data" not in data:
+            raise serializers.ValidationError(_("Missing encrypted payment data."))
         return super().validate(data)
-
 
 
 class Bluefin(PaymentMethod):
     name = settings.SOURCE_TYPE
-    code = 'bluefin'
+    code = "bluefin"
     serializer_class = BluefinPaymentMethodSerializer
 
     @staticmethod
@@ -182,23 +183,28 @@ class Bluefin(PaymentMethod):
             req_bill_to_forename=order.billing_address.first_name,
             req_bill_to_surname=order.billing_address.last_name,
             req_card_expiry_date=card_expiry_date,
-            req_reference_number=response.merchantReferenceCode if 'merchantReferenceCode' in response else None,
-            req_transaction_type=('create_payment_token' if 'paySubscriptionCreateReply' in response else 'authorization'),
+            req_reference_number=response.merchantReferenceCode
+            if "merchantReferenceCode" in response
+            else None,
+            req_transaction_type=(
+                "create_payment_token"
+                if "paySubscriptionCreateReply" in response
+                else "authorization"
+            ),
             req_transaction_uuid=None,
             request_token=response.requestToken,
             transaction_id=response.requestID,
         )
         # These fields may or may not be present
-        cc_auth_reply = getattr(response, 'ccAuthReply', None)
+        cc_auth_reply = getattr(response, "ccAuthReply", None)
         if cc_auth_reply:
-            log.auth_code = getattr(cc_auth_reply, 'authorizationCode', None)
-            log.auth_response = getattr(cc_auth_reply, 'processorResponse', None)
-            log.auth_trans_ref_no = getattr(cc_auth_reply, 'reconciliationID', None)
-            log.auth_avs_code = getattr(cc_auth_reply, 'avsCode', None)
+            log.auth_code = getattr(cc_auth_reply, "authorizationCode", None)
+            log.auth_response = getattr(cc_auth_reply, "processorResponse", None)
+            log.auth_trans_ref_no = getattr(cc_auth_reply, "reconciliationID", None)
+            log.auth_avs_code = getattr(cc_auth_reply, "avsCode", None)
         # Save and return log object
         log.save()
         return log
-
 
     @staticmethod
     def lookup_token_details(request, order, payment_token):
@@ -208,14 +214,16 @@ class Bluefin(PaymentMethod):
             settings.CYBERSOURCE_SOAP_KEY,
             request,
             order,
-            '')
+            "",
+        )
         return cs.lookup_payment_token(payment_token)
-
 
     def record_created_payment_token(self, request, order, reply_log_entry, response):
         token_string = response.paySubscriptionCreateReply.subscriptionID
         # Lookup more details about the token
-        token_details = self.__class__.lookup_token_details(request, order, token_string)
+        token_details = self.__class__.lookup_token_details(
+            request, order, token_string
+        )
         if token_details is None:
             return None, None
         # Create the payment token
@@ -224,12 +232,14 @@ class Bluefin(PaymentMethod):
                 log=reply_log_entry,
                 token=token_string,
                 masked_card_number=token_details.paySubscriptionRetrieveReply.cardAccountNumber,
-                card_type=token_details.paySubscriptionRetrieveReply.cardType)
+                card_type=token_details.paySubscriptionRetrieveReply.cardType,
+            )
             token.save()
         return token, token_details
 
-
-    def record_successful_authorization(self, reply_log_entry, order, token_string, response):
+    def record_successful_authorization(
+        self, reply_log_entry, order, token_string, response
+    ):
         decision = reply_log_entry.get_decision()
         transaction_id = response.requestID
         request_token = response.requestToken
@@ -264,8 +274,9 @@ class Bluefin(PaymentMethod):
             self.make_event_quantity(event, line, line.quantity)
         return Complete(source.amount_allocated, source_id=source.pk)
 
-
-    def record_declined_authorization(self, reply_log_entry, order, token_string, response, amount):
+    def record_declined_authorization(
+        self, reply_log_entry, order, token_string, response, amount
+    ):
         decision = reply_log_entry.get_decision()
         transaction_id = response.requestID
         request_token = response.requestToken
@@ -288,14 +299,14 @@ class Bluefin(PaymentMethod):
 
         return Declined(req_amount, source_id=source.pk)
 
-
     def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
-        """ This is the entry point from django-oscar-api-checkout """
-        payment_data = kwargs.get('payment_data')
+        """This is the entry point from django-oscar-api-checkout"""
+        payment_data = kwargs.get("payment_data")
         if payment_data is None:
             return Declined(amount)
-        return self.record_bluefin_payment(request, order, method_key, amount, payment_data)
-
+        return self.record_bluefin_payment(
+            request, order, method_key, amount, payment_data
+        )
 
     def record_bluefin_payment(self, request, order, method_key, amount, payment_data):
         # Allow application to include extra, arbitrary fields in the request to CS
@@ -305,7 +316,8 @@ class Bluefin(PaymentMethod):
             extra_fields=extra_fields,
             request=request,
             order=order,
-            method_key=method_key)
+            method_key=method_key,
+        )
 
         cs = CyberSourceSoap(
             settings.CYBERSOURCE_WSDL,
@@ -313,7 +325,8 @@ class Bluefin(PaymentMethod):
             settings.CYBERSOURCE_SOAP_KEY,
             request,
             order,
-            method_key)
+            method_key,
+        )
 
         # Get token via SOAP
         response = cs.get_token_encrypted(payment_data)
@@ -324,27 +337,35 @@ class Bluefin(PaymentMethod):
             return Declined(amount)
 
         # Record the new payment token
-        token, token_details = self.record_created_payment_token(request, order, reply_log_entry, response)
+        token, token_details = self.record_created_payment_token(
+            request, order, reply_log_entry, response
+        )
         if token is None or token_details is None:
             return Declined(amount)
         expiry_date = "{month}-{year}".format(
             month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
-            year=token_details.paySubscriptionRetrieveReply.cardExpirationYear)
+            year=token_details.paySubscriptionRetrieveReply.cardExpirationYear,
+        )
         reply_log_entry.req_card_expiry_date = expiry_date
         reply_log_entry.save()
 
         # Attempt to authorize payment
         response = cs.authorize_encrypted(payment_data, amount)
-        reply_log_entry = self.__class__.log_soap_response(request, order, response,
-            card_expiry_date=expiry_date)
+        reply_log_entry = self.__class__.log_soap_response(
+            request, order, response, card_expiry_date=expiry_date
+        )
 
         # If authorization was not successful, log it and redirect to the failed page.
         if response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
-            new_state = self.record_declined_authorization(reply_log_entry, order, token.token, response, amount)
+            new_state = self.record_declined_authorization(
+                reply_log_entry, order, token.token, response, amount
+            )
             return new_state
 
         # Authorization was successful! Log it and update he order state
-        new_state = self.record_successful_authorization(reply_log_entry, order, token.token, response)
+        new_state = self.record_successful_authorization(
+            reply_log_entry, order, token.token, response
+        )
         if response.decision == DECISION_REVIEW:
             create_review_order_note(order, response.requestID)
         return new_state
