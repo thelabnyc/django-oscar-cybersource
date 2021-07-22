@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_bytes, force_str
 from fernet_fields import EncryptedTextField
 from . import settings, signature, models
 import random
@@ -14,7 +14,7 @@ def encrypt_session_id(session_id):
     fernet = EncryptedTextField().fernet
     session_id_bytes = force_bytes(session_id)
     encrypted_bytes = fernet.encrypt(session_id_bytes)
-    encrypted_str = force_text(encrypted_bytes)
+    encrypted_str = force_str(encrypted_bytes)
     return encrypted_str
 
 
@@ -22,7 +22,7 @@ def decrypt_session_id(encrypted_str):
     fernet = EncryptedTextField().fernet
     encrypted_bytes = force_bytes(encrypted_str)
     session_id_bytes = fernet.decrypt(encrypted_bytes)
-    session_id = force_text(session_id_bytes)
+    session_id = force_str(session_id_bytes)
     return session_id
 
 
