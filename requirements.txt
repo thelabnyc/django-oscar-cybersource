@@ -26,7 +26,7 @@ filelock==3.0.10
 flake8==3.7.7
 idna==2.8
 imagesize==1.1.0
-instrumented-soap==1.1.1
+instrumented-soap==2.1.1
 Jinja2==2.10.1
 lxml==4.3.3
 MarkupSafe==1.1.1
