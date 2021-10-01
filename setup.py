@@ -32,7 +32,7 @@ extras_require = {
         "sorl-thumbnail>=11.04",
         "sphinx-rtd-theme>=0.4.3",
         "sphinx>=1.5.2",
-        "suds-jurko==0.6",
+        "suds-community>=0.8.5",
         "tox>=2.6.0",
         "unittest-xml-reporting>=3.0.4",
         "versiontag>=1.2.0",
