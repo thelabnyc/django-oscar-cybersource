@@ -9,6 +9,7 @@ class CybersourceConfig(OscarConfig):
     label = "cybersource"
     verbose_name = _("Oscar API-Checkout Cybersource Payment Adapter")
     namespace = "cybersource"
+    default = True
 
     def get_urls(self):
         from .views import (
