@@ -12,7 +12,7 @@ from versiontag import get_version, cache_git_tag  # NOQA
 packages = find_packages("src")
 
 install_requires = [
-    "django>=2.2",
+    "Django>=3.2",
     "django-oscar>=3.0",
     "django-oscar-api>=2.0.0",
     "django-oscar-api-checkout>=3.0.0b1",
@@ -27,7 +27,7 @@ extras_require = {
         "coverage>=4.4.2",
         "flake8>=3.5.0",
         "instrumented-soap==2.1.1",
-        "psycopg2cffi>=2.7.7",
+        "psycopg2-binary>=2.8.4",
         "PyYAML>=3.12",
         "sorl-thumbnail>=11.04",
         "sphinx-rtd-theme>=0.4.3",
