@@ -16,6 +16,7 @@ from .methods import Cybersource, Bluefin, create_review_order_note, mark_declin
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
 from .cybersoap import CyberSourceSoap
+from .utils import decrypt_session_id
 from . import actions, settings, signature
 import dateutil.parser
 import uuid
@@ -98,7 +99,7 @@ class CyberSourceReplyView(APIView):
             actions.OrderAction.session_id_field_name
         )
         encrypted_session_id = request.data.get(session_id_field_name)
-        session_id = actions.decrypt_session_id(encrypted_session_id)
+        session_id = decrypt_session_id(encrypted_session_id)
         request.session._session_key = session_id
         delattr(request.session, "_session_cache")
 
@@ -180,19 +181,24 @@ class CyberSourceReplyView(APIView):
 
         # Try to authorize the payment
         cs = CyberSourceSoap(
-            settings.CYBERSOURCE_WSDL,
-            settings.MERCHANT_ID,
-            settings.CYBERSOURCE_SOAP_KEY,
-            request,
-            order,
-            method_key,
+            wsdl=settings.CYBERSOURCE_WSDL,
+            merchant_id=settings.MERCHANT_ID,
+            transaction_security_key=settings.CYBERSOURCE_SOAP_KEY,
+            request=request,
+            order=order,
+            method_key=method_key,
         )
-        auth_response = cs.authorize()
-        auth_reply_log_entry = Bluefin.log_soap_response(request, order, auth_response)
+        amount = request.data.get("req_amount", "0.00")
+        auth_response = cs.authorize(
+            token=request.data.get("payment_token"),
+            amount=amount,
+        )
+        auth_reply_log_entry = CyberSourceReply.log_soap_response(
+            request, order, auth_response
+        )
 
         # If authorization was declined, log it and redirect to the failure page.
         if auth_response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
-            amount = create_token_resp_data.get("req_amount", "0.00")
             Bluefin().record_declined_authorization(
                 auth_reply_log_entry, order, token.token, auth_response, amount
             )

@@ -7,7 +7,6 @@ from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
 from oscarapicheckout.states import FormPostRequired, Complete, Declined
 from oscarapicheckout import utils
 from rest_framework import serializers
-from suds import sudsobject
 from cybersource.cybersoap import CyberSourceSoap
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
 from .models import PaymentToken, CyberSourceReply
@@ -51,28 +50,6 @@ def mark_declined(order, request, method_key, reply_log_entry):
         utils.mark_payment_method_declined(order, request, method_key, amount)
     except InvalidOrderStatus:
         log_order_exception(order.number, order.status, reply_log_entry)
-
-
-def sudsobj_to_dict(sudsobj, key_prefix=""):
-    """Convert Suds object into a flattened dictionary"""
-    out = {}
-    # Handle lists
-    if isinstance(sudsobj, list):
-        for i, child in enumerate(sudsobj):
-            child_key = "{}[{}]".format(key_prefix, i)
-            out.update(sudsobj_to_dict(child, key_prefix=child_key))
-        return out
-    # Handle Primitives
-    if not hasattr(sudsobj, "__keylist__"):
-        out[key_prefix] = sudsobj
-        return out
-    # Handle Suds Objects
-    for parent_key, parent_val in sudsobject.asdict(sudsobj).items():
-        full_parent_key = (
-            "{}.{}".format(key_prefix, parent_key) if key_prefix else parent_key
-        )
-        out.update(sudsobj_to_dict(parent_val, key_prefix=full_parent_key))
-    return out
 
 
 class Cybersource(PaymentMethod):
@@ -168,62 +145,17 @@ class Bluefin(PaymentMethod):
     code = "bluefin"
     serializer_class = BluefinPaymentMethodSerializer
 
-    @staticmethod
-    def log_soap_response(request, order, response, card_expiry_date=None):
-        reply_data = sudsobj_to_dict(response)
-        log = CyberSourceReply(
-            user=request.user if request.user.is_authenticated else None,
-            order=order,
-            reply_type=CyberSourceReply.REPLY_TYPE_SOAP,
-            data=reply_data,
-            decision=response.decision,
-            message=None,
-            reason_code=response.reasonCode,
-            req_bill_to_address_postal_code=order.billing_address.postcode,
-            req_bill_to_forename=order.billing_address.first_name,
-            req_bill_to_surname=order.billing_address.last_name,
-            req_card_expiry_date=card_expiry_date,
-            req_reference_number=response.merchantReferenceCode
-            if "merchantReferenceCode" in response
-            else None,
-            req_transaction_type=(
-                "create_payment_token"
-                if "paySubscriptionCreateReply" in response
-                else "authorization"
-            ),
-            req_transaction_uuid=None,
-            request_token=response.requestToken,
-            transaction_id=response.requestID,
-        )
-        # These fields may or may not be present
-        cc_auth_reply = getattr(response, "ccAuthReply", None)
-        if cc_auth_reply:
-            log.auth_code = getattr(cc_auth_reply, "authorizationCode", None)
-            log.auth_response = getattr(cc_auth_reply, "processorResponse", None)
-            log.auth_trans_ref_no = getattr(cc_auth_reply, "reconciliationID", None)
-            log.auth_avs_code = getattr(cc_auth_reply, "avsCode", None)
-        # Save and return log object
-        log.save()
-        return log
-
-    @staticmethod
-    def lookup_token_details(request, order, payment_token):
-        cs = CyberSourceSoap(
-            settings.CYBERSOURCE_WSDL,
-            settings.MERCHANT_ID,
-            settings.CYBERSOURCE_SOAP_KEY,
-            request,
-            order,
-            "",
-        )
-        return cs.lookup_payment_token(payment_token)
-
     def record_created_payment_token(self, request, order, reply_log_entry, response):
         token_string = response.paySubscriptionCreateReply.subscriptionID
         # Lookup more details about the token
-        token_details = self.__class__.lookup_token_details(
-            request, order, token_string
+        cs = CyberSourceSoap(
+            wsdl=settings.CYBERSOURCE_WSDL,
+            merchant_id=settings.MERCHANT_ID,
+            transaction_security_key=settings.CYBERSOURCE_SOAP_KEY,
+            request=request,
+            order=order,
         )
+        token_details = cs.lookup_payment_token(token_string)
         if token_details is None:
             return None, None
         # Create the payment token
@@ -319,26 +251,27 @@ class Bluefin(PaymentMethod):
             method_key=method_key,
         )
 
+        # Get token via SOAP
         cs = CyberSourceSoap(
-            settings.CYBERSOURCE_WSDL,
-            settings.MERCHANT_ID,
-            settings.CYBERSOURCE_SOAP_KEY,
-            request,
-            order,
-            method_key,
+            wsdl=settings.CYBERSOURCE_WSDL,
+            merchant_id=settings.MERCHANT_ID,
+            transaction_security_key=settings.CYBERSOURCE_SOAP_KEY,
+            request=request,
+            order=order,
+            method_key=method_key,
+        )
+        get_token_response = cs.get_token(payment_data)
+        reply_log_entry = CyberSourceReply.log_soap_response(
+            request, order, get_token_response
         )
 
-        # Get token via SOAP
-        response = cs.get_token_encrypted(payment_data)
-        reply_log_entry = self.__class__.log_soap_response(request, order, response)
-
         # If token creation was not successful, return declined.
-        if response.decision != DECISION_ACCEPT:
+        if get_token_response.decision != DECISION_ACCEPT:
             return Declined(amount)
 
         # Record the new payment token
         token, token_details = self.record_created_payment_token(
-            request, order, reply_log_entry, response
+            request, order, reply_log_entry, get_token_response
         )
         if token is None or token_details is None:
             return Declined(amount)
@@ -350,22 +283,22 @@ class Bluefin(PaymentMethod):
         reply_log_entry.save()
 
         # Attempt to authorize payment
-        response = cs.authorize_encrypted(payment_data, amount)
-        reply_log_entry = self.__class__.log_soap_response(
-            request, order, response, card_expiry_date=expiry_date
+        authorize_response = cs.authorize(token.token, amount)
+        reply_log_entry = CyberSourceReply.log_soap_response(
+            request, order, authorize_response, card_expiry_date=expiry_date
         )
 
         # If authorization was not successful, log it and redirect to the failed page.
-        if response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
+        if authorize_response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
             new_state = self.record_declined_authorization(
-                reply_log_entry, order, token.token, response, amount
+                reply_log_entry, order, token.token, authorize_response, amount
             )
             return new_state
 
         # Authorization was successful! Log it and update he order state
         new_state = self.record_successful_authorization(
-            reply_log_entry, order, token.token, response
+            reply_log_entry, order, token.token, authorize_response
         )
-        if response.decision == DECISION_REVIEW:
-            create_review_order_note(order, response.requestID)
+        if authorize_response.decision == DECISION_REVIEW:
+            create_review_order_note(order, authorize_response.requestID)
         return new_state

@@ -1,25 +1,6 @@
 from django.contrib import admin
-from django.utils.safestring import mark_safe
+from .utils import format_json_for_display
 from . import models
-import json
-
-
-def format_json_for_display(data, width="auto"):
-    """Use Pygments to pretty-print the JSON data field"""
-    json_data = json.dumps(data, sort_keys=True, indent=4)
-    try:
-        from pygments import highlight
-        from pygments.lexers import JsonLexer
-        from pygments.formatters import HtmlFormatter
-    except ImportError:
-        return json_data
-    prestyles = ("width: {};" "white-space: pre-wrap;" "word-wrap: break-word;").format(
-        width
-    )
-    formatter = HtmlFormatter(style="colorful", prestyles=prestyles)
-    response = highlight(json_data, JsonLexer(), formatter)
-    style = "<style>" + formatter.get_style_defs() + "</style>"
-    return mark_safe(style + response)
 
 
 @admin.register(models.PaymentToken)

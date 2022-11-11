@@ -23,7 +23,7 @@ Order = get_model("order", "Order")
 DO_SOAP = settings.CYBERSOURCE_SOAP_KEY and settings.CYBERSOURCE_MERCHANT_ID
 
 
-# Mock cybersource.methods.Bluefin.log_soap_response with this
+# Mock cybersource.models.CyberSourceReply.log_soap_response with this
 def mock_log_soap_response(request, order, response):
     # convert Mock object to dict, as the real method converts a sudsobject to dict
     response = {
@@ -225,7 +225,7 @@ class BaseCheckoutTest(APITestCase):
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout using mocked SOAP integration"""
 
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.cybersoap.CyberSourceSoap._run_transaction")
     def test_checkout_process(self, run_transaction, log_soap_response):
         """Full checkout process using minimal api calls"""
@@ -292,7 +292,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.check_finished_order(order_number, product.id)
 
     @mock.patch("oscarapicheckout.signals.order_payment_declined.send")
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.cybersoap.CyberSourceSoap._run_transaction")
     def test_checkout_process_declined_auth(
         self, run_transaction, log_soap_response, send_order_payment_declined_signal
@@ -364,7 +364,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         # Make sure order_payment_declined signal was triggered exactly once
         self.assertEqual(send_order_payment_declined_signal.call_count, 1)
 
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.cybersoap.CyberSourceSoap._run_transaction")
     def test_decision_manager_review_auth(self, run_transaction, log_soap_response):
         product = self.create_product()
@@ -442,7 +442,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
         self.check_finished_order(order_number, product.id, status="REVIEW")
 
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.cybersoap.CyberSourceSoap._run_transaction")
     def test_add_product_during_auth(self, run_transaction, log_soap_response):
         """Test attempting to add a product during the authorize flow"""
@@ -536,7 +536,7 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
         self.assertEqual(resp.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.cybersoap.CyberSourceSoap._run_transaction")
     def test_free_product(self, run_transaction, log_soap_response):
         """Full checkout process using minimal api calls"""
@@ -976,7 +976,7 @@ class CSReplyViewTest(BaseCheckoutTest):
             self.do_fetch_payment_states().data["order_status"], "Payment Declined"
         )
 
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("oscarapicheckout.signals.order_payment_authorized.send")
     def test_soap_declined_auth(self, order_payment_authorized, log_soap_response):
         """Declined auth should should result in redirect to failure page"""
@@ -1060,7 +1060,7 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
 class CybersourceMethodTest(BaseCheckoutTest):
-    @mock.patch("cybersource.methods.Bluefin.log_soap_response")
+    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.signals.pre_build_auth_request.send")
     @mock.patch("cybersource.signals.pre_build_get_token_request.send")
     @mock.patch("oscarapicheckout.signals.pre_calculate_total.send")

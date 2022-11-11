@@ -1,29 +1,10 @@
-from decimal import Decimal
 from datetime import datetime
-from django.utils.encoding import force_bytes, force_str
-from fernet_fields import EncryptedTextField
+from .constants import PRECISION
+from .utils import encrypt_session_id
 from . import settings, signature, models
 import random
 import time
 import re
-
-PRECISION = Decimal("0.01")
-
-
-def encrypt_session_id(session_id):
-    fernet = EncryptedTextField().fernet
-    session_id_bytes = force_bytes(session_id)
-    encrypted_bytes = fernet.encrypt(session_id_bytes)
-    encrypted_str = force_str(encrypted_bytes)
-    return encrypted_str
-
-
-def decrypt_session_id(encrypted_str):
-    fernet = EncryptedTextField().fernet
-    encrypted_bytes = force_bytes(encrypted_str)
-    session_id_bytes = fernet.decrypt(encrypted_bytes)
-    session_id = force_str(session_id_bytes)
-    return session_id
 
 
 class SecureAcceptanceAction(object):
@@ -186,12 +167,12 @@ class BillingAddressMixin(object):
 
 
 class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMixin):
-    method_key_field_name = "merchant_defined_data50"
-    session_id_field_name = "merchant_secure_data4"  # Use secure_data4 because it has a 2000 char length limit, as opposed to 100 char.
-
     """
     Abstract SecureAcceptanceAction for action's related to orders.
     """
+
+    method_key_field_name = "merchant_defined_data50"
+    session_id_field_name = "merchant_secure_data4"  # Use secure_data4 because it has a 2000 char length limit, as opposed to 100 char.
 
     def __init__(
         self, session_id, order, method_key, amount, server_hostname, **kwargs

@@ -13,3 +13,6 @@ services:
       - postgres
     volumes:
       - .:/code
+    environment:
+      CYBERSOURCE_MERCHANT_ID:
+      CYBERSOURCE_SOAP_KEY:

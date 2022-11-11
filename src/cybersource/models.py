@@ -7,6 +7,7 @@ from django.utils import timezone
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
 from fernet_fields import EncryptedTextField
+from .utils import sudsobj_to_dict
 from .constants import (
     DECISION_ACCEPT,
     DECISION_REVIEW,
@@ -160,6 +161,44 @@ class CyberSourceReply(models.Model):
         verbose_name = _("CyberSource Reply")
         verbose_name_plural = _("CyberSource Replies")
         ordering = ("date_created",)
+
+    @classmethod
+    def log_soap_response(cls, request, order, response, card_expiry_date=None):
+        reply_data = sudsobj_to_dict(response)
+        log = CyberSourceReply(
+            user=request.user if request.user.is_authenticated else None,
+            order=order,
+            reply_type=CyberSourceReply.REPLY_TYPE_SOAP,
+            data=reply_data,
+            decision=response.decision,
+            message=None,
+            reason_code=response.reasonCode,
+            req_bill_to_address_postal_code=order.billing_address.postcode,
+            req_bill_to_forename=order.billing_address.first_name,
+            req_bill_to_surname=order.billing_address.last_name,
+            req_card_expiry_date=card_expiry_date,
+            req_reference_number=response.merchantReferenceCode
+            if "merchantReferenceCode" in response
+            else None,
+            req_transaction_type=(
+                "create_payment_token"
+                if "paySubscriptionCreateReply" in response
+                else "authorization"
+            ),
+            req_transaction_uuid=None,
+            request_token=response.requestToken,
+            transaction_id=response.requestID,
+        )
+        # These fields may or may not be present
+        cc_auth_reply = getattr(response, "ccAuthReply", None)
+        if cc_auth_reply:
+            log.auth_code = getattr(cc_auth_reply, "authorizationCode", None)
+            log.auth_response = getattr(cc_auth_reply, "processorResponse", None)
+            log.auth_trans_ref_no = getattr(cc_auth_reply, "reconciliationID", None)
+            log.auth_avs_code = getattr(cc_auth_reply, "avsCode", None)
+        # Save and return log object
+        log.save()
+        return log
 
     def __str__(self):
         return _("CyberSource Reply %(created)s") % dict(created=self.date_created)
