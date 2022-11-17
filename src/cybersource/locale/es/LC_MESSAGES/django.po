@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-07 14:05+0000\n"
+"POT-Creation-Date: 2022-11-17 21:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,94 +18,123 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: cybersource/apps.py:10
-msgid "Oscar API-Checkout Cybersource Payment Adapter"
-msgstr ""
-
-#: cybersource/methods.py:34
+#: cybersource/actions.py:379
 #, python-format
 msgid ""
 "Transaction %(transaction_id)s is currently under review. Use Decision "
 "Manager to either accept or reject the transaction."
 msgstr ""
 
-#: cybersource/methods.py:162
+#: cybersource/apps.py:10
+msgid "Oscar API-Checkout Cybersource Payment Adapter"
+msgstr ""
+
+#: cybersource/methods.py:77
 msgid "Missing encrypted payment data."
 msgstr ""
 
-#: cybersource/models.py:24
+#: cybersource/models.py:29
 msgid "Hostname"
 msgstr ""
 
-#: cybersource/models.py:29
+#: cybersource/models.py:34
 msgid "When the request matches this hostname, this profile will be used."
 msgstr ""
 
-#: cybersource/models.py:32
+#: cybersource/models.py:37
 msgid "Profile ID"
 msgstr ""
 
-#: cybersource/models.py:33
+#: cybersource/models.py:38
 msgid "Access Key"
 msgstr ""
 
-#: cybersource/models.py:34
+#: cybersource/models.py:39
 msgid "Secret Key"
 msgstr ""
 
-#: cybersource/models.py:36
+#: cybersource/models.py:41
 msgid "Is Default Profile?"
 msgstr ""
 
-#: cybersource/models.py:39
+#: cybersource/models.py:44
 msgid ""
 "If no profile can be found for a request's hostname, the default profile "
 "will be used."
 msgstr ""
 
-#: cybersource/models.py:44
+#: cybersource/models.py:49
 msgid "Secure Acceptance Profile"
 msgstr ""
 
-#: cybersource/models.py:45
+#: cybersource/models.py:50
 msgid "Secure Acceptance Profiles"
 msgstr ""
 
-#: cybersource/models.py:102
+#: cybersource/models.py:107
 #, python-format
 msgid ""
 "Secure Acceptance Profile hostname=%(hostname)s, profile_id=%(profile_id)s"
 msgstr ""
 
-#: cybersource/models.py:110
+#: cybersource/models.py:115
 msgid "Secure Acceptance"
 msgstr ""
 
-#: cybersource/models.py:111
+#: cybersource/models.py:116
 msgid "SOAP API"
 msgstr ""
 
-#: cybersource/models.py:156
+#: cybersource/models.py:161
 msgid "Date Modified"
 msgstr ""
 
-#: cybersource/models.py:157
+#: cybersource/models.py:162
 msgid "Date Received"
 msgstr ""
 
-#: cybersource/models.py:160
+#: cybersource/models.py:165
 msgid "CyberSource Reply"
 msgstr ""
 
-#: cybersource/models.py:161
+#: cybersource/models.py:166
 msgid "CyberSource Replies"
 msgstr ""
 
-#: cybersource/models.py:165
+#: cybersource/models.py:241
 #, python-format
 msgid "CyberSource Reply %(created)s"
 msgstr ""
 
-#: cybersource/models.py:261 cybersource/models.py:262
+#: cybersource/models.py:337 cybersource/models.py:338
 msgid "Payment Token"
+msgstr ""
+
+#: cybersource/models.py:397
+msgid ""
+"For capture (debit) transactions, link to the authorization transaction that "
+"allowed the capture to take place."
+msgstr ""
+
+#: cybersource/models.py:429
+#, python-brace-format
+msgid "transaction has source {has}, expected {expected}"
+msgstr ""
+
+#: cybersource/models.py:436
+#, python-brace-format
+msgid "transaction has type {has}, expected {expected}"
+msgstr ""
+
+#: cybersource/models.py:443
+#, python-brace-format
+msgid "transaction has status {has}, expected {expected}"
+msgstr ""
+
+#: cybersource/models.py:462
+msgid "transaction does not have a related payment token"
+msgstr ""
+
+#: cybersource/models.py:466
+msgid "transaction has already been fully captured"
 msgstr ""
