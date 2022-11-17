@@ -3,6 +3,15 @@
 Changelog
 =========
 
+9.0.0
+------------------
+- Add support for capturing funds from authorization transactions.
+- General refactoring and code cleanup.
+
+8.2.0
+------------------
+- Fix Django deprecation warnings
+
 8.1.1
 ------------------
 - Fix bug in handling of Cybersource SOAP API downtime.
