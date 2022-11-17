@@ -12,6 +12,7 @@ from rest_framework.test import APITestCase
 import datetime
 from cybersource.models import CyberSourceReply
 from ..constants import DECISION_REVIEW, DECISION_ACCEPT
+from .. import actions
 from . import factories as cs_factories
 import uuid
 
@@ -24,7 +25,7 @@ DO_SOAP = settings.CYBERSOURCE_SOAP_KEY and settings.CYBERSOURCE_MERCHANT_ID
 
 
 # Mock cybersource.models.CyberSourceReply.log_soap_response with this
-def mock_log_soap_response(request, order, response):
+def mock_log_soap_response(order, response, request=None, card_expiry_date=None):
     # convert Mock object to dict, as the real method converts a sudsobject to dict
     response = {
         "decision": response.decision,
@@ -34,7 +35,7 @@ def mock_log_soap_response(request, order, response):
     response["req_reference_number"] = response.get("merchantReferenceCode", "")
 
     log = CyberSourceReply(
-        user=request.user if request.user.is_authenticated else None,
+        user=request.user if request and request.user.is_authenticated else None,
         order=order,
         reply_type=CyberSourceReply.REPLY_TYPE_SA,
         data=response,
@@ -221,6 +222,45 @@ class BaseCheckoutTest(APITestCase):
                 "reject the transaction." % transactions[0].reference,
             )
 
+    def capture_payment(self, number, card_last4="1111"):
+        order = Order.objects.get(number=number)
+
+        # Check preconditions
+        payment_sources = order.sources.all()
+        self.assertEqual(payment_sources.count(), 1)
+        self.assertEqual(payment_sources[0].currency, order.currency)
+        self.assertEqual(payment_sources[0].amount_allocated, order.total_incl_tax)
+        self.assertEqual(payment_sources[0].amount_debited, D("0.00"))
+        self.assertEqual(payment_sources[0].amount_refunded, D("0.00"))
+
+        # Capture payment
+        transactions = payment_sources[0].transactions.all()
+        auth_txn = transactions[0]
+        capture_txn = actions.CapturePayment(order)(auth_txn, amount=auth_txn.amount)
+
+        # Payment source now has amount debited too
+        payment_sources = order.sources.all()
+        self.assertEqual(payment_sources.count(), 1)
+        self.assertEqual(payment_sources[0].currency, order.currency)
+        self.assertEqual(payment_sources[0].amount_allocated, order.total_incl_tax)
+        self.assertEqual(payment_sources[0].amount_debited, order.total_incl_tax)
+        self.assertEqual(payment_sources[0].amount_refunded, D("0.00"))
+
+        # Check transaction
+        self.assertEqual(capture_txn.txn_type, "Debit")
+        self.assertEqual(capture_txn.amount, order.total_incl_tax)
+        self.assertEqual(capture_txn.status, DECISION_ACCEPT)
+        self.assertEqual(capture_txn.log.order, order)
+        self.assertEqual(capture_txn.log.req_reference_number, order.number)
+        self.assertEqual(capture_txn.token.card_last4, card_last4)
+        self.assertEqual(capture_txn.token.log.order, order)
+        self.assertEqual(capture_txn.token.log.req_reference_number, order.number)
+
+        # Attempting to capture again causes a ValueError
+        with self.assertRaises(ValueError):
+            # Capture payment
+            actions.CapturePayment(order)(auth_txn, amount=auth_txn.amount)
+
 
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout using mocked SOAP integration"""
@@ -290,6 +330,14 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
 
         self.check_finished_order(order_number, product.id)
+
+        # Now capture payment
+        run_transaction.return_value.ccCaptureReply.requestDateTime = (
+            timezone.now().isoformat()
+        )
+        run_transaction.return_value.requestToken = "foobar"
+        run_transaction.return_value.requestID = "5579568773646201204011"
+        self.capture_payment(order_number)
 
     @mock.patch("oscarapicheckout.signals.order_payment_declined.send")
     @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")

@@ -31,14 +31,14 @@ class CyberSourceSoap(object):
         wsdl,
         merchant_id,
         transaction_security_key,
-        request,
         order,
+        request=None,
         method_key="",
         soap_log_prefix="CYBERSOURCE",
     ):
         self.merchant_id = merchant_id
-        self.request = request
         self.order = order
+        self.request = request
         self.method_key = method_key
 
         # Build a SOAP client
@@ -93,6 +93,23 @@ class CyberSourceSoap(object):
         # Run transaction
         return self._run_transaction(txndata)
 
+    def capture(self, token, amount, auth_request_id):
+        """Authorize with a payment token"""
+        txndata = self._prep_transaction("ccCaptureService", amount)
+        # Add token info
+        txndata["recurringSubscriptionInfo"] = self.client.factory.create(
+            "ns0:recurringSubscriptionInfo"
+        )
+        txndata["recurringSubscriptionInfo"].subscriptionID = token
+        # Add request ID of the cooresponding authorization
+        txndata["ccCaptureService"]["authRequestID"] = auth_request_id
+        # Add extra fields
+        self._trigger_pre_build_hook(
+            txndata, signals.pre_build_capture_request, token=token
+        )
+        # Run transaction
+        return self._run_transaction(txndata)
+
     def _prep_transaction(self, service, amount):
         data = {}
 
@@ -101,19 +118,18 @@ class CyberSourceSoap(object):
         data[service]._run = "true"
 
         # Add merchant info
-        if CHECKOUT_FINGERPRINT_SESSION_ID and self.request.session.get(
-            CHECKOUT_FINGERPRINT_SESSION_ID
-        ):
-            data["deviceFingerprintID"] = self.request.session[
-                CHECKOUT_FINGERPRINT_SESSION_ID
-            ]
+        if self.request and CHECKOUT_FINGERPRINT_SESSION_ID:
+            fingerprint_id = self.request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID)
+            if fingerprint_id:
+                data["deviceFingerprintID"] = fingerprint_id
         data["merchantID"] = self.merchant_id
         data["merchantReferenceCode"] = self.order.number
 
         # Add order info
         data["billTo"] = self.client.factory.create("ns0:BillTo")
         data["billTo"].email = self.order.email
-        data["billTo"].ipAddress = self.request.META.get("REMOTE_ADDR")
+        if self.request:
+            data["billTo"].ipAddress = self.request.META.get("REMOTE_ADDR")
         if self.order.user:
             data["billTo"].customerID = self.order.user.pk
 

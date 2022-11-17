@@ -1,11 +1,14 @@
+from decimal import Decimal
 from cryptography.fernet import InvalidToken
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.db import models
+from django.db.models import Q, CheckConstraint, Sum
 from django.contrib.postgres.fields import HStoreField
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
+from oscar.apps.payment.abstract_models import AbstractTransaction
 from fernet_fields import EncryptedTextField
 from .utils import sudsobj_to_dict
 from .constants import (
@@ -14,6 +17,7 @@ from .constants import (
     DECISION_DECLINE,
     DECISION_ERROR,
 )
+from . import settings as cyb_settings
 import dateutil.parser
 import logging
 
@@ -70,15 +74,15 @@ class SecureAcceptanceProfile(models.Model):
 
         # No default profile exists, so try and get something out of settings.
         if (
-            hasattr(settings, "CYBERSOURCE_PROFILE")
-            and hasattr(settings, "CYBERSOURCE_ACCESS")
-            and hasattr(settings, "CYBERSOURCE_SECRET")
+            hasattr(django_settings, "CYBERSOURCE_PROFILE")
+            and hasattr(django_settings, "CYBERSOURCE_ACCESS")
+            and hasattr(django_settings, "CYBERSOURCE_SECRET")
         ):
             profile = SecureAcceptanceProfile()
             profile.hostname = ""
-            profile.profile_id = settings.CYBERSOURCE_PROFILE
-            profile.access_key = settings.CYBERSOURCE_ACCESS
-            profile.secret_key = settings.CYBERSOURCE_SECRET
+            profile.profile_id = django_settings.CYBERSOURCE_PROFILE
+            profile.access_key = django_settings.CYBERSOURCE_ACCESS
+            profile.secret_key = django_settings.CYBERSOURCE_SECRET
             profile.is_default = True
             profile.save()
             logger.info(
@@ -163,10 +167,47 @@ class CyberSourceReply(models.Model):
         ordering = ("date_created",)
 
     @classmethod
-    def log_soap_response(cls, request, order, response, card_expiry_date=None):
-        reply_data = sudsobj_to_dict(response)
+    def log_secure_acceptance_response(cls, order, request):
         log = CyberSourceReply(
-            user=request.user if request.user.is_authenticated else None,
+            user=request.user if request and request.user.is_authenticated else None,
+            order=order,
+            data=request.data,
+            reply_type=CyberSourceReply.REPLY_TYPE_SA,
+            auth_avs_code=request.data.get("auth_avs_code"),
+            auth_code=request.data.get("auth_code"),
+            auth_response=request.data.get("auth_response"),
+            auth_trans_ref_no=request.data.get("auth_trans_ref_no"),
+            decision=request.data.get("decision"),
+            message=request.data.get("message"),
+            reason_code=request.data.get("reason_code"),
+            req_bill_to_address_postal_code=request.data.get(
+                "req_bill_to_address_postal_code"
+            ),
+            req_bill_to_forename=request.data.get("req_bill_to_forename"),
+            req_bill_to_surname=request.data.get("req_bill_to_surname"),
+            req_card_expiry_date=request.data.get("req_card_expiry_date"),
+            req_reference_number=request.data.get("req_reference_number"),
+            req_transaction_type=request.data.get("req_transaction_type"),
+            req_transaction_uuid=request.data.get("req_transaction_uuid"),
+            request_token=request.data.get("request_token"),
+            transaction_id=request.data.get("transaction_id"),
+        )
+        log.save()
+        return log
+
+    @classmethod
+    def log_soap_response(cls, order, response, request=None, card_expiry_date=None):
+        reply_data = sudsobj_to_dict(response)
+        user = request.user if request and request.user.is_authenticated else None
+        req_transaction_type = None
+        if "paySubscriptionCreateReply" in response:
+            req_transaction_type = "create_payment_token"
+        elif "ccCaptureReply" in response:
+            req_transaction_type = "capture"
+        else:
+            req_transaction_type = "authorization"
+        log = CyberSourceReply(
+            user=user,
             order=order,
             reply_type=CyberSourceReply.REPLY_TYPE_SOAP,
             data=reply_data,
@@ -180,11 +221,7 @@ class CyberSourceReply(models.Model):
             req_reference_number=response.merchantReferenceCode
             if "merchantReferenceCode" in response
             else None,
-            req_transaction_type=(
-                "create_payment_token"
-                if "paySubscriptionCreateReply" in response
-                else "authorization"
-            ),
+            req_transaction_type=req_transaction_type,
             req_transaction_uuid=None,
             request_token=response.requestToken,
             transaction_id=response.requestID,
@@ -347,12 +384,108 @@ class TransactionMixin(ReplyLogMixin, models.Model):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    authorization = models.ForeignKey(
+        "self",
+        related_name="captures",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        limit_choices_to={
+            "txn_type": AbstractTransaction.AUTHORISE,
+        },
+        help_text=_(
+            "For capture (debit) transactions, link to the authorization "
+            "transaction that allowed the capture to take place."
+        ),
+    )
     request_token = models.CharField(max_length=200, null=True, blank=True)
     processed_datetime = models.DateTimeField(default=timezone.now)
 
     class Meta:
         abstract = True
+        constraints = [
+            CheckConstraint(
+                check=(
+                    Q(txn_type=AbstractTransaction.DEBIT)
+                    | Q(authorization__isnull=True)
+                ),
+                name="only_captures_have_auths",
+            ),
+        ]
 
     @property
     def is_pending_review(self):
         return self.status == DECISION_REVIEW
+
+    @property
+    def is_accepted_authorization(self):
+        """
+        Check if this transaction is an successfully approved Cybersource authorization.
+        Returns a tuple, either ``(True, None)`` or ``(False, "Reason")``.
+        """
+        source_type = self.source.source_type
+        if source_type.name != cyb_settings.SOURCE_TYPE:
+            return False, (
+                _("transaction has source {has}, expected {expected}").format(
+                    has=source_type.name,
+                    expected=cyb_settings.SOURCE_TYPE,
+                )
+            )
+        if self.txn_type != AbstractTransaction.AUTHORISE:
+            return False, (
+                _("transaction has type {has}, expected {expected}").format(
+                    has=self.txn_type,
+                    expected=AbstractTransaction.AUTHORISE,
+                )
+            )
+        if self.status != DECISION_ACCEPT:
+            return False, (
+                _("transaction has status {has}, expected {expected}").format(
+                    has=self.status,
+                    expected=DECISION_ACCEPT,
+                )
+            )
+        return True, None
+
+    @property
+    def can_be_captured(self):
+        """
+        Check if this transaction can be captured by Cybersource.
+        Returns a tuple, either ``(True, None)`` or ``(False, "Reason")``.
+        """
+        is_good_auth, err_reason = self.is_accepted_authorization
+        if not is_good_auth:
+            return is_good_auth, err_reason
+        # Need payment token to capture
+        payment_token = self.token
+        if payment_token is None:
+            return False, _("transaction does not have a related payment token")
+        # Check if there's any money left to capture
+        remaining_capture_amount = self.get_remaining_amount_to_capture()
+        if remaining_capture_amount <= 0:
+            return False, _("transaction has already been fully captured")
+        # Looks like we can capture this.
+        return True, None
+
+    def list_successful_captures(self):
+        if not self.is_accepted_authorization:
+            return self.captures.none()
+        return self.captures.filter(
+            txn_type=AbstractTransaction.DEBIT,
+            status=DECISION_ACCEPT,
+        )
+
+    def get_total_captured_amount(self):
+        if not self.is_accepted_authorization:
+            return Decimal("0.00")
+        data = self.list_successful_captures().aggregate(total_amount=Sum("amount"))
+        if data["total_amount"] is None:
+            return Decimal("0.00")
+        return data["total_amount"]
+
+    def get_remaining_amount_to_capture(self):
+        if not self.is_accepted_authorization:
+            return Decimal("0.00")
+        total_captured = self.get_total_captured_amount()
+        remaining = self.amount - total_captured
+        return remaining

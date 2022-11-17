@@ -1,10 +1,28 @@
 from datetime import datetime
-from .constants import PRECISION
+from decimal import Decimal
+from django.db.models import F
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from oscar.core.loading import get_model, get_class
+from oscarapicheckout.states import Complete, Declined
+from oscarapicheckout.methods import PaymentMethod
+from oscarapicheckout import utils
+from .constants import PRECISION, DECISION_ACCEPT, DECISION_REVIEW
 from .utils import encrypt_session_id
+from .models import PaymentToken, CyberSourceReply
+from .cybersoap import CyberSourceSoap
 from . import settings, signature, models
+import dateutil.parser
 import random
 import time
 import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+Transaction = get_model("payment", "Transaction")
+OrderNote = get_model("order", "OrderNote")
+InvalidOrderStatus = get_class("order.exceptions", "InvalidOrderStatus")
 
 
 class SecureAcceptanceAction(object):
@@ -79,7 +97,7 @@ class SecureAcceptanceAction(object):
         return "%s%s" % (int(time.time()), random.randrange(0, 100))
 
 
-class ShippingAddressMixin(object):
+class SecureAcceptanceShippingAddressMixin(object):
     def _get_shipping_signed_fields(self):
         return set(
             [
@@ -126,7 +144,7 @@ class ShippingAddressMixin(object):
         return shipping_data
 
 
-class BillingAddressMixin(object):
+class SecureAcceptanceBillingAddressMixin(object):
     def _get_billing_signed_fields(self):
         return set(
             [
@@ -166,7 +184,11 @@ class BillingAddressMixin(object):
         return data
 
 
-class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMixin):
+class SecureAcceptanceOrderAction(
+    SecureAcceptanceAction,
+    SecureAcceptanceShippingAddressMixin,
+    SecureAcceptanceBillingAddressMixin,
+):
     """
     Abstract SecureAcceptanceAction for action's related to orders.
     """
@@ -255,7 +277,7 @@ class OrderAction(SecureAcceptanceAction, ShippingAddressMixin, BillingAddressMi
         return data
 
 
-class CreatePaymentToken(OrderAction):
+class CreatePaymentToken(SecureAcceptanceOrderAction):
     transaction_type = "create_payment_token"
     url = settings.ENDPOINT_PAY
 
@@ -272,3 +294,284 @@ class CreatePaymentToken(OrderAction):
             ]
         )
         return fields
+
+
+class ReplyHandlerAction(PaymentMethod):
+    name = settings.SOURCE_TYPE
+
+    def __init__(self, reply_log_entry, request, method_key):
+        self.reply_log_entry = reply_log_entry
+        self.request = request
+        self.method_key = method_key
+
+    def create_order_note(self, order, msg):
+        return OrderNote.objects.create(
+            note_type=OrderNote.SYSTEM, order=order, message=msg
+        )
+
+
+class RecordPaymentToken(ReplyHandlerAction):
+    def __call__(self, token_string, card_num, card_type):
+        """Record the generated payment token and require authorization using the token."""
+        try:
+            token = PaymentToken.objects.filter(token=token_string).get()
+        except PaymentToken.DoesNotExist:
+            token = PaymentToken(
+                log=self.reply_log_entry,
+                token=token_string,
+                masked_card_number=card_num,
+                card_type=card_type,
+            )
+            token.save()
+        return token
+
+
+class RecordSuccessfulAuth(ReplyHandlerAction):
+    def __call__(self, order, token_string, response, update_session=False):
+        decision = self.reply_log_entry.get_decision()
+        transaction_id = response.requestID
+        request_token = response.requestToken
+        signed_date_time = response.ccAuthReply.authorizedDateTime
+        req_amount = Decimal(response.ccAuthReply.amount)
+        # assuming these are equal since authorization succeeded
+        auth_amount = req_amount
+        source = self.get_source(order, transaction_id)
+
+        # Lookup the payment token
+        try:
+            token = PaymentToken.objects.get(token=token_string)
+        except PaymentToken.DoesNotExist:
+            return Declined(req_amount, source_id=source.pk)
+        # Increment the amount_allocated on the payment source
+        source.amount_allocated = F("amount_allocated") + auth_amount
+        source.save()
+        source.refresh_from_db()  # Refetch data from DB to resolve F() expression
+        # Save a new transaction record
+        transaction = Transaction()
+        transaction.log = self.reply_log_entry
+        transaction.source = source
+        transaction.token = token
+        transaction.txn_type = Transaction.AUTHORISE
+        transaction.amount = req_amount
+        transaction.reference = transaction_id
+        transaction.status = decision
+        transaction.request_token = request_token
+        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
+        transaction.save()
+        # Create payment event
+        event = self.make_authorize_event(order, auth_amount)
+        for line in order.lines.all():
+            self.make_event_quantity(event, line, line.quantity)
+        # Create order notes
+        if response.decision == DECISION_REVIEW:
+            self.create_review_order_note(order, response.requestID)
+        # Update payment state in session
+        new_state = Complete(source.amount_allocated, source_id=source.pk)
+        if update_session:
+            utils.update_payment_method_state(
+                order, self.request, self.method_key, new_state
+            )
+        return new_state
+
+    def create_review_order_note(self, order, transaction_id):
+        """If an order is under review, add a note explaining why"""
+        msg = _(
+            "Transaction %(transaction_id)s is currently under review. Use Decision Manager to either accept or reject the transaction."
+        ) % dict(transaction_id=transaction_id)
+        self.create_order_note(order, msg)
+
+
+class RecordDeclinedAuth(ReplyHandlerAction):
+    def __call__(self, order, token_string, response, amount, update_session=False):
+        decision = self.reply_log_entry.get_decision()
+        transaction_id = response.requestID
+        request_token = response.requestToken
+        signed_date_time = str(timezone.now())  # not available in response.ccAuthReply
+        req_amount = amount  # not available in response.ccAuthReply
+        # Save a transaction to the DB
+        source = self.get_source(order, transaction_id)
+        transaction = Transaction()
+        transaction.log = self.reply_log_entry
+        transaction.source = source
+        transaction.token = PaymentToken.objects.filter(token=token_string).first()
+        transaction.txn_type = Transaction.AUTHORISE
+        transaction.amount = req_amount
+        transaction.reference = transaction_id
+        transaction.status = decision
+        transaction.request_token = request_token
+        transaction.processed_datetime = dateutil.parser.parse(signed_date_time)
+        transaction.save()
+        # Update payment state in session
+        if update_session:
+            try:
+                utils.mark_payment_method_declined(
+                    order, self.request, self.method_key, amount
+                )
+            except InvalidOrderStatus:
+                logger.exception(
+                    "Failed to set Order %s to payment declined. Order is current in status %s. Examine CyberSourceReply[%s]",
+                    order.number,
+                    order.status,
+                    self.reply_log_entry.pk,
+                )
+        return Declined(req_amount, source_id=source.pk)
+
+
+class RecordCapture(ReplyHandlerAction):
+    def __call__(
+        self,
+        order,
+        capture_resp,
+        authorization_txn,
+        capture_amount,
+    ):
+        try:
+            processed_dt = dateutil.parser.parse(
+                capture_resp.ccCaptureReply.requestDateTime
+            )
+        except AttributeError:
+            processed_dt = timezone.now()
+        source = authorization_txn.source
+        transaction = Transaction()
+        transaction.log = self.reply_log_entry
+        transaction.source = source
+        transaction.token = authorization_txn.token
+        transaction.authorization = authorization_txn
+        transaction.txn_type = Transaction.DEBIT
+        transaction.amount = capture_amount
+        transaction.reference = capture_resp.requestID
+        transaction.status = self.reply_log_entry.get_decision()
+        transaction.request_token = capture_resp.requestToken
+        transaction.processed_datetime = processed_dt
+        transaction.save()
+
+        # If the transaction was successful, increment that amount debited and create a payment event
+        if transaction.status in (DECISION_ACCEPT, DECISION_REVIEW):
+            source.amount_debited = F("amount_debited") + capture_amount
+            source.save()
+            event = self.make_debit_event(order, capture_amount)
+            for line in order.lines.all():
+                self.make_event_quantity(event, line, line.quantity)
+        # Return the resulting transaction
+        return transaction
+
+
+class SOAPAction:
+    def __init__(self, order, request=None, method_key=None):
+        self.order = order
+        self.request = request
+        self.method_key = method_key
+        self.api = CyberSourceSoap(
+            wsdl=settings.CYBERSOURCE_WSDL,
+            merchant_id=settings.MERCHANT_ID,
+            transaction_security_key=settings.CYBERSOURCE_SOAP_KEY,
+            order=order,
+            request=request,
+            method_key=method_key,
+        )
+
+
+class GetPaymentToken(SOAPAction):
+    def __call__(self, payment_data):
+        response = self.api.get_token(payment_data)
+        reply_log_entry = CyberSourceReply.log_soap_response(
+            order=self.order,
+            response=response,
+            request=self.request,
+        )
+        # If token creation was not successful, return
+        if response.decision != DECISION_ACCEPT:
+            return None, None
+        # Lookup more details about the token
+        token_string = response.paySubscriptionCreateReply.subscriptionID
+        token_details = self.api.lookup_payment_token(token_string)
+        if token_details is None:
+            return None, None
+        # Record the new payment token
+        token = RecordPaymentToken(reply_log_entry, self.request, self.method_key)(
+            token_string=token_string,
+            card_num=token_details.paySubscriptionRetrieveReply.cardAccountNumber,
+            card_type=token_details.paySubscriptionRetrieveReply.cardType,
+        )
+        if token is None:
+            return None, None
+        # Use the token details to update our copy of the card's expiration date.
+        expiry_date = "{month}-{year}".format(
+            month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
+            year=token_details.paySubscriptionRetrieveReply.cardExpirationYear,
+        )
+        reply_log_entry.req_card_expiry_date = expiry_date
+        reply_log_entry.save()
+        # Return the token object
+        return token, reply_log_entry
+
+
+class AuthorizePayment(SOAPAction):
+    def __call__(self, token_string, amount, update_session, card_expiry_date=None):
+        response = self.api.authorize(
+            token=token_string,
+            amount=amount,
+        )
+        reply_log_entry = CyberSourceReply.log_soap_response(
+            order=self.order,
+            response=response,
+            request=self.request,
+            card_expiry_date=card_expiry_date,
+        )
+        record_kwargs = {
+            "reply_log_entry": reply_log_entry,
+            "request": self.request,
+            "method_key": self.method_key,
+        }
+        if response.decision in (DECISION_ACCEPT, DECISION_REVIEW):
+            state = RecordSuccessfulAuth(**record_kwargs)(
+                order=self.order,
+                token_string=token_string,
+                response=response,
+                update_session=update_session,
+            )
+        else:
+            state = RecordDeclinedAuth(**record_kwargs)(
+                order=self.order,
+                token_string=token_string,
+                response=response,
+                amount=amount,
+                update_session=update_session,
+            )
+        return state
+
+
+class CapturePayment(SOAPAction):
+    def __call__(self, authorization_txn, amount):
+        """
+        Given a successful authorization transaction, submit a capture funds request.
+        """
+        # Sanity check that the given transaction matches what we'd expect (and
+        # isn't, for example, from another payment source or a declined status).
+        can_capture, err_reason = authorization_txn.can_be_captured
+        if not can_capture:
+            raise ValueError(err_reason)
+
+        # Check the given amount
+        if amount > authorization_txn.get_remaining_amount_to_capture():
+            raise ValueError(
+                "Capture amount can not be greater than the amount of the source authorization"
+            )
+
+        # Attempt to capture payment for this authorization
+        order = authorization_txn.source.order
+        capture_resp = self.api.capture(
+            token=authorization_txn.token.token,
+            amount=amount,
+            auth_request_id=authorization_txn.reference,
+        )
+        reply_log_entry = CyberSourceReply.log_soap_response(order, capture_resp)
+
+        # Record a debit transaction and return it
+        transaction = RecordCapture(reply_log_entry, None, None)(
+            order=order,
+            capture_resp=capture_resp,
+            authorization_txn=authorization_txn,
+            capture_amount=amount,
+        )
+        return transaction
