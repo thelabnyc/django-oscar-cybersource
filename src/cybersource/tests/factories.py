@@ -2,7 +2,7 @@ from datetime import datetime
 from random import randrange
 from ..signature import SecureAcceptanceSigner
 from ..models import SecureAcceptanceProfile
-from ..actions import encrypt_session_id
+from ..utils import encrypt_session_id
 import uuid
 
 

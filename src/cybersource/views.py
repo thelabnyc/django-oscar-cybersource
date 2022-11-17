@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.http import Http404
@@ -8,14 +9,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from oscar.core.loading import get_class, get_model
-from oscarapicheckout import utils
+from oscarapicheckout import utils, states
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from .authentication import CSRFExemptSessionAuthentication
-from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT, DECISION_REVIEW
-from .methods import Cybersource, Bluefin, create_review_order_note, mark_declined
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT
+from .methods import Cybersource
 from .models import SecureAcceptanceProfile, CyberSourceReply
 from .signals import received_decision_manager_update
-from .cybersoap import CyberSourceSoap
+from .utils import decrypt_session_id
 from . import actions, settings, signature
 import dateutil.parser
 import uuid
@@ -26,17 +27,8 @@ OrderNumberGenerator = get_class("order.utils", "OrderNumberGenerator")
 OrderPlacementMixin = get_class("checkout.mixins", "OrderPlacementMixin")
 OrderTotalCalculator = get_class("checkout.calculators", "OrderTotalCalculator")
 
-Basket = get_model("basket", "Basket")
-BillingAddress = get_model("order", "BillingAddress")
-Country = get_model("address", "Country")
 Order = get_model("order", "Order")
 OrderNote = get_model("order", "OrderNote")
-PaymentEventType = get_model("order", "PaymentEventType")
-PaymentEvent = get_model("order", "PaymentEvent")
-PaymentEventQuantity = get_model("order", "PaymentEventQuantity")
-ShippingAddress = get_model("order", "ShippingAddress")
-Source = get_model("payment", "Source")
-SourceType = get_model("payment", "SourceType")
 Transaction = get_model("payment", "Transaction")
 
 
@@ -95,15 +87,18 @@ class CyberSourceReplyView(APIView):
         # Cybersource. Cybersource then sends us that value back with their reply, where we decrypt
         # it, and use it to rehydrate the user's real session.
         session_id_field_name = "req_{}".format(
-            actions.OrderAction.session_id_field_name
+            actions.SecureAcceptanceOrderAction.session_id_field_name
         )
         encrypted_session_id = request.data.get(session_id_field_name)
-        session_id = actions.decrypt_session_id(encrypted_session_id)
+        session_id = decrypt_session_id(encrypted_session_id)
         request.session._session_key = session_id
         delattr(request.session, "_session_cache")
 
         # Record in reply log
-        log = self.log_response(request)
+        log = CyberSourceReply.log_secure_acceptance_response(
+            order=self._get_order(request),
+            request=request,
+        )
 
         # Invoke handler for transaction type
         trans_type = request.data.get("req_transaction_type")
@@ -122,34 +117,6 @@ class CyberSourceReplyView(APIView):
             request
         )
 
-    def log_response(self, request):
-        log = CyberSourceReply(
-            user=request.user if request.user.is_authenticated else None,
-            order=self._get_order(request),
-            data=request.data,
-            reply_type=CyberSourceReply.REPLY_TYPE_SA,
-            auth_avs_code=request.data.get("auth_avs_code"),
-            auth_code=request.data.get("auth_code"),
-            auth_response=request.data.get("auth_response"),
-            auth_trans_ref_no=request.data.get("auth_trans_ref_no"),
-            decision=request.data.get("decision"),
-            message=request.data.get("message"),
-            reason_code=request.data.get("reason_code"),
-            req_bill_to_address_postal_code=request.data.get(
-                "req_bill_to_address_postal_code"
-            ),
-            req_bill_to_forename=request.data.get("req_bill_to_forename"),
-            req_bill_to_surname=request.data.get("req_bill_to_surname"),
-            req_card_expiry_date=request.data.get("req_card_expiry_date"),
-            req_reference_number=request.data.get("req_reference_number"),
-            req_transaction_type=request.data.get("req_transaction_type"),
-            req_transaction_uuid=request.data.get("req_transaction_uuid"),
-            request_token=request.data.get("request_token"),
-            transaction_id=request.data.get("transaction_id"),
-        )
-        log.save()
-        return log
-
     def get_handler_fn(self, trans_type):
         handlers = {
             actions.CreatePaymentToken.transaction_type: self.record_token,
@@ -163,6 +130,7 @@ class CyberSourceReplyView(APIView):
         order = self._get_order(request)
         method_key = self._get_method_key(request)
         create_token_resp_data = request.data
+        amount = Decimal(request.data.get("req_amount", "0.00"))
 
         # Figure out what status the order is in.
         token_decision = reply_log_entry.get_decision()
@@ -170,42 +138,25 @@ class CyberSourceReplyView(APIView):
         # Check if the payment token was actually created or not.
         if token_decision != DECISION_ACCEPT:
             # Payment token was not created
-            mark_declined(order, request, method_key, reply_log_entry)
+            utils.mark_payment_method_declined(order, request, method_key, amount)
             return redirect(settings.REDIRECT_FAIL)
 
         # Record the new payment token
-        token, _ = Cybersource().record_created_payment_token(
-            reply_log_entry, create_token_resp_data
+        token = actions.RecordPaymentToken(reply_log_entry, request, method_key)(
+            token_string=create_token_resp_data.get("payment_token"),
+            card_num=create_token_resp_data.get("req_card_number"),
+            card_type=create_token_resp_data.get("req_card_type"),
         )
 
         # Try to authorize the payment
-        cs = CyberSourceSoap(
-            settings.CYBERSOURCE_WSDL,
-            settings.MERCHANT_ID,
-            settings.CYBERSOURCE_SOAP_KEY,
-            request,
-            order,
-            method_key,
+        auth_state = actions.AuthorizePayment(order, request, method_key)(
+            token_string=token.token,
+            amount=amount,
+            update_session=True,
         )
-        auth_response = cs.authorize()
-        auth_reply_log_entry = Bluefin.log_soap_response(request, order, auth_response)
-
-        # If authorization was declined, log it and redirect to the failure page.
-        if auth_response.decision not in (DECISION_ACCEPT, DECISION_REVIEW):
-            amount = create_token_resp_data.get("req_amount", "0.00")
-            Bluefin().record_declined_authorization(
-                auth_reply_log_entry, order, token.token, auth_response, amount
-            )
-            mark_declined(order, request, method_key, auth_reply_log_entry)
+        # If authorization was declined, redirect to the failure page.
+        if auth_state.status == states.DECLINED:
             return redirect(settings.REDIRECT_FAIL)
-
-        # If authorization was successful, log it and redirect to the success page.
-        new_state = Bluefin().record_successful_authorization(
-            auth_reply_log_entry, order, token.token, auth_response
-        )
-        utils.update_payment_method_state(order, request, method_key, new_state)
-        if auth_response.decision == DECISION_REVIEW:
-            create_review_order_note(order, auth_response.requestID)
         return redirect(settings.REDIRECT_SUCCESS)
 
     def _get_order(self, request):
@@ -216,7 +167,9 @@ class CyberSourceReplyView(APIView):
         return order
 
     def _get_method_key(self, request):
-        field_name = "req_{}".format(actions.OrderAction.method_key_field_name)
+        field_name = "req_{}".format(
+            actions.SecureAcceptanceOrderAction.method_key_field_name
+        )
         return request.data.get(field_name, Cybersource.code)
 
 
