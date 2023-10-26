@@ -9,7 +9,7 @@ from django.utils import timezone
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
 from oscar.apps.payment.abstract_models import AbstractTransaction
-from fernet_fields import EncryptedTextField
+from thelabdb.fields import EncryptedTextField
 from .utils import sudsobj_to_dict
 from .constants import (
     DECISION_ACCEPT,

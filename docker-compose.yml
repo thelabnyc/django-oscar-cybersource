@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.8'
 
 services:
   postgres:
@@ -13,6 +13,12 @@ services:
       - postgres
     volumes:
       - .:/code
+    env_file:
+      - .env
     environment:
       CYBERSOURCE_MERCHANT_ID:
+      CYBERSOURCE_ORG_ID:
+      CYBERSOURCE_PROFILE:
+      CYBERSOURCE_ACCESS:
+      CYBERSOURCE_SECRET:
       CYBERSOURCE_SOAP_KEY:

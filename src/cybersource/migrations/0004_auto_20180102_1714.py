@@ -3,11 +3,10 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import fernet_fields.fields
+import thelabdb.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cybersource", "0003_auto_20160629_1135"),
     ]
@@ -46,7 +45,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "secret_key",
-                    fernet_fields.fields.EncryptedTextField(verbose_name="Secret Key"),
+                    thelabdb.fields.EncryptedTextField(verbose_name="Secret Key"),
                 ),
                 (
                     "is_default",
