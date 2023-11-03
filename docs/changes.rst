@@ -7,6 +7,8 @@ Changelog
 ------------------
 - Add support for capturing funds from authorization transactions.
 - General refactoring and code cleanup.
+- Add support for django-oscar 3.2.2
+- Add support for django 4.2
 
 8.2.0
 ------------------
