@@ -13,10 +13,10 @@ packages = find_packages("src")
 
 install_requires = [
     "Django>=3.2",
-    "django-oscar>=3.0",
-    "django-oscar-api>=2.0.0",
+    "django-oscar>=3.2.2",
+    "django-oscar-api>=3.0.0",
     "django-oscar-api-checkout>=3.0.0b1",
-    "django-fernet-fields>=0.5",
+    "thelabdb>=0.0.1",
     "lxml>=4.1.1",
     "phonenumbers>=8.8.8",
     "python-dateutil>=2.8.0",

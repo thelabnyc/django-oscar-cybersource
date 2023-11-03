@@ -44,36 +44,36 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.flatpages",
     # django-oscar
-    "oscar",
-    "oscar.apps.analytics",
-    "oscar.apps.communication",
-    "oscar.apps.checkout",
-    "oscar.apps.address",
-    "oscar.apps.shipping",
-    "oscar.apps.catalogue",
-    "oscar.apps.catalogue.reviews",
-    "oscar.apps.partner",
-    "oscar.apps.basket",
-    "payment",  # 'oscar.apps.payment',
-    "oscar.apps.offer",
-    "order",  # 'oscar.apps.order',
-    "oscar.apps.customer",
-    "oscar.apps.search",
-    "oscar.apps.voucher",
-    "oscar.apps.wishlists",
-    "oscar.apps.dashboard",
-    "oscar.apps.dashboard.reports",
-    "oscar.apps.dashboard.users",
-    "oscar.apps.dashboard.orders",
-    "oscar.apps.dashboard.catalogue",
-    "oscar.apps.dashboard.offers",
-    "oscar.apps.dashboard.partners",
-    "oscar.apps.dashboard.pages",
-    "oscar.apps.dashboard.ranges",
-    "oscar.apps.dashboard.reviews",
-    "oscar.apps.dashboard.vouchers",
-    "oscar.apps.dashboard.communications",
-    "oscar.apps.dashboard.shipping",
+    "oscar.config.Shop",
+    "oscar.apps.analytics.apps.AnalyticsConfig",
+    "oscar.apps.checkout.apps.CheckoutConfig",
+    "oscar.apps.address.apps.AddressConfig",
+    "oscar.apps.shipping.apps.ShippingConfig",
+    "oscar.apps.catalogue.apps.CatalogueConfig",
+    "oscar.apps.catalogue.reviews.apps.CatalogueReviewsConfig",
+    "oscar.apps.communication.apps.CommunicationConfig",
+    "oscar.apps.partner.apps.PartnerConfig",
+    "oscar.apps.basket.apps.BasketConfig",
+    "payment.apps.PaymentConfig",  # oscar.apps.payment.apps.PaymentConfig
+    "oscar.apps.offer.apps.OfferConfig",
+    "order.apps.OrderConfig",  # oscar.apps.order.apps.OrderConfig
+    "oscar.apps.customer.apps.CustomerConfig",
+    "oscar.apps.search.apps.SearchConfig",
+    "oscar.apps.voucher.apps.VoucherConfig",
+    "oscar.apps.wishlists.apps.WishlistsConfig",
+    "oscar.apps.dashboard.apps.DashboardConfig",
+    "oscar.apps.dashboard.reports.apps.ReportsDashboardConfig",
+    "oscar.apps.dashboard.users.apps.UsersDashboardConfig",
+    "oscar.apps.dashboard.orders.apps.OrdersDashboardConfig",
+    "oscar.apps.dashboard.catalogue.apps.CatalogueDashboardConfig",
+    "oscar.apps.dashboard.offers.apps.OffersDashboardConfig",
+    "oscar.apps.dashboard.partners.apps.PartnersDashboardConfig",
+    "oscar.apps.dashboard.pages.apps.PagesDashboardConfig",
+    "oscar.apps.dashboard.ranges.apps.RangesDashboardConfig",
+    "oscar.apps.dashboard.reviews.apps.ReviewsDashboardConfig",
+    "oscar.apps.dashboard.vouchers.apps.VouchersDashboardConfig",
+    "oscar.apps.dashboard.communications.apps.CommunicationsDashboardConfig",
+    "oscar.apps.dashboard.shipping.apps.ShippingDashboardConfig",
     # 3rd-party apps that oscar depends on
     "widget_tweaks",
     "haystack",
@@ -190,11 +190,11 @@ OSCAR_ALLOW_ANON_CHECKOUT = True
 OSCAR_DEFAULT_CURRENCY = "USD"
 OSCARAPI_BLOCK_ADMIN_API_ACCESS = False
 
-# Cybersource Config. Test key expires on 2022-04-10
-CYBERSOURCE_ORG_ID = "someorg"
-CYBERSOURCE_PROFILE = "2A37F989-C8B2-4FEF-ACCF-2562577780E2"
-CYBERSOURCE_ACCESS = "47ba466bbd223f7097b94d8e18bd654c"
-CYBERSOURCE_SECRET = "78b76f8cd5d14b0cad48fcb79107fb84bca61697151445fe82e98832193cd998760a05da6ae94983a94615c98555e2a29599b16afb044c7cb8007e9b68df560ee771e6499a4242fdab0f8302a698bf65c4e21470f7e04863afe00c54c634b263b6b796cc3e1647b19af4cf51e2a52f59dd8b0be725d549e4b81747f4361f900d"  # NOQA
+# Cybersource Config.
+CYBERSOURCE_ORG_ID = os.environ.get("CYBERSOURCE_ORG_ID")
+CYBERSOURCE_PROFILE = os.environ.get("CYBERSOURCE_PROFILE")
+CYBERSOURCE_ACCESS = os.environ.get("CYBERSOURCE_ACCESS")
+CYBERSOURCE_SECRET = os.environ.get("CYBERSOURCE_SECRET")
 CYBERSOURCE_REDIRECT_PENDING = "checkout:index"
 CYBERSOURCE_REDIRECT_SUCCESS = "checkout:thank-you"
 CYBERSOURCE_REDIRECT_FAIL = "checkout:index"

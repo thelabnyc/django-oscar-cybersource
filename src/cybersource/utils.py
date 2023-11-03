@@ -1,6 +1,6 @@
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_bytes, force_str
-from fernet_fields import EncryptedTextField
+from thelabdb.fields import EncryptedTextField
 from suds import sudsobject
 import json
 
