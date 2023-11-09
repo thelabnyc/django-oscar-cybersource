@@ -1,0 +1,41 @@
+[build-system]
+requires = [ "poetry-core>=1.0.0",]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "django-oscar-cybersource"
+version = "9.0.0.post2"
+description = "Integration between django-oscar and the Cybersource Secure Acceptance."
+authors = [ "thelabnyc <thelabdev@thelabnyc.com>",]
+readme = "README.rst"
+homepage = "https://gitlab.com/thelabnyc/django-oscar-cybersource"
+repository = "https://gitlab.com/thelabnyc/django-oscar-cybersource"
+license = "ISC"
+
+[[tool.poetry.packages]]
+include = "cybersource"
+from = "src"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = ">=3.2"
+django-oscar = ">=3.2.2"
+django-oscar-api = ">=3.0.0"
+django-oscar-api-checkout = ">=3.0.0b1"
+thelabdb = ">=0.0.1"
+lxml = ">=4.1.1"
+phonenumbers = ">=8.8.8"
+python-dateutil = ">=2.8.0"
+
+[tool.poetry.group.dev.dependencies]
+coverage = ">=4.4.2"
+flake8 = ">=3.5.0"
+instrumented-soap = "2.1.1"
+psycopg2-binary = ">=2.8.4"
+PyYAML = ">=3.12"
+sorl-thumbnail = ">=11.04"
+sphinx-rtd-theme = ">=0.4.3"
+sphinx = ">=1.5.2"
+suds-community = ">=0.8.5"
+tox = ">=2.6.0"
+unittest-xml-reporting = ">=3.0.4"
