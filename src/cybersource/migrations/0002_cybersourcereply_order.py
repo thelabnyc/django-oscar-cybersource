@@ -7,7 +7,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0004_auto_20160111_1108"),
         ("cybersource", "0001_initial"),

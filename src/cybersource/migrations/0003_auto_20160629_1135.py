@@ -20,7 +20,6 @@ def assign_orders(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cybersource", "0002_cybersourcereply_order"),
     ]

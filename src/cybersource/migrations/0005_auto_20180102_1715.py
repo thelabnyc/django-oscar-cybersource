@@ -27,7 +27,6 @@ def empty_sa_profile(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cybersource", "0004_auto_20180102_1714"),
     ]

@@ -5,7 +5,6 @@ from oscar.models.fields import NullCharField
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cybersource", "0005_auto_20180102_1715"),
     ]
