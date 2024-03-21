@@ -131,12 +131,12 @@ class SecureAcceptanceShippingAddressMixin(object):
             shipping_data["ship_to_address_line2"] = self.order.shipping_address.line2
             shipping_data["ship_to_address_city"] = self.order.shipping_address.line4
             shipping_data["ship_to_address_state"] = self.order.shipping_address.state
-            shipping_data[
-                "ship_to_address_postal_code"
-            ] = self.order.shipping_address.postcode
-            shipping_data[
-                "ship_to_address_country"
-            ] = self.order.shipping_address.country.code
+            shipping_data["ship_to_address_postal_code"] = (
+                self.order.shipping_address.postcode
+            )
+            shipping_data["ship_to_address_country"] = (
+                self.order.shipping_address.country.code
+            )
             shipping_data["ship_to_phone"] = re.sub(
                 "[^0-9]", "", self.order.shipping_address.phone_number.as_rfc3966
             )
