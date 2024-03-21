@@ -218,9 +218,11 @@ class CyberSourceReply(models.Model):
             req_bill_to_forename=order.billing_address.first_name,
             req_bill_to_surname=order.billing_address.last_name,
             req_card_expiry_date=card_expiry_date,
-            req_reference_number=response.merchantReferenceCode
-            if "merchantReferenceCode" in response
-            else None,
+            req_reference_number=(
+                response.merchantReferenceCode
+                if "merchantReferenceCode" in response
+                else None
+            ),
             req_transaction_type=req_transaction_type,
             req_transaction_uuid=None,
             request_token=response.requestToken,
