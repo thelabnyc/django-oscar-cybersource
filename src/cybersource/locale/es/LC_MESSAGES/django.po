@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-17 21:05+0000\n"
+"POT-Creation-Date: 2024-03-21 17:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -101,40 +101,40 @@ msgstr ""
 msgid "CyberSource Replies"
 msgstr ""
 
-#: cybersource/models.py:241
+#: cybersource/models.py:243
 #, python-format
 msgid "CyberSource Reply %(created)s"
 msgstr ""
 
-#: cybersource/models.py:337 cybersource/models.py:338
+#: cybersource/models.py:339 cybersource/models.py:340
 msgid "Payment Token"
 msgstr ""
 
-#: cybersource/models.py:397
+#: cybersource/models.py:399
 msgid ""
 "For capture (debit) transactions, link to the authorization transaction that "
 "allowed the capture to take place."
 msgstr ""
 
-#: cybersource/models.py:429
+#: cybersource/models.py:431
 #, python-brace-format
 msgid "transaction has source {has}, expected {expected}"
 msgstr ""
 
-#: cybersource/models.py:436
+#: cybersource/models.py:438
 #, python-brace-format
 msgid "transaction has type {has}, expected {expected}"
 msgstr ""
 
-#: cybersource/models.py:443
+#: cybersource/models.py:445
 #, python-brace-format
 msgid "transaction has status {has}, expected {expected}"
 msgstr ""
 
-#: cybersource/models.py:462
+#: cybersource/models.py:464
 msgid "transaction does not have a related payment token"
 msgstr ""
 
-#: cybersource/models.py:466
+#: cybersource/models.py:468
 msgid "transaction has already been fully captured"
 msgstr ""
