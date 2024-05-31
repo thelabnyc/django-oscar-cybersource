@@ -1573,17 +1573,17 @@ files = [
 
 [[package]]
 name = "thelabdb"
-version = "0.0.1"
+version = "0.1.1"
 description = "Django DB Utilities"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "thelabdb-0.0.1-py3-none-any.whl", hash = "sha256:ef5f43eb9a79505dd3500c0ea356206915f801150b484cee9f0fef6e20545449"},
-    {file = "thelabdb-0.0.1.tar.gz", hash = "sha256:89c11999c474da3ced3fe4f7a097dcb2ed056b9c89b5485edff96f3cd3837b14"},
+    {file = "thelabdb-0.1.1-py3-none-any.whl", hash = "sha256:750dd95302bc8f7c80f54c72f89224ef3a6bd9d0fed2778ce4ee4c8228938309"},
+    {file = "thelabdb-0.1.1.tar.gz", hash = "sha256:4ba8857af79c1079b4863d3fce109d32e436962a5857057619510de14e0eff1e"},
 ]
 
 [package.dependencies]
-cryptography = ">=41.0.5,<42.0.0"
+cryptography = ">=41.0.5"
 Django = ">=3.2.0,<5.0"
 
 [[package]]
