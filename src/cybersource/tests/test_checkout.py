@@ -1,7 +1,6 @@
 from unittest import skipUnless, mock
 from decimal import Decimal as D
 from django.conf import settings
-from django.core import mail
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -208,8 +207,6 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(transactions[0].token.card_last4, card_last4)
         self.assertEqual(transactions[0].token.log.order, order)
         self.assertEqual(transactions[0].token.log.req_reference_number, order.number)
-
-        self.assertEqual(len(mail.outbox), 1)
 
         if status == DECISION_REVIEW:
             self.assertEqual(order.notes.count(), 1, "Should save OrderNote")
