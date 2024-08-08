@@ -1,5 +1,23 @@
 # Changes
 
+## v9.0.1b0 (2024-08-08)
+
+### Fix
+
+- **deps**: update dependency phonenumbers to ^8.13.42
+- **deps**: update dependency django to ^4.2.14
+- **deps**: update dependency phonenumbers to ^8.13.40
+- **deps**: update dependency django to ^4.2.13
+- **deps**: update dependency phonenumbers to v8.13.39
+- **deps**: update dependency phonenumbers to v8.13.38
+- **deps**: update dependency django-oscar-api-checkout to v3.4.0
+- **deps**: update dependency python-dateutil to v2.9.0.post0
+- **deps**: update dependency thelabdb to v0.1.1
+- **deps**: update dependency phonenumbers to v8.13.37
+- **deps**: update dependency lxml to v4.9.4
+- **deps**: update dependency django-oscar to v3.2.4
+- **deps**: update dependency django to v4.2.13
+
 ## v9.0.0
 
 - Add support for capturing funds from authorization transactions.
