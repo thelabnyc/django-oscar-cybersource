@@ -24,7 +24,7 @@ django-oscar-api = "^3.2.4"
 django-oscar-api-checkout = "^3.4.0"
 thelabdb = "^0.1.1"
 lxml = "^5.2.2"
-phonenumbers = "^8.13.42"
+phonenumbers = "^8.13.43"
 python-dateutil = "^2.9.0"
 
 [tool.poetry.group.dev.dependencies]
