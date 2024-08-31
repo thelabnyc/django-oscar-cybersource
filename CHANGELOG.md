@@ -1,5 +1,14 @@
 # Changes
 
+## v9.0.1 (2024-08-31)
+
+### Fix
+
+- **deps**: update dependency phonenumbers to ^8.13.44
+- **deps**: update dependency lxml to ^5.3.0
+- **deps**: update dependency phonenumbers to ^8.13.43
+- **deps**: update dependency django to ^4.2.15
+
 ## v9.0.1b0 (2024-08-08)
 
 ### Fix
