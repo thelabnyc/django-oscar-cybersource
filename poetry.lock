@@ -55,13 +55,13 @@ files = [
 
 [[package]]
 name = "certifi"
-version = "2024.7.4"
+version = "2024.8.30"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2024.7.4-py3-none-any.whl", hash = "sha256:c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90"},
-    {file = "certifi-2024.7.4.tar.gz", hash = "sha256:5a1e7645bc0ec61a09e26c36f6106dd4cf40c6db3a1fb6352b0244e7fb057c7b"},
+    {file = "certifi-2024.8.30-py3-none-any.whl", hash = "sha256:922820b53db7a7257ffbda3f597266d435245903d80737e34f8a45ff3e3230d8"},
+    {file = "certifi-2024.8.30.tar.gz", hash = "sha256:bec941d2aa8195e248a60b31ff9f0558284cf01a52591ceda73ea9afffd69fd9"},
 ]
 
 [[package]]
@@ -527,20 +527,20 @@ lint = ["black (>=23.1.0)", "pylint", "pylint-django"]
 
 [[package]]
 name = "django-oscar-api-checkout"
-version = "3.4.0"
+version = "3.4.1"
 description = "An extension on top of django-oscar-api providing a more flexible checkout API with a pluggable payment methods interface."
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = "<4.0,>=3.10"
 files = [
-    {file = "django_oscar_api_checkout-3.4.0-py3-none-any.whl", hash = "sha256:19e017a91563fbcc26b36dcd1ce12a510ca8dbb438d94c7f617f0f8bff0789a7"},
-    {file = "django_oscar_api_checkout-3.4.0.tar.gz", hash = "sha256:d6d2b23a6fe14d48370434945bb0207d8bc79c4fb47cc8c134fd735662718542"},
+    {file = "django_oscar_api_checkout-3.4.1-py3-none-any.whl", hash = "sha256:0a4955fe39b59fc49792142a67bacb1a7c9ed533a31131f61447cc177d987be0"},
+    {file = "django_oscar_api_checkout-3.4.1.tar.gz", hash = "sha256:7e600f54027ffa11f2dfb85ffb9c69f8a1898204f098eec939c3f7897e4ff87d"},
 ]
 
 [package.dependencies]
-Django = ">=3.2"
-django-oscar = ">=3.2.2"
-django-oscar-api = ">=3.0.0"
-drf-recaptcha = ">=3.0.0,<4.0.0"
+Django = ">=4.2.15,<5.0.0"
+django-oscar = ">=3.2.4,<4.0.0"
+django-oscar-api = ">=3.2.4,<4.0.0"
+drf-recaptcha = ">=3.1.0,<4.0.0"
 
 [[package]]
 name = "django-phonenumber-field"
@@ -663,13 +663,13 @@ doc = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [[package]]
 name = "faker"
-version = "28.0.0"
+version = "28.1.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Faker-28.0.0-py3-none-any.whl", hash = "sha256:6a3a08be54c37e05f7943d7ba5211d252c1de737687a46ad6f29209d8d5db11f"},
-    {file = "faker-28.0.0.tar.gz", hash = "sha256:0d3c0399204aaf8205cc1750db443474ca0436f177126b2c27b798e8336cc74f"},
+    {file = "Faker-28.1.0-py3-none-any.whl", hash = "sha256:b17d69312ef6485a720e21bffa997668c88876a5298b278e903ba706243c9c6b"},
+    {file = "faker-28.1.0.tar.gz", hash = "sha256:bc460a0e6020966410d0b276043879abca0fac51890f3324bc254bb0a383ee3a"},
 ]
 
 [package.dependencies]
@@ -1423,19 +1423,23 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "setuptools"
-version = "73.0.1"
+version = "74.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-73.0.1-py3-none-any.whl", hash = "sha256:b208925fcb9f7af924ed2dc04708ea89791e24bde0d3020b27df0e116088b34e"},
-    {file = "setuptools-73.0.1.tar.gz", hash = "sha256:d59a3e788ab7e012ab2c4baed1b376da6366883ee20d7a5fc426816e3d7b1193"},
+    {file = "setuptools-74.1.0-py3-none-any.whl", hash = "sha256:cee604bd76cc092355a4e43ec17aee5369095974f41f088676724dc6bc2c9ef8"},
+    {file = "setuptools-74.1.0.tar.gz", hash = "sha256:bea195a800f510ba3a2bc65645c88b7e016fe36709fefc58a880c4ae8a0138d7"},
 ]
 
 [package.extras]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.5.2)"]
 core = ["importlib-metadata (>=6)", "importlib-resources (>=5.10.2)", "jaraco.text (>=3.7)", "more-itertools (>=8.8)", "packaging (>=24)", "platformdirs (>=2.6.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+cover = ["pytest-cov"]
 doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
-test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "importlib-metadata", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "mypy (==1.11.*)", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy", "pytest-perf", "pytest-ruff (<0.4)", "pytest-ruff (>=0.2.1)", "pytest-ruff (>=0.3.2)", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+enabler = ["pytest-enabler (>=2.2)"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (==1.11.*)", "pytest-mypy"]
 
 [[package]]
 name = "six"
@@ -1660,18 +1664,18 @@ files = [
 
 [[package]]
 name = "thelabdb"
-version = "0.1.1"
+version = "0.1.2"
 description = "Django DB Utilities"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = "<4.0,>=3.10"
 files = [
-    {file = "thelabdb-0.1.1-py3-none-any.whl", hash = "sha256:750dd95302bc8f7c80f54c72f89224ef3a6bd9d0fed2778ce4ee4c8228938309"},
-    {file = "thelabdb-0.1.1.tar.gz", hash = "sha256:4ba8857af79c1079b4863d3fce109d32e436962a5857057619510de14e0eff1e"},
+    {file = "thelabdb-0.1.2-py3-none-any.whl", hash = "sha256:024f76345e98050a3387aff007d756ba2e49d0ad1b55f0b8c499e446991d0649"},
+    {file = "thelabdb-0.1.2.tar.gz", hash = "sha256:7f68bc6efce4d89063df26ed0c29e1a0ea1aaa5d3ddd1b865d93ba84b93bd1a8"},
 ]
 
 [package.dependencies]
-cryptography = ">=41.0.5"
-Django = ">=3.2.0,<5.0"
+cryptography = ">=43.0.0"
+Django = ">=4.2.0"
 
 [[package]]
 name = "tomli"
