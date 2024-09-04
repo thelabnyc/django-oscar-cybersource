@@ -731,22 +731,19 @@ files = [
 
 [[package]]
 name = "instrumented-soap"
-version = "2.1.1"
-description = "Wrapper around suds-jurko that adds improved proxy support and testing tools."
+version = "2.1.2"
+description = "Wrapper around suds-community that adds improved proxy support and testing tools."
 optional = false
-python-versions = "*"
+python-versions = "<4.0,>=3.10"
 files = [
-    {file = "instrumented-soap-2.1.1.tar.gz", hash = "sha256:6f74f79e21fc3e066a63a0fe8eb08fee50bb0cf89d18a32d1af85b4393526ace"},
-    {file = "instrumented_soap-2.1.1-py3-none-any.whl", hash = "sha256:f8886e07bf4e39a25f5052775d3820ca9e82370b72eb35815df4a871c9e0a6e2"},
+    {file = "instrumented_soap-2.1.2-py3-none-any.whl", hash = "sha256:b60fb4c9b750c52605d0d3c6b27c267b2ac2f54e06d25039e054dbaed8f94637"},
+    {file = "instrumented_soap-2.1.2.tar.gz", hash = "sha256:4eb8418a9436fef10ec22867ba470dc9e856431ed13313bdf8f81b8432cf2912"},
 ]
 
 [package.dependencies]
-Django = ">=2.2"
-requests = ">=2.9.1"
-suds-community = ">=0.8.5"
-
-[package.extras]
-development = ["flake8 (>=3.2.1)", "sphinx (>=1.6.5)", "sphinx-rtd-theme (>=0.4.3)", "tox (>=2.6.0)"]
+Django = ">=4.2"
+requests = ">=2.32.3"
+suds-community = ">=1.2.0"
 
 [[package]]
 name = "jinja2"
@@ -1791,4 +1788,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "68d791f3a0bf7ab04c6c74cd70046ad8762c68ae27f2cda73ced00f3a9b6b44e"
+content-hash = "5a06326f4aaf80cd88f6a5c5fce9c18c73fabde1c7104154579fc88aefa21921"

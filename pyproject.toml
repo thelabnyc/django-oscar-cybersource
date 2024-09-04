@@ -30,7 +30,7 @@ python-dateutil = "^2.9.0"
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.6.1"
 flake8 = "^7.1.1"
-instrumented-soap = "2.1.1"
+instrumented-soap = "2.1.2"
 psycopg2-binary = "^2.9.9"
 PyYAML = "^6.0.2"
 sorl-thumbnail = "^12.10.0"
