@@ -1,5 +1,18 @@
 # Changes
 
+## v9.0.2 (2024-09-25)
+
+### Fix
+
+- **deps**: update dependency django-oscar to v3.2.5
+- **deps**: update dependency django-oscar-api to v3.3.0
+- **deps**: update dependency django-oscar to v3.2.5
+- pin django-oscar version due to breaking changes in patch versions
+- **deps**: update dependency phonenumbers to ^8.13.45
+- **deps**: update dependency django to ^4.2.16
+- **deps**: update dependency thelabdb to ^0.1.2
+- **deps**: update dependency django-oscar-api-checkout to ^3.4.1
+
 ## v9.0.1 (2024-08-31)
 
 ### Fix
