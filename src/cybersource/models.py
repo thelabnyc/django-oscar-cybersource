@@ -255,13 +255,14 @@ class CyberSourceReply(models.Model):
             return DECISION_ACCEPT
 
         # Review
-        if self.reason_code in (201, 480):
+        if self.reason_code in (480,):
             return DECISION_REVIEW
 
         # Rejections
         if self.reason_code in (
             110,
             200,
+            201,
             202,
             203,
             204,
