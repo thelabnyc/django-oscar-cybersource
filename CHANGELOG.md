@@ -1,5 +1,14 @@
 # Changes
 
+## v9.0.3 (2024-10-23)
+
+### Fix
+
+- handle 201 reason code as a REJECT (#27811)
+- **deps**: update dependency phonenumbers to ^8.13.47
+- **deps**: update dependency django-oscar-api-checkout to ^3.5.0
+- **deps**: update dependency phonenumbers to ^8.13.46
+
 ## v9.0.2 (2024-09-25)
 
 ### Fix
