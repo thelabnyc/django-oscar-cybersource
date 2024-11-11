@@ -532,20 +532,20 @@ dev = ["black (>=23.1.0)", "coverage", "easy-thumbnails", "pylint", "pylint-djan
 
 [[package]]
 name = "django-oscar-api-checkout"
-version = "3.5.0"
+version = "3.5.1"
 description = "An extension on top of django-oscar-api providing a more flexible checkout API with a pluggable payment methods interface."
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "django_oscar_api_checkout-3.5.0-py3-none-any.whl", hash = "sha256:2250ce2c533210f165103303ef0337bf10ab11912ca5c735cd142311d9d5d15a"},
-    {file = "django_oscar_api_checkout-3.5.0.tar.gz", hash = "sha256:eae0cc867d67f33c7964930cf69713073f9469fd76fb2c982ad1497a92016b49"},
+    {file = "django_oscar_api_checkout-3.5.1-py3-none-any.whl", hash = "sha256:fbe8da56e117eb765e057ba57f2f9b5d0685d0189ee4453017c53c70ba03d5e9"},
+    {file = "django_oscar_api_checkout-3.5.1.tar.gz", hash = "sha256:4964cd70a9c5b5e71aa3f62d5092691099fbbd67295b53fea92cbe75b64899c3"},
 ]
 
 [package.dependencies]
 Django = ">=4.2.16,<5.0.0"
 django-oscar = "3.2.5"
 django-oscar-api = "3.3.0"
-drf-recaptcha = ">=3.2.0,<4.0.0"
+drf-recaptcha = ">=4.0.2,<5.0.0"
 
 [[package]]
 name = "django-phonenumber-field"
@@ -634,19 +634,19 @@ files = [
 
 [[package]]
 name = "drf-recaptcha"
-version = "3.2.0"
-description = "Django rest framework recaptcha field serializer."
+version = "4.0.2"
+description = "Django rest framework recaptcha field serializer"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 files = [
-    {file = "drf_recaptcha-3.2.0-py3-none-any.whl", hash = "sha256:30e9d1612ef447d61a7465850b63512c7032abf0decfb7680f9acdb3753315a1"},
-    {file = "drf_recaptcha-3.2.0.tar.gz", hash = "sha256:856eeba20a48d05188a0882382a1c65d9f8c1e40305d8a2ac62760380041a049"},
+    {file = "drf_recaptcha-4.0.2-py3-none-any.whl", hash = "sha256:72f2f39bca4a1adb897c696381a098b3e5e5e5d111a7ced98aa15a75e37c1df7"},
+    {file = "drf_recaptcha-4.0.2.tar.gz", hash = "sha256:68fb90860f53374b4732a22b6980d7ac1cbb006d444d527d25f39d95392be99e"},
 ]
 
 [package.dependencies]
-django = ">=3.2"
-django-ipware = ">=2.1"
-djangorestframework = ">=3.11"
+django = ">=4.2"
+django-ipware = ">=5.0"
+djangorestframework = ">=3.14"
 
 [[package]]
 name = "factory-boy"
@@ -1793,4 +1793,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2c8868de751cef012532964cc1eb7b6fed55d3c3b9164dcceb9ae6e61ab17785"
+content-hash = "ee3771722008f68ab44fdd0fab20860946a3a29e0aef659c835728589089e706"
