@@ -1,13 +1,10 @@
-from suds.wsse import Security
-from suds.wsse import UsernameToken
-from .constants import (
-    TERMINAL_DESCRIPTOR,
-    CHECKOUT_FINGERPRINT_SESSION_ID,
-    PRECISION,
-)
-from . import signals
 import logging
+
+from suds.wsse import Security, UsernameToken
 import soap
+
+from . import signals
+from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, PRECISION, TERMINAL_DESCRIPTOR
 
 logger = logging.getLogger(__name__)
 

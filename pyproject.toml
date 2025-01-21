@@ -17,12 +17,12 @@ include = "cybersource"
 from = "src"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 Django = "^4.2.18"
 django-oscar = "3.2.5"
 django-oscar-api = "3.3.0"
 django-oscar-api-checkout = "^3.5.1"
-thelabdb = "^0.1.2"
+thelabdb = "^0.2.0"
 lxml = "^5.3.0"
 phonenumbers = "^8.13.53"
 python-dateutil = "^2.9.0"
@@ -39,6 +39,10 @@ sphinx = "^8.1.3"
 suds-community = "^1.2.0"
 tox = "^4.23.2"
 unittest-xml-reporting = "^3.2.0"
+django-stubs = "^5.1.2"
+mypy = "^1.14.1"
+types-psycopg2 = "^2.9.21.20241019"
+djangorestframework-stubs = "^3.15.2"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -58,3 +62,15 @@ pre_bump_hooks = [
 post_bump_hooks = [
     "git push origin master $CZ_POST_CURRENT_TAG_VERSION"
 ]
+
+[tool.isort]
+profile = "black"
+from_first = true
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["oscarapicheckout"]
+
+[tool.coverage.report]
+show_missing = true
+ignore_errors = true

@@ -1,26 +1,28 @@
 from decimal import Decimal
+import logging
+import uuid
+
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.http import Http404
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.views import generic
 from lxml import etree
+from oscar.core.loading import get_class, get_model
+from oscarapicheckout import states, utils
+from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
-from oscar.core.loading import get_class, get_model
-from oscarapicheckout import utils, states
-from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
+import dateutil.parser
+
+from . import actions, settings, signature
 from .authentication import CSRFExemptSessionAuthentication
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, DECISION_ACCEPT
 from .methods import Cybersource
-from .models import SecureAcceptanceProfile, CyberSourceReply
+from .models import CyberSourceReply, SecureAcceptanceProfile
 from .signals import received_decision_manager_update
 from .utils import decrypt_session_id
-from . import actions, settings, signature
-import dateutil.parser
-import uuid
-import logging
 
 InvalidOrderStatus = get_class("order.exceptions", "InvalidOrderStatus")
 OrderNumberGenerator = get_class("order.utils", "OrderNumberGenerator")

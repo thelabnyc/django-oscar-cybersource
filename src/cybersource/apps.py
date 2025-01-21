@@ -1,6 +1,6 @@
 from django.urls import path
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt
 from oscar.core.application import OscarConfig
 
 
@@ -14,8 +14,8 @@ class CybersourceConfig(OscarConfig):
     def get_urls(self):
         from .views import (
             CyberSourceReplyView,
-            FingerprintRedirectView,
             DecisionManagerNotificationView,
+            FingerprintRedirectView,
         )
 
         cs_reply = csrf_exempt(CyberSourceReplyView.as_view())

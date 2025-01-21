@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .utils import format_json_for_display
+
 from . import models
+from .utils import format_json_for_display
 
 
 @admin.register(models.PaymentToken)

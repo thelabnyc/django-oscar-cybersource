@@ -1,8 +1,9 @@
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_bytes, force_str
-from thelabdb.fields import EncryptedTextField
-from suds import sudsobject
 import json
+
+from django.utils.encoding import force_bytes, force_str
+from django.utils.safestring import mark_safe
+from suds import sudsobject
+from thelabdb.fields import EncryptedTextField
 
 
 def format_json_for_display(data, width="auto"):
@@ -10,8 +11,8 @@ def format_json_for_display(data, width="auto"):
     json_data = json.dumps(data, sort_keys=True, indent=4)
     try:
         from pygments import highlight
-        from pygments.lexers import JsonLexer
         from pygments.formatters import HtmlFormatter
+        from pygments.lexers import JsonLexer
     except ImportError:
         return json_data
     prestyles = ("width: {};" "white-space: pre-wrap;" "word-wrap: break-word;").format(

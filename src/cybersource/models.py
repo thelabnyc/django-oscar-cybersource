@@ -1,25 +1,27 @@
 from decimal import Decimal
+import logging
+
 from cryptography.fernet import InvalidToken
 from django.conf import settings as django_settings
-from django.db import models
-from django.db.models import Q, CheckConstraint, Sum
 from django.contrib.postgres.fields import HStoreField
-from django.utils.translation import gettext_lazy as _
+from django.db import models
+from django.db.models import CheckConstraint, Q, Sum
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from oscar.apps.payment.abstract_models import AbstractTransaction
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
-from oscar.apps.payment.abstract_models import AbstractTransaction
 from thelabdb.fields import EncryptedTextField
-from .utils import sudsobj_to_dict
+import dateutil.parser
+
+from . import settings as cyb_settings
 from .constants import (
     DECISION_ACCEPT,
-    DECISION_REVIEW,
     DECISION_DECLINE,
     DECISION_ERROR,
+    DECISION_REVIEW,
 )
-from . import settings as cyb_settings
-import dateutil.parser
-import logging
+from .utils import sudsobj_to_dict
 
 logger = logging.getLogger(__name__)
 
