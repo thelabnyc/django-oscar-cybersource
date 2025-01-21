@@ -1,8 +1,7 @@
 from django.apps import apps
 from django.conf.urls import include
-from django.urls import path
 from django.contrib import admin
-
+from django.urls import path
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),

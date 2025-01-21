@@ -1,7 +1,8 @@
-from django.core.exceptions import SuspiciousOperation
+import base64
 import hashlib
 import hmac
-import base64
+
+from django.core.exceptions import SuspiciousOperation
 
 
 class SecureAcceptanceSigner(object):

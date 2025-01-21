@@ -1,8 +1,9 @@
 from django.conf import settings
-from django.urls import reverse
 from django.test import TestCase
+from django.urls import reverse
 from oscar.core.loading import get_model
 from oscar.test import factories
+
 from .. import settings as pkg_settings
 
 Order = get_model("order", "Order")

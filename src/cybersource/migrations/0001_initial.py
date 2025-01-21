@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.conf import settings
+from django.contrib.postgres.operations import HStoreExtension
 from django.db import migrations, models
 import django.contrib.postgres.fields.hstore
-from django.contrib.postgres.operations import HStoreExtension
 import django.db.models.deletion
+
 import cybersource.models
-from django.conf import settings
 
 
 class Migration(migrations.Migration):

@@ -1,9 +1,10 @@
 from datetime import datetime
 from random import randrange
-from ..signature import SecureAcceptanceSigner
-from ..models import SecureAcceptanceProfile
-from ..utils import encrypt_session_id
 import uuid
+
+from ..models import SecureAcceptanceProfile
+from ..signature import SecureAcceptanceSigner
+from ..utils import encrypt_session_id
 
 
 def get_sa_profile():

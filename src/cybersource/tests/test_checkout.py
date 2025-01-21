@@ -1,5 +1,8 @@
-from unittest import skipUnless, mock
 from decimal import Decimal as D
+from unittest import mock, skipUnless
+import datetime
+import uuid
+
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
@@ -8,12 +11,12 @@ from oscar.core.loading import get_model
 from oscar.test import factories
 from rest_framework import status
 from rest_framework.test import APITestCase
-import datetime
+
 from cybersource.models import CyberSourceReply
-from ..constants import DECISION_REVIEW, DECISION_ACCEPT
+
 from .. import actions
+from ..constants import DECISION_ACCEPT, DECISION_REVIEW
 from . import factories as cs_factories
-import uuid
 
 Basket = get_model("basket", "Basket")
 Product = get_model("catalogue", "Product")

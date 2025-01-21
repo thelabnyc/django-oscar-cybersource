@@ -1,10 +1,11 @@
-from django.utils.translation import gettext_lazy as _
 from django.conf import settings as django_settings
+from django.utils.translation import gettext_lazy as _
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
-from oscarapicheckout.states import FormPostRequired, Declined
+from oscarapicheckout.states import Declined, FormPostRequired
 from rest_framework import serializers
+
+from . import actions, settings, signals
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
-from . import actions, signals, settings
 
 
 class Cybersource(PaymentMethod):

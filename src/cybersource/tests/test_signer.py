@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
+
 from ..signature import SecureAcceptanceSigner
 from .factories import get_sa_profile
 

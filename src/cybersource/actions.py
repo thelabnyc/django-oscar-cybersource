@@ -1,22 +1,24 @@
 from datetime import datetime
 from decimal import Decimal
-from django.db.models import F
-from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from oscar.core.loading import get_model, get_class
-from oscarapicheckout.states import Complete, Declined
-from oscarapicheckout.methods import PaymentMethod
-from oscarapicheckout import utils
-from .constants import PRECISION, DECISION_ACCEPT, DECISION_REVIEW
-from .utils import encrypt_session_id
-from .models import PaymentToken, CyberSourceReply
-from .cybersoap import CyberSourceSoap
-from . import settings, signature, models
-import dateutil.parser
-import random
-import time
-import re
 import logging
+import random
+import re
+import time
+
+from django.db.models import F
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from oscar.core.loading import get_class, get_model
+from oscarapicheckout import utils
+from oscarapicheckout.methods import PaymentMethod
+from oscarapicheckout.states import Complete, Declined
+import dateutil.parser
+
+from . import models, settings, signature
+from .constants import DECISION_ACCEPT, DECISION_REVIEW, PRECISION
+from .cybersoap import CyberSourceSoap
+from .models import CyberSourceReply, PaymentToken
+from .utils import encrypt_session_id
 
 logger = logging.getLogger(__name__)
 
