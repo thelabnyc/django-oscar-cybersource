@@ -1,5 +1,11 @@
 # Changes
 
+## v9.0.5 (2025-01-21)
+
+### Fix
+
+- ci component python version
+
 ## v9.0.4 (2025-01-21)
 
 ### Fix
