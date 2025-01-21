@@ -1,5 +1,20 @@
 # Changes
 
+## v9.0.4 (2025-01-21)
+
+### Fix
+
+- **deps**: update dependency thelabdb to ^0.2.0
+- **deps**: update dependency phonenumbers to ^8.13.53
+- **deps**: update dependency django to ^4.2.18
+- **deps**: update dependency phonenumbers to ^8.13.52
+- **deps**: update dependency django to ^4.2.17
+- **deps**: update dependency phonenumbers to ^8.13.51
+- **deps**: update dependency phonenumbers to ^8.13.50
+- **deps**: update dependency django-oscar-api-checkout to ^3.5.1
+- **deps**: update dependency phonenumbers to ^8.13.49
+- **deps**: update dependency phonenumbers to ^8.13.48
+
 ## v9.0.3 (2024-10-23)
 
 ### Fix
