@@ -535,18 +535,18 @@ dev = ["black (>=23.1.0)", "coverage", "easy-thumbnails", "pylint", "pylint-djan
 
 [[package]]
 name = "django-oscar-api-checkout"
-version = "3.5.1"
+version = "3.6.1"
 description = "An extension on top of django-oscar-api providing a more flexible checkout API with a pluggable payment methods interface."
 optional = false
-python-versions = "<4.0,>=3.10"
+python-versions = "<4.0,>=3.12"
 groups = ["main"]
 files = [
-    {file = "django_oscar_api_checkout-3.5.1-py3-none-any.whl", hash = "sha256:fbe8da56e117eb765e057ba57f2f9b5d0685d0189ee4453017c53c70ba03d5e9"},
-    {file = "django_oscar_api_checkout-3.5.1.tar.gz", hash = "sha256:4964cd70a9c5b5e71aa3f62d5092691099fbbd67295b53fea92cbe75b64899c3"},
+    {file = "django_oscar_api_checkout-3.6.1-py3-none-any.whl", hash = "sha256:8de49385472524469064a9dd2f768cafe125783124bdd761f13fcb3c2671307d"},
+    {file = "django_oscar_api_checkout-3.6.1.tar.gz", hash = "sha256:ea550b03674a0b6e159cb30e22c3ed37b3e7b5f41817fc3888d3f74a88857895"},
 ]
 
 [package.dependencies]
-Django = ">=4.2.16,<5.0.0"
+Django = ">=4.2.18,<5.0.0"
 django-oscar = "3.2.5"
 django-oscar-api = "3.3.0"
 drf-recaptcha = ">=4.0.2,<5.0.0"
@@ -2012,4 +2012,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "7b0ee036d07f7ec9c59c50eb9a9751e3891a2e91852698888c6b39cf95c60060"
+content-hash = "c4ec387b237fc12c8f0e06c639319c2b1648f288a35833c3e898d1edad5917bc"
