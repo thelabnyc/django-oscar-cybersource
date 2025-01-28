@@ -15,7 +15,7 @@ from rest_framework.test import APITestCase
 from cybersource.models import CyberSourceReply
 
 from .. import actions
-from ..constants import DECISION_ACCEPT, DECISION_REVIEW
+from ..constants import CyberSourceReplyType, Decision
 from . import factories as cs_factories
 
 Basket = get_model("basket", "Basket")
@@ -39,7 +39,7 @@ def mock_log_soap_response(order, response, request=None, card_expiry_date=None)
     log = CyberSourceReply(
         user=request.user if request and request.user.is_authenticated else None,
         order=order,
-        reply_type=CyberSourceReply.REPLY_TYPE_SA,
+        reply_type=CyberSourceReplyType.SA,
         data=response,
         auth_avs_code=response.get("auth_avs_code"),
         auth_code=response.get("auth_code"),
@@ -175,7 +175,7 @@ class BaseCheckoutTest(APITestCase):
         return token_resp_data
 
     def check_finished_order(
-        self, number, product_id, quantity=1, status=DECISION_ACCEPT, card_last4="1111"
+        self, number, product_id, quantity=1, status=Decision.ACCEPT, card_last4="1111"
     ):
         # Order exists and was paid for
         self.assertEqual(Order.objects.all().count(), 1)
@@ -211,7 +211,7 @@ class BaseCheckoutTest(APITestCase):
         self.assertEqual(transactions[0].token.log.order, order)
         self.assertEqual(transactions[0].token.log.req_reference_number, order.number)
 
-        if status == DECISION_REVIEW:
+        if status == Decision.REVIEW:
             self.assertEqual(order.notes.count(), 1, "Should save OrderNote")
             note = order.notes.first()
             self.assertEqual(note.note_type, "System")
@@ -249,7 +249,7 @@ class BaseCheckoutTest(APITestCase):
         # Check transaction
         self.assertEqual(capture_txn.txn_type, "Debit")
         self.assertEqual(capture_txn.amount, order.total_incl_tax)
-        self.assertEqual(capture_txn.status, DECISION_ACCEPT)
+        self.assertEqual(capture_txn.status, Decision.ACCEPT)
         self.assertEqual(capture_txn.log.order, order)
         self.assertEqual(capture_txn.log.req_reference_number, order.number)
         self.assertEqual(capture_txn.token.card_last4, card_last4)

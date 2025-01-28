@@ -76,6 +76,5 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            bases=(cybersource.models.ReplyLogMixin, models.Model),
         ),
     ]

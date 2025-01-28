@@ -1,15 +1,28 @@
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any, Literal
 import logging
 
+from django.dispatch import Signal
+from django.http import HttpRequest
 from suds.wsse import Security, UsernameToken
 import soap
 
 from . import signals
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, PRECISION, TERMINAL_DESCRIPTOR
 
+if TYPE_CHECKING:
+    from oscar.apps.order.models import Order
+
 logger = logging.getLogger(__name__)
 
 
-class CyberSourceSoap(object):
+type SoapRequest = dict[str, Any]
+type SoapResponse = Any
+
+
+class CyberSourceSoap:
     """
     Wrapper around the Cybersource SOAP API.
 
@@ -25,13 +38,13 @@ class CyberSourceSoap(object):
 
     def __init__(
         self,
-        wsdl,
-        merchant_id,
-        transaction_security_key,
-        order,
-        request=None,
-        method_key="",
-        soap_log_prefix="CYBERSOURCE",
+        wsdl: str,
+        merchant_id: str,
+        transaction_security_key: str,
+        order: Order,
+        request: HttpRequest | None = None,
+        method_key: str | None = "",
+        soap_log_prefix: str = "CYBERSOURCE",
     ):
         self.merchant_id = merchant_id
         self.order = order
@@ -47,7 +60,7 @@ class CyberSourceSoap(object):
         security.tokens.append(token)
         self.client.set_options(wsse=security)
 
-    def get_token(self, encrypted_payment_data):
+    def get_token(self, encrypted_payment_data: str) -> SoapResponse:
         """Get a token using encrypted card number"""
         txndata = self._prep_transaction("paySubscriptionCreateService", "0")
         # Add encrypted payment data (from the Bluefin terminal)
@@ -64,7 +77,7 @@ class CyberSourceSoap(object):
         # Run transaction
         return self._run_transaction(txndata)
 
-    def lookup_payment_token(self, token):
+    def lookup_payment_token(self, token: str) -> SoapResponse:
         """Using a payment token, lookup some of the details about the related card"""
         txndata = self._prep_transaction("paySubscriptionRetrieveService", "0")
         # Add token info
@@ -75,7 +88,7 @@ class CyberSourceSoap(object):
         # Run transaction
         return self._run_transaction(txndata)
 
-    def authorize(self, token, amount):
+    def authorize(self, token: str, amount: Decimal) -> SoapResponse:
         """Authorize with a payment token"""
         txndata = self._prep_transaction("ccAuthService", amount)
         # Add token info
@@ -90,7 +103,9 @@ class CyberSourceSoap(object):
         # Run transaction
         return self._run_transaction(txndata)
 
-    def capture(self, token, amount, auth_request_id):
+    def capture(
+        self, token: str, amount: Decimal, auth_request_id: str
+    ) -> SoapResponse:
         """Authorize with a payment token"""
         txndata = self._prep_transaction("ccCaptureService", amount)
         # Add token info
@@ -107,8 +122,17 @@ class CyberSourceSoap(object):
         # Run transaction
         return self._run_transaction(txndata)
 
-    def _prep_transaction(self, service, amount):
-        data = {}
+    def _prep_transaction(
+        self,
+        service: Literal[
+            "paySubscriptionCreateService",
+            "paySubscriptionRetrieveService",
+            "ccAuthService",
+            "ccCaptureService",
+        ],
+        amount: Decimal | str,
+    ) -> SoapRequest:
+        data: SoapRequest = {}
 
         # Add which service to run (auth/capture/etc)
         data[service] = self.client.factory.create("ns0:{}".format(service))
@@ -160,10 +184,14 @@ class CyberSourceSoap(object):
         for line in self.order.lines.all():
             item = self.client.factory.create("ns0:Item")
             item._id = str(i)
-            item.productName = line.product.title
+            item.productName = line.product.title if line.product is not None else ""
             item.productSKU = line.partner_sku
             item.quantity = str(line.quantity)
-            item.unitPrice = str(line.unit_price_incl_tax.quantize(PRECISION))
+            item.unitPrice = str(
+                line.unit_price_incl_tax.quantize(PRECISION)
+                if line.unit_price_incl_tax is not None
+                else ""
+            )
             data["item"].append(item)
             i += 1
 
@@ -175,12 +203,17 @@ class CyberSourceSoap(object):
         # Prep is done
         return data
 
-    def _trigger_pre_build_hook(self, txndata, signal, token=None):
+    def _trigger_pre_build_hook(
+        self,
+        txndata: SoapRequest,
+        signal: Signal,
+        token: str | None = None,
+    ) -> None:
         """
         Send a Django signal as a means of allowing applications to modify the merchantDefinedData fields in the
         transaction before we run it.
         """
-        extra_fields = {}
+        extra_fields: dict[str, Any] = {}
         signal.send(
             sender=self.__class__,
             extra_fields=extra_fields,
@@ -195,7 +228,7 @@ class CyberSourceSoap(object):
         for k, v in extra_fields.items():
             txndata["merchantDefinedData"]["field{}".format(k)] = v
 
-    def _run_transaction(self, txndata):
+    def _run_transaction(self, txndata: SoapRequest) -> SoapResponse:
         """Send the transaction to Cybersource to process"""
         try:
             response = self.client.service.runTransaction(**txndata)

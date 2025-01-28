@@ -26,6 +26,7 @@ thelabdb = "^0.2.0"
 lxml = "^5.3.0"
 phonenumbers = "^8.13.53"
 python-dateutil = "^2.9.0"
+django-stubs-ext = "^5.1.2"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.6.10"
@@ -43,6 +44,9 @@ django-stubs = "^5.1.2"
 mypy = "^1.14.1"
 types-psycopg2 = "^2.9.21.20241019"
 djangorestframework-stubs = "^3.15.2"
+lxml-stubs = "^0.5.1"
+types-python-dateutil = "^2.9.0.20241206"
+types-pygments = "^2.19.0.20250107"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -62,6 +66,55 @@ pre_bump_hooks = [
 post_bump_hooks = [
     "git push origin master $CZ_POST_CURRENT_TAG_VERSION"
 ]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+# Strict mode, see mypy --help
+warn_unused_configs = true
+disallow_subclassing_any = true
+disallow_any_generics = true
+# disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# warn_return_any = true
+no_implicit_reexport = true
+show_error_codes = true
+# Not turned on by strict
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "oscar.*"
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = "oscarapi.*"
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = "suds.*"
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = "soap.*"
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "*.tests.*"
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "sandbox.settings"
 
 [tool.isort]
 profile = "black"

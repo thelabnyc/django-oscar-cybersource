@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
+
 from django.urls import path
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from oscar.core.application import OscarConfig
+
+if TYPE_CHECKING:
+    from django.urls.resolvers import URLPattern
 
 
 class CybersourceConfig(OscarConfig):
@@ -11,7 +18,7 @@ class CybersourceConfig(OscarConfig):
     namespace = "cybersource"
     default = True
 
-    def get_urls(self):
+    def get_urls(self) -> List[URLPattern]:
         from .views import (
             CyberSourceReplyView,
             DecisionManagerNotificationView,
