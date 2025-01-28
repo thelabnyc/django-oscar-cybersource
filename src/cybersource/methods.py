@@ -1,11 +1,31 @@
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import Any
+
 from django.conf import settings as django_settings
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
-from oscarapicheckout.methods import PaymentMethod, PaymentMethodSerializer
-from oscarapicheckout.states import Declined, FormPostRequired
+from oscar.apps.order.models import Order
+from oscarapicheckout.methods import (
+    PaymentMethod,
+    PaymentMethodData,
+    PaymentMethodSerializer,
+)
+from oscarapicheckout.states import (
+    Declined,
+    FormPostRequired,
+    FormPostRequiredFormDataField,
+    PaymentStatus,
+)
 from rest_framework import serializers
 
 from . import actions, settings, signals
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
+
+
+class CybFormPostRequiredFormDataField(FormPostRequiredFormDataField):
+    editable: bool
 
 
 class Cybersource(PaymentMethod):
@@ -20,10 +40,18 @@ class Cybersource(PaymentMethod):
     code = "cybersource"
     serializer_class = PaymentMethodSerializer
 
-    def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
+    def _record_payment(
+        self,
+        request: HttpRequest,
+        order: Order,
+        method_key: str,
+        amount: Decimal,
+        reference: str,
+        **kwargs: Any,
+    ) -> PaymentStatus:
         """Payment Step 1: Require form POST to Cybersource"""
         # Allow application to include extra, arbitrary fields in the request to CS
-        extra_fields = {}
+        extra_fields: dict[str, str] = {}
         signals.pre_build_get_token_request.send(
             sender=self.__class__,
             extra_fields=extra_fields,
@@ -34,6 +62,8 @@ class Cybersource(PaymentMethod):
 
         # Build the data for CyberSource transaction
         session_id = request.COOKIES.get(django_settings.SESSION_COOKIE_NAME)
+        if session_id is None:
+            return Declined(amount)
         operation = actions.CreatePaymentToken(
             session_id=session_id,
             order=order,
@@ -53,30 +83,40 @@ class Cybersource(PaymentMethod):
         # URL to finishing processing this payment method
         return FormPostRequired(amount=amount, name="get-token", url=url, fields=fields)
 
-    def _fields(self, operation):
+    def _fields(
+        self,
+        operation: actions.CreatePaymentToken,
+    ) -> tuple[str, list[CybFormPostRequiredFormDataField]]:
         """Helper to convert an operation object into a list of fields and a URL"""
         fields = []
         cs_fields = operation.fields()
         editable_fields = cs_fields["unsigned_field_names"].split(",")
         for key, value in cs_fields.items():
             fields.append(
-                {
-                    "key": key,
-                    "value": value if isinstance(value, str) else value.decode(),
-                    "editable": (key in editable_fields),
-                }
+                CybFormPostRequiredFormDataField(
+                    key=key,
+                    value=value,
+                    editable=(key in editable_fields),
+                )
             )
 
         return operation.url, fields
 
 
+class BluefinPaymentMethodData(PaymentMethodData):
+    payment_data: str
+
+
 class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
     payment_data = serializers.CharField(max_length=256)
 
-    def validate(self, data):
+    def validate(
+        self,
+        data: BluefinPaymentMethodData,  # type:ignore[override]
+    ) -> BluefinPaymentMethodData:
         if "payment_data" not in data:
             raise serializers.ValidationError(_("Missing encrypted payment data."))
-        return super().validate(data)
+        return super().validate(data)  # type:ignore[return-value]
 
 
 class Bluefin(PaymentMethod):
@@ -84,14 +124,22 @@ class Bluefin(PaymentMethod):
     code = "bluefin"
     serializer_class = BluefinPaymentMethodSerializer
 
-    def _record_payment(self, request, order, method_key, amount, reference, **kwargs):
+    def _record_payment(
+        self,
+        request: HttpRequest,
+        order: Order,
+        method_key: str,
+        amount: Decimal,
+        reference: str,
+        **kwargs: Any,
+    ) -> PaymentStatus:
         """This is the entry point from django-oscar-api-checkout"""
         payment_data = kwargs.get("payment_data")
         if payment_data is None:
             return Declined(amount)
 
         # Allow application to include extra, arbitrary fields in the request to CS
-        extra_fields = {}
+        extra_fields: dict[str, str] = {}
         signals.pre_build_get_token_request.send(
             sender=self.__class__,
             extra_fields=extra_fields,
@@ -104,7 +152,7 @@ class Bluefin(PaymentMethod):
         token, get_token_log = actions.GetPaymentToken(order, request, method_key)(
             payment_data
         )
-        if token is None:
+        if token is None or get_token_log is None:
             return Declined(amount)
 
         # Attempt to authorize payment via SOAP

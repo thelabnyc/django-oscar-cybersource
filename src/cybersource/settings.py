@@ -1,10 +1,11 @@
+from typing import Any
 import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 
-def overridable(name, default=None, required=False):
+def overridable(name: str, default: Any = None, required: bool = False) -> Any:
     if required:
         if not hasattr(settings, name) or not getattr(settings, name):
             raise ImproperlyConfigured("%s must be defined in Django settings" % name)

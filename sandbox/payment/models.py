@@ -7,4 +7,4 @@ class Transaction(TransactionMixin, AbstractTransaction):
     pass
 
 
-from oscar.apps.payment.models import *  # noqa
+from oscar.apps.payment.models import *  # type:ignore[assignment] # noqa

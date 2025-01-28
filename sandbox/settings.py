@@ -19,7 +19,7 @@ LANGUAGES = (
     ("es", _("Spanish")),
 )
 
-ROOT_URLCONF = "urls"
+ROOT_URLCONF = "sandbox.urls"
 ALLOWED_HOSTS = ["*"]
 
 # Configure JUnit XML output
@@ -58,9 +58,9 @@ INSTALLED_APPS = [
     "oscar.apps.communication.apps.CommunicationConfig",
     "oscar.apps.partner.apps.PartnerConfig",
     "oscar.apps.basket.apps.BasketConfig",
-    "payment.apps.PaymentConfig",  # oscar.apps.payment.apps.PaymentConfig
+    "sandbox.payment.apps.PaymentConfig",  # oscar.apps.payment.apps.PaymentConfig
     "oscar.apps.offer.apps.OfferConfig",
-    "order.apps.OrderConfig",  # oscar.apps.order.apps.OrderConfig
+    "sandbox.order.apps.OrderConfig",  # oscar.apps.order.apps.OrderConfig
     "oscar.apps.customer.apps.CustomerConfig",
     "oscar.apps.search.apps.SearchConfig",
     "oscar.apps.voucher.apps.VoucherConfig",

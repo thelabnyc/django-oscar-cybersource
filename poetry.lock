@@ -1010,6 +1010,21 @@ htmlsoup = ["BeautifulSoup4"]
 source = ["Cython (>=3.0.11)"]
 
 [[package]]
+name = "lxml-stubs"
+version = "0.5.1"
+description = "Type annotations for the lxml package"
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "lxml-stubs-0.5.1.tar.gz", hash = "sha256:e0ec2aa1ce92d91278b719091ce4515c12adc1d564359dfaf81efa7d4feab79d"},
+    {file = "lxml_stubs-0.5.1-py3-none-any.whl", hash = "sha256:1f689e5dbc4b9247cb09ae820c7d34daeb1fdbd1db06123814b856dae7787272"},
+]
+
+[package.extras]
+test = ["coverage[toml] (>=7.2.5)", "mypy (>=1.2.0)", "pytest (>=7.3.0)", "pytest-mypy-plugins (>=1.10.1)"]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1892,6 +1907,18 @@ virtualenv = ">=20.27.1"
 test = ["devpi-process (>=1.0.2)", "pytest (>=8.3.3)", "pytest-mock (>=3.14)"]
 
 [[package]]
+name = "types-docutils"
+version = "0.21.0.20241128"
+description = "Typing stubs for docutils"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "types_docutils-0.21.0.20241128-py3-none-any.whl", hash = "sha256:e0409204009639e9b0bf4521eeabe58b5e574ce9c0db08421c2ac26c32be0039"},
+    {file = "types_docutils-0.21.0.20241128.tar.gz", hash = "sha256:4dd059805b83ac6ec5a223699195c4e9eeb0446a4f7f2aeff1759a4a7cc17473"},
+]
+
+[[package]]
 name = "types-psycopg2"
 version = "2.9.21.20250121"
 description = "Typing stubs for psycopg2"
@@ -1901,6 +1928,34 @@ groups = ["dev"]
 files = [
     {file = "types_psycopg2-2.9.21.20250121-py3-none-any.whl", hash = "sha256:b890dc6f5a08b6433f0ff73a4ec9a834deedad3e914f2a4a6fd43df021f745f1"},
     {file = "types_psycopg2-2.9.21.20250121.tar.gz", hash = "sha256:2b0e2cd0f3747af1ae25a7027898716d80209604770ef3cbf350fe055b9c349b"},
+]
+
+[[package]]
+name = "types-pygments"
+version = "2.19.0.20250107"
+description = "Typing stubs for Pygments"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "types_Pygments-2.19.0.20250107-py3-none-any.whl", hash = "sha256:34a555ed327f249daed18c6309e6e62770cdb8b9c321029ba7fd852d10b16f10"},
+    {file = "types_pygments-2.19.0.20250107.tar.gz", hash = "sha256:94de72c7f09b956c518f566e056812c698272a7a03a9cd81f0065576c6bd3219"},
+]
+
+[package.dependencies]
+types-docutils = "*"
+types-setuptools = "*"
+
+[[package]]
+name = "types-python-dateutil"
+version = "2.9.0.20241206"
+description = "Typing stubs for python-dateutil"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "types_python_dateutil-2.9.0.20241206-py3-none-any.whl", hash = "sha256:e248a4bc70a486d3e3ec84d0dc30eec3a5f979d6e7ee4123ae043eedbb987f53"},
+    {file = "types_python_dateutil-2.9.0.20241206.tar.gz", hash = "sha256:18f493414c26ffba692a72369fea7a154c502646301ebfe3d56a04b3767284cb"},
 ]
 
 [[package]]
@@ -1929,6 +1984,18 @@ files = [
 
 [package.dependencies]
 urllib3 = ">=2"
+
+[[package]]
+name = "types-setuptools"
+version = "75.8.0.20250110"
+description = "Typing stubs for setuptools"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "types_setuptools-75.8.0.20250110-py3-none-any.whl", hash = "sha256:a9f12980bbf9bcdc23ecd80755789085bad6bfce4060c2275bc2b4ca9f2bc480"},
+    {file = "types_setuptools-75.8.0.20250110.tar.gz", hash = "sha256:96f7ec8bbd6e0a54ea180d66ad68ad7a1d7954e7281a710ea2de75e355545271"},
+]
 
 [[package]]
 name = "typing-extensions"
@@ -2012,4 +2079,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "c4ec387b237fc12c8f0e06c639319c2b1648f288a35833c3e898d1edad5917bc"
+content-hash = "ed729937f16a04246d0a77cb259044b57dc16c6e86d3c786757007e719f5dea6"

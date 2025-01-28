@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 import json
 
 from django.utils.encoding import force_bytes, force_str
@@ -5,8 +8,12 @@ from django.utils.safestring import mark_safe
 from suds import sudsobject
 from thelabdb.fields import EncryptedTextField
 
+if TYPE_CHECKING:
+    from django.utils.safestring import SafeString
+    from suds.sudsobject import Object as SudsObject
 
-def format_json_for_display(data, width="auto"):
+
+def format_json_for_display(data: Any, width: str = "auto") -> str | SafeString:
     """Use Pygments to pretty-print the JSON data field"""
     json_data = json.dumps(data, sort_keys=True, indent=4)
     try:
@@ -24,7 +31,10 @@ def format_json_for_display(data, width="auto"):
     return mark_safe(style + response)
 
 
-def sudsobj_to_dict(sudsobj, key_prefix=""):
+def sudsobj_to_dict(
+    sudsobj: list[SudsObject] | SudsObject,
+    key_prefix: str = "",
+) -> dict[str, SudsObject]:
     """Convert Suds object into a flattened dictionary"""
     out = {}
     # Handle lists
@@ -46,7 +56,7 @@ def sudsobj_to_dict(sudsobj, key_prefix=""):
     return out
 
 
-def encrypt_session_id(session_id):
+def encrypt_session_id(session_id: str) -> str:
     fernet = EncryptedTextField().fernet
     session_id_bytes = force_bytes(session_id)
     encrypted_bytes = fernet.encrypt(session_id_bytes)
@@ -54,7 +64,7 @@ def encrypt_session_id(session_id):
     return encrypted_str
 
 
-def decrypt_session_id(encrypted_str):
+def decrypt_session_id(encrypted_str: str) -> str:
     fernet = EncryptedTextField().fernet
     encrypted_bytes = force_bytes(encrypted_str)
     session_id_bytes = fernet.decrypt(encrypted_bytes)
