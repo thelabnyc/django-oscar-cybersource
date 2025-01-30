@@ -3,11 +3,12 @@ FROM registry.gitlab.com/thelabnyc/python:py313
 RUN mkdir /code
 WORKDIR /code
 
-RUN apt-get update && \
-    apt-get install -y gettext && \
+ADD ./Makefile .
+RUN make system_deps && \
     rm -rf /var/lib/apt/lists/*
 
-ADD . /code/
+ADD . .
+ENV POETRY_INSTALLER_NO_BINARY='lxml,xmlsec'
 RUN poetry install
 
 RUN mkdir /tox

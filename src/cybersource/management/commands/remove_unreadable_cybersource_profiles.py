@@ -3,7 +3,7 @@ from typing import Any
 from cryptography.fernet import InvalidToken
 from django.core.management.base import BaseCommand
 
-from cybersource.models import SecureAcceptanceProfile
+from ...models import SecureAcceptanceProfile
 
 
 class Command(BaseCommand):

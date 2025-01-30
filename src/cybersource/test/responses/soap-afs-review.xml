@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">\n
+    <soap:Header>
+        <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <wsu:Timestamp wsu:Id="Timestamp-1251142835" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                <wsu:Created>2017-10-02T20:54:01.309Z</wsu:Created>
+            </wsu:Timestamp>
+        </wsse:Security>
+    </soap:Header>
+    <soap:Body>
+        <c:replyMessage xmlns:c="urn:schemas-cybersource-com:transaction-data-1.141">
+            <c:merchantReferenceCode>111111</c:merchantReferenceCode>
+            <c:requestID>1111111111111111111111</c:requestID>
+            <c:decision>REVIEW</c:decision>
+            <c:reasonCode>480</c:reasonCode>
+            <c:requestToken>lakbjciwUBEFKASBDaVIAWBURPIGBkscdipvwBEPIuwbvdkdddPWBVPI</c:requestToken>
+            <c:afsReply>
+                <c:reasonCode>480</c:reasonCode>
+                <c:afsResult>13</c:afsResult>
+                <c:hostSeverity>1</c:hostSeverity>
+                <c:consumerLocalTime>16:54:00</c:consumerLocalTime>
+                <c:afsFactorCode>G</c:afsFactorCode>
+                <c:addressInfoCode>COR-BA</c:addressInfoCode>
+                <c:internetInfoCode>INV-EM^MM-IPBST^UNV-EMBCO</c:internetInfoCode>
+                <c:ipCountry>us</c:ipCountry>
+                <c:ipState>va</c:ipState>
+                <c:ipCity>ashburn</c:ipCity>
+                <c:ipRoutingMethod>fixed</c:ipRoutingMethod>
+                <c:scoreModelUsed>default</c:scoreModelUsed>
+            </c:afsReply>
+            <c:decisionReply>
+                <c:casePriority>3</c:casePriority>
+                <c:activeProfileReply/>
+            </c:decisionReply>
+        </c:replyMessage>
+    </soap:Body>
+</soap:Envelope>

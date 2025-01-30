@@ -1,10 +1,8 @@
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from oscar.core.loading import get_model
 from oscar.test import factories
-
-from .. import settings as pkg_settings
 
 Order = get_model("order", "Order")
 Transaction = get_model("payment", "Transaction")
@@ -305,59 +303,52 @@ class DecisionManagerNotificationViewTest(TestCase):
         self.assertEqual(transaction.status, "REVIEW")
 
         # Set some auth keys for the DM view to use
-        pkg_settings.DECISION_MANAGER_KEYS = (
-            "12345",
-            "abcdef",
-        )
+        with override_settings(CYBERSOURCE_DECISION_MANAGER_KEYS=["12345", "abcdef"]):
+            # Request should fail, order should remain unchanged.
+            url = reverse("cybersource-review-notification")
+            data = {"content": REJECTED}
+            response = self.client.post(url, data)
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(order.notes.count(), 0)
 
-        # Request should fail, order should remain unchanged.
-        url = reverse("cybersource-review-notification")
-        data = {"content": REJECTED}
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(order.notes.count(), 0)
+            order = Order.objects.get(pk=order.pk)
+            self.assertEqual(order.status, settings.ORDER_STATUS_AUTHORIZED)
+            transaction = Transaction.objects.get(pk=transaction.pk)
+            self.assertTrue(transaction.is_pending_review)
+            self.assertEqual(transaction.status, "REVIEW")
 
-        order = Order.objects.get(pk=order.pk)
-        self.assertEqual(order.status, settings.ORDER_STATUS_AUTHORIZED)
-        transaction = Transaction.objects.get(pk=transaction.pk)
-        self.assertTrue(transaction.is_pending_review)
-        self.assertEqual(transaction.status, "REVIEW")
+            # Request should success, order and transaction should be rejected.
+            url = reverse("cybersource-review-notification") + "?key=abcdef"
+            data = {"content": REJECTED}
+            response = self.client.post(url, data)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(order.notes.count(), 2)
 
-        # Request should success, order and transaction should be rejected.
-        url = reverse("cybersource-review-notification") + "?key=abcdef"
-        data = {"content": REJECTED}
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(order.notes.count(), 2)
+            note = order.notes.get(
+                message__startswith="[Decision Manager Wed Aug 24 16:31:25 2016]"
+            )
+            self.assertEqual(note.note_type, "System")
+            self.assertEqual(
+                note.message,
+                (
+                    "[Decision Manager Wed Aug 24 16:31:25 2016] Bill added comment: Took ownership.\n"
+                ),
+            )
 
-        note = order.notes.get(
-            message__startswith="[Decision Manager Wed Aug 24 16:31:25 2016]"
-        )
-        self.assertEqual(note.note_type, "System")
-        self.assertEqual(
-            note.message,
-            (
-                "[Decision Manager Wed Aug 24 16:31:25 2016] Bill added comment: Took ownership.\n"
-            ),
-        )
+            note = order.notes.get(message__startswith="[Decision Manager]")
+            self.assertEqual(note.note_type, "System")
+            self.assertEqual(
+                note.message,
+                (
+                    "[Decision Manager] Bill changed decision from REVIEW to REJECT.\n"
+                    "\n"
+                    "Comments: some reason. | Order mis-typed."
+                ),
+            )
 
-        note = order.notes.get(message__startswith="[Decision Manager]")
-        self.assertEqual(note.note_type, "System")
-        self.assertEqual(
-            note.message,
-            (
-                "[Decision Manager] Bill changed decision from REVIEW to REJECT.\n"
-                "\n"
-                "Comments: some reason. | Order mis-typed."
-            ),
-        )
+            order = Order.objects.get(pk=order.pk)
+            self.assertEqual(order.status, settings.ORDER_STATUS_PAYMENT_DECLINED)
 
-        order = Order.objects.get(pk=order.pk)
-        self.assertEqual(order.status, settings.ORDER_STATUS_PAYMENT_DECLINED)
-
-        transaction = Transaction.objects.get(pk=transaction.pk)
-        self.assertFalse(transaction.is_pending_review)
-        self.assertEqual(transaction.status, "REJECT")
-
-        # Reset the keys to disable authentication
-        pkg_settings.DECISION_MANAGER_KEYS = []
+            transaction = Transaction.objects.get(pk=transaction.pk)
+            self.assertFalse(transaction.is_pending_review)
+            self.assertEqual(transaction.status, "REJECT")

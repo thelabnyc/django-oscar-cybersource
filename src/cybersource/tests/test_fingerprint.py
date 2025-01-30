@@ -1,6 +1,7 @@
-from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
+
+from ..conf import settings
 
 
 class FingerprintRedirectViewTest(TestCase):
@@ -11,7 +12,7 @@ class FingerprintRedirectViewTest(TestCase):
         url = reverse("cybersource-fingerprint-redirect", args=["img-1"])
         expected = (
             "https://h.online-metrix.net/fp/clear.png?org_id=%s&session_id=%s%s&m=1"
-            % (settings.CYBERSOURCE_ORG_ID, settings.CYBERSOURCE_MERCHANT_ID, "foo")
+            % (settings.ORG_ID, settings.MERCHANT_ID, "foo")
         )
 
         response = self.client.get(url)
@@ -25,7 +26,7 @@ class FingerprintRedirectViewTest(TestCase):
         url = reverse("cybersource-fingerprint-redirect", args=["img-2"])
         expected = (
             "https://h.online-metrix.net/fp/clear.png?org_id=%s&session_id=%s%s&m=2"
-            % (settings.CYBERSOURCE_ORG_ID, settings.CYBERSOURCE_MERCHANT_ID, "bar")
+            % (settings.ORG_ID, settings.MERCHANT_ID, "bar")
         )
 
         response = self.client.get(url)
@@ -38,8 +39,8 @@ class FingerprintRedirectViewTest(TestCase):
         session.save()
         url = reverse("cybersource-fingerprint-redirect", args=["flash"])
         expected = "https://h.online-metrix.net/fp/fp.swf?org_id=%s&session_id=%s%s" % (
-            settings.CYBERSOURCE_ORG_ID,
-            settings.CYBERSOURCE_MERCHANT_ID,
+            settings.ORG_ID,
+            settings.MERCHANT_ID,
             "baz",
         )
 
@@ -54,7 +55,7 @@ class FingerprintRedirectViewTest(TestCase):
         url = reverse("cybersource-fingerprint-redirect", args=["js"])
         expected = (
             "https://h.online-metrix.net/fp/check.js?org_id=%s&session_id=%s%s"
-            % (settings.CYBERSOURCE_ORG_ID, settings.CYBERSOURCE_MERCHANT_ID, "bat")
+            % (settings.ORG_ID, settings.MERCHANT_ID, "bat")
         )
 
         response = self.client.get(url)
