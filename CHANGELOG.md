@@ -1,5 +1,17 @@
 # Changes
 
+## v9.1.0 (2025-01-30)
+
+### Feat
+
+- update SOAP code to use pkcs12 auth (#28272)
+- add type annotations
+
+### Fix
+
+- typing tweaks
+- **deps**: update dependency django-oscar-api-checkout to ^3.6.1
+
 ## v9.0.5 (2025-01-21)
 
 ### Fix
