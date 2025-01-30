@@ -6,7 +6,6 @@ from typing import Any, Literal, Self, cast
 import logging
 
 from cryptography.fernet import InvalidToken
-from django.conf import settings as django_settings
 from django.contrib.postgres.fields import HStoreField
 from django.db import models
 from django.db.models import CheckConstraint, Q, QuerySet, Sum
@@ -22,10 +21,10 @@ from oscar.models.fields import NullCharField
 from rest_framework.request import Request
 from thelabdb.fields import EncryptedTextField
 import dateutil.parser
+import zeep.helpers
 
-from . import settings as cyb_settings
+from .conf import settings as cyb_settings
 from .constants import ZERO, CyberSourceReplyType, Decision
-from .utils import sudsobj_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -79,22 +78,12 @@ class SecureAcceptanceProfile(models.Model):
             return profile
 
         # No default profile exists, so try and get something out of settings.
-        if (
-            hasattr(django_settings, "CYBERSOURCE_PROFILE")
-            and hasattr(django_settings, "CYBERSOURCE_ACCESS")
-            and hasattr(django_settings, "CYBERSOURCE_SECRET")
-        ):
+        if cyb_settings.PROFILE and cyb_settings.ACCESS and cyb_settings.SECRET:
             profile = cls()
             profile.hostname = ""
-            profile.profile_id = (
-                django_settings.CYBERSOURCE_PROFILE  # type:ignore[assignment]
-            )
-            profile.access_key = (
-                django_settings.CYBERSOURCE_ACCESS  # type:ignore[assignment]
-            )
-            profile.secret_key = (
-                django_settings.CYBERSOURCE_SECRET  # type:ignore[assignment]
-            )
+            profile.profile_id = cyb_settings.PROFILE
+            profile.access_key = cyb_settings.ACCESS
+            profile.secret_key = cyb_settings.SECRET
             profile.is_default = True
             profile.save()
             logger.info(
@@ -213,7 +202,7 @@ class CyberSourceReply(models.Model):
         request: HttpRequest | None = None,
         card_expiry_date: str | None = None,
     ) -> Self:
-        reply_data = sudsobj_to_dict(response)
+        reply_data = zeep.helpers.serialize_object(response)
         user = request.user if request and request.user.is_authenticated else None
         req_transaction_type = None
         if "paySubscriptionCreateReply" in response:
@@ -254,6 +243,7 @@ class CyberSourceReply(models.Model):
             log.auth_avs_code = getattr(cc_auth_reply, "avsCode", None)
         # Save and return log object
         log.save()
+
         return log
 
     def __str__(self) -> str:

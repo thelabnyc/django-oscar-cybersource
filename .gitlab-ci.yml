@@ -4,6 +4,9 @@ variables:
   POSTGRES_PASSWORD: ""
   POSTGRES_HOST_AUTH_METHOD: 'trust'
 
+  POETRY_INSTALLER_NO_BINARY: 'lxml,xmlsec'
+  PIP_NO_BINARY: '$POETRY_INSTALLER_NO_BINARY'
+
 stages:
   - test
   - release
@@ -25,6 +28,7 @@ test:
   stage: test
   image: "registry.gitlab.com/thelabnyc/python:${IMAGE}"
   script:
+    - make system_deps
     - pip install tox
     - tox
   coverage: '/^TOTAL.+?(\d+\%)$/'

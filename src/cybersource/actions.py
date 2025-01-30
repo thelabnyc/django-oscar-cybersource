@@ -19,7 +19,8 @@ from oscarapicheckout.methods import PaymentMethod
 from oscarapicheckout.states import Complete, Declined
 import dateutil.parser
 
-from . import models, settings, signature
+from . import models, signature
+from .conf import settings
 from .constants import PRECISION, Decision
 from .cybersoap import CyberSourceSoap, SoapResponse
 from .models import CyberSourceReply, PaymentToken
@@ -311,7 +312,7 @@ class SecureAcceptanceOrderAction(
 
 class CreatePaymentToken(SecureAcceptanceOrderAction):
     transaction_type = "create_payment_token"
-    url = settings.ENDPOINT_PAY
+    url = str(settings.ENDPOINT_PAY)
 
     @property
     def unsigned_field_names(self) -> set[str]:
@@ -335,7 +336,7 @@ class ReplyHandlerActionKwargs(TypedDict):
 
 
 class ReplyHandlerAction(PaymentMethod):
-    name = settings.SOURCE_TYPE
+    name = settings.SOURCE_TYPE  # type:ignore[assignment]
 
     def __init__(
         self,
@@ -530,9 +531,10 @@ class SOAPAction:
         self.request = request
         self.method_key = method_key
         self.api = CyberSourceSoap(
-            wsdl=settings.CYBERSOURCE_WSDL,
+            wsdl=str(settings.WSDL),
             merchant_id=settings.MERCHANT_ID,
-            transaction_security_key=settings.CYBERSOURCE_SOAP_KEY,
+            pkcs12_data=settings.PKCS12_DATA,
+            pkcs12_password=settings.PKCS12_PASSWORD,
             order=order,
             request=request,
             method_key=method_key,

@@ -20,7 +20,8 @@ from oscarapicheckout.states import (
 )
 from rest_framework import serializers
 
-from . import actions, settings, signals
+from . import actions, signals
+from .conf import settings
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
 
 
@@ -36,7 +37,7 @@ class Cybersource(PaymentMethod):
     redirects back to us. This is a common pattern in PCI SAQ A-EP ecommerce sites.
     """
 
-    name = settings.SOURCE_TYPE
+    name = settings.SOURCE_TYPE  # type:ignore[assignment]
     code = "cybersource"
     serializer_class = PaymentMethodSerializer
 
@@ -120,7 +121,7 @@ class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
 
 
 class Bluefin(PaymentMethod):
-    name = settings.SOURCE_TYPE
+    name = settings.SOURCE_TYPE  # type:ignore[assignment]
     code = "bluefin"
     serializer_class = BluefinPaymentMethodSerializer
 

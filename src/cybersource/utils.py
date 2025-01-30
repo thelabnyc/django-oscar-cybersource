@@ -5,12 +5,10 @@ import json
 
 from django.utils.encoding import force_bytes, force_str
 from django.utils.safestring import mark_safe
-from suds import sudsobject
 from thelabdb.fields import EncryptedTextField
 
 if TYPE_CHECKING:
     from django.utils.safestring import SafeString
-    from suds.sudsobject import Object as SudsObject
 
 
 def format_json_for_display(data: Any, width: str = "auto") -> str | SafeString:
@@ -29,31 +27,6 @@ def format_json_for_display(data: Any, width: str = "auto") -> str | SafeString:
     response = highlight(json_data, JsonLexer(), formatter)
     style = "<style>" + formatter.get_style_defs() + "</style>"
     return mark_safe(style + response)
-
-
-def sudsobj_to_dict(
-    sudsobj: list[SudsObject] | SudsObject,
-    key_prefix: str = "",
-) -> dict[str, SudsObject]:
-    """Convert Suds object into a flattened dictionary"""
-    out = {}
-    # Handle lists
-    if isinstance(sudsobj, list):
-        for i, child in enumerate(sudsobj):
-            child_key = "{}[{}]".format(key_prefix, i)
-            out.update(sudsobj_to_dict(child, key_prefix=child_key))
-        return out
-    # Handle Primitives
-    if not hasattr(sudsobj, "__keylist__"):
-        out[key_prefix] = sudsobj
-        return out
-    # Handle Suds Objects
-    for parent_key, parent_val in sudsobject.asdict(sudsobj).items():
-        full_parent_key = (
-            "{}.{}".format(key_prefix, parent_key) if key_prefix else parent_key
-        )
-        out.update(sudsobj_to_dict(parent_val, key_prefix=full_parent_key))
-    return out
 
 
 def encrypt_session_id(session_id: str) -> str:

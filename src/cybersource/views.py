@@ -23,8 +23,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 import dateutil.parser
 
-from . import actions, settings, signature
+from . import actions, signature
 from .authentication import CSRFExemptSessionAuthentication
+from .conf import settings
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, Decision
 from .methods import Cybersource
 from .models import CyberSourceReply, SecureAcceptanceProfile

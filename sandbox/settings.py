@@ -91,6 +91,25 @@ INSTALLED_APPS = [
     "cybersource",
 ]
 
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "handlers": {
+#         "console": {
+#             "class": "logging.StreamHandler",
+#         },
+#     },
+#     "loggers": {
+#         "zeep.transports": {
+#             "level": "DEBUG",
+#         },
+#     },
+#     "root": {
+#         "handlers": ["console"],
+#         "level": "ERROR",
+#     },
+# }
+
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -195,17 +214,28 @@ OSCAR_DEFAULT_CURRENCY = "USD"
 OSCARAPI_BLOCK_ADMIN_API_ACCESS = False
 
 # Cybersource Config.
-CYBERSOURCE_ORG_ID = os.environ.get("CYBERSOURCE_ORG_ID")
-CYBERSOURCE_PROFILE = os.environ.get("CYBERSOURCE_PROFILE")
-CYBERSOURCE_ACCESS = os.environ.get("CYBERSOURCE_ACCESS")
-CYBERSOURCE_SECRET = os.environ.get("CYBERSOURCE_SECRET")
-CYBERSOURCE_REDIRECT_PENDING = "checkout:index"
-CYBERSOURCE_REDIRECT_SUCCESS = "checkout:thank-you"
-CYBERSOURCE_REDIRECT_FAIL = "checkout:index"
-
-# Cybersource SOAP Config
-CYBERSOURCE_MERCHANT_ID = os.environ.get("CYBERSOURCE_MERCHANT_ID")
-CYBERSOURCE_SOAP_KEY = os.environ.get("CYBERSOURCE_SOAP_KEY")
+CYBERSOURCE = {
+    # Secure Acceptance
+    "PROFILE": os.environ.get("CYBERSOURCE_PROFILE"),
+    "ACCESS": os.environ.get("CYBERSOURCE_ACCESS"),
+    "SECRET": os.environ.get("CYBERSOURCE_SECRET"),
+    # SOAP API
+    "ORG_ID": os.environ.get("CYBERSOURCE_ORG_ID"),
+    "MERCHANT_ID": os.environ.get("CYBERSOURCE_MERCHANT_ID"),
+    "PKCS12_DATA": os.environ.get("CYBERSOURCE_PKCS12_DATA"),
+    "PKCS12_PASSWORD": os.environ.get("CYBERSOURCE_PKCS12_PASSWORD"),
+    # Checkout URL flow
+    "REDIRECT_PENDING": "checkout:index",
+    "REDIRECT_SUCCESS": "checkout:thank-you",
+    "REDIRECT_FAIL": "checkout:index",
+    # Misc
+    "SHIPPING_METHOD_MAPPING": {
+        "free-shipping": "lowcost",
+        "ups-ground": "threeday",
+        "ups-2-day": "twoday",
+        "ups-next-day": "oneday",
+    },
+}
 
 # Configure payment methods
 API_ENABLED_PAYMENT_METHODS = [
@@ -218,10 +248,3 @@ API_ENABLED_PAYMENT_METHODS = [
         "permission": "oscarapicheckout.permissions.Public",
     },
 ]
-
-CYBERSOURCE_SHIPPING_METHOD_MAPPING = {
-    "free-shipping": "lowcost",
-    "ups-ground": "threeday",
-    "ups-2-day": "twoday",
-    "ups-next-day": "oneday",
-}

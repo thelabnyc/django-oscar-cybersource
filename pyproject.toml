@@ -27,17 +27,19 @@ lxml = "^5.3.0"
 phonenumbers = "^8.13.53"
 python-dateutil = "^2.9.0"
 django-stubs-ext = "^5.1.2"
+zeep = "^4.3.1"
+xmlsec = "^1.3.14"
+pydantic = "^2.10.6"
+cryptography = "^44.0.0"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.6.10"
 flake8 = "^7.1.1"
-instrumented-soap = "2.1.2"
 psycopg2-binary = "^2.9.10"
 PyYAML = "^6.0.2"
 sorl-thumbnail = "^12.11.0"
 sphinx-rtd-theme = "^3.0.2"
 sphinx = "^8.1.3"
-suds-community = "^1.2.0"
 tox = "^4.24.1"
 unittest-xml-reporting = "^3.2.0"
 django-stubs = "^5.1.2"
@@ -47,6 +49,7 @@ djangorestframework-stubs = "^3.15.2"
 lxml-stubs = "^0.5.1"
 types-python-dateutil = "^2.9.0.20241206"
 types-pygments = "^2.19.0.20250107"
+requests-mock = "^1.12.1"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -95,14 +98,6 @@ follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
 module = "oscarapi.*"
-follow_untyped_imports = true
-
-[[tool.mypy.overrides]]
-module = "suds.*"
-follow_untyped_imports = true
-
-[[tool.mypy.overrides]]
-module = "soap.*"
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
