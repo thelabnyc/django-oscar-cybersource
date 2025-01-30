@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from oscar.core.loading import get_class, get_model
 from oscarapicheckout import utils
-from oscarapicheckout.methods import PaymentMethod
+from oscarapicheckout.methods import PaymentMethod, PaymentMethodData
 from oscarapicheckout.states import Complete, Declined
 import dateutil.parser
 
@@ -335,8 +335,8 @@ class ReplyHandlerActionKwargs(TypedDict):
     method_key: str | None
 
 
-class ReplyHandlerAction(PaymentMethod):
-    name = settings.SOURCE_TYPE  # type:ignore[assignment]
+class ReplyHandlerAction(PaymentMethod[PaymentMethodData]):
+    name = settings.SOURCE_TYPE
 
     def __init__(
         self,

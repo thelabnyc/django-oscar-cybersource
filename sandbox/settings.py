@@ -220,10 +220,10 @@ CYBERSOURCE = {
     "ACCESS": os.environ.get("CYBERSOURCE_ACCESS"),
     "SECRET": os.environ.get("CYBERSOURCE_SECRET"),
     # SOAP API
-    "ORG_ID": os.environ.get("CYBERSOURCE_ORG_ID"),
-    "MERCHANT_ID": os.environ.get("CYBERSOURCE_MERCHANT_ID"),
-    "PKCS12_DATA": os.environ.get("CYBERSOURCE_PKCS12_DATA"),
-    "PKCS12_PASSWORD": os.environ.get("CYBERSOURCE_PKCS12_PASSWORD"),
+    "ORG_ID": os.environ.get("CYBERSOURCE_ORG_ID", ""),
+    "MERCHANT_ID": os.environ.get("CYBERSOURCE_MERCHANT_ID", ""),
+    "PKCS12_DATA": os.environ.get("CYBERSOURCE_PKCS12_DATA", "Zm9v"),
+    "PKCS12_PASSWORD": os.environ.get("CYBERSOURCE_PKCS12_PASSWORD", "Zm9v"),
     # Checkout URL flow
     "REDIRECT_PENDING": "checkout:index",
     "REDIRECT_SUCCESS": "checkout:thank-you",
