@@ -29,7 +29,7 @@ class CybFormPostRequiredFormDataField(FormPostRequiredFormDataField):
     editable: bool
 
 
-class Cybersource(PaymentMethod):
+class Cybersource(PaymentMethod[PaymentMethodData]):
     """
     This is an example of how to implement a payment method that required some off-site
     interaction, like Cybersource Secure Acceptance, for example. It returns a pending
@@ -37,9 +37,9 @@ class Cybersource(PaymentMethod):
     redirects back to us. This is a common pattern in PCI SAQ A-EP ecommerce sites.
     """
 
-    name = settings.SOURCE_TYPE  # type:ignore[assignment]
+    name = settings.SOURCE_TYPE
     code = "cybersource"
-    serializer_class = PaymentMethodSerializer
+    serializer_class = PaymentMethodSerializer[PaymentMethodData]
 
     def _record_payment(
         self,
@@ -108,20 +108,20 @@ class BluefinPaymentMethodData(PaymentMethodData):
     payment_data: str
 
 
-class BluefinPaymentMethodSerializer(PaymentMethodSerializer):
+class BluefinPaymentMethodSerializer(PaymentMethodSerializer[BluefinPaymentMethodData]):
     payment_data = serializers.CharField(max_length=256)
 
     def validate(
         self,
-        data: BluefinPaymentMethodData,  # type:ignore[override]
+        data: BluefinPaymentMethodData,
     ) -> BluefinPaymentMethodData:
         if "payment_data" not in data:
             raise serializers.ValidationError(_("Missing encrypted payment data."))
-        return super().validate(data)  # type:ignore[return-value]
+        return super().validate(data)
 
 
-class Bluefin(PaymentMethod):
-    name = settings.SOURCE_TYPE  # type:ignore[assignment]
+class Bluefin(PaymentMethod[BluefinPaymentMethodData]):
+    name = settings.SOURCE_TYPE
     code = "bluefin"
     serializer_class = BluefinPaymentMethodSerializer
 
