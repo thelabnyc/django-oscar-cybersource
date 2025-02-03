@@ -1,5 +1,12 @@
 # Changes
 
+## v9.1.1 (2025-02-03)
+
+### Fix
+
+- add py.typed marker
+- **deps**: update dependency phonenumbers to ^8.13.54
+
 ## v9.1.0 (2025-01-30)
 
 ### Feat
