@@ -1,5 +1,11 @@
 # Changes
 
+## v9.1.2 (2025-02-03)
+
+### Fix
+
+- wrap order model import in TYPE_CHECKING conditional to fix overridden order models
+
 ## v9.1.1 (2025-02-03)
 
 ### Fix
