@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Literal, Self, cast
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
 import logging
 
 from cryptography.fernet import InvalidToken
@@ -14,7 +14,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_stubs_ext import StrOrPromise
 from django_stubs_ext.db.models import TypedModelMeta
-from oscar.apps.order.models import Order
 from oscar.apps.payment.abstract_models import AbstractTransaction
 from oscar.core.compat import AUTH_USER_MODEL
 from oscar.models.fields import NullCharField
@@ -25,6 +24,9 @@ import zeep.helpers
 
 from .conf import settings as cyb_settings
 from .constants import ZERO, CyberSourceReplyType, Decision
+
+if TYPE_CHECKING:
+    from oscar.apps.order.models import Order
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +166,7 @@ class CyberSourceReply(models.Model):
     @classmethod
     def log_secure_acceptance_response(
         cls,
-        order: Order,
+        order: "Order",
         request: Request,
     ) -> Self:
         log = cls(
@@ -197,7 +199,7 @@ class CyberSourceReply(models.Model):
     @classmethod
     def log_soap_response(
         cls,
-        order: Order,
+        order: "Order",
         response: Any,
         request: HttpRequest | None = None,
         card_expiry_date: str | None = None,
