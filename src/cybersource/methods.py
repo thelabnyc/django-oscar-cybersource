@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings as django_settings
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
-from oscar.apps.order.models import Order
 from oscarapicheckout.methods import (
     PaymentMethod,
     PaymentMethodData,
@@ -23,6 +22,9 @@ from rest_framework import serializers
 from . import actions, signals
 from .conf import settings
 from .constants import CHECKOUT_FINGERPRINT_SESSION_ID
+
+if TYPE_CHECKING:
+    from oscar.apps.order.models import Order
 
 
 class CybFormPostRequiredFormDataField(FormPostRequiredFormDataField):
@@ -44,7 +46,7 @@ class Cybersource(PaymentMethod[PaymentMethodData]):
     def _record_payment(
         self,
         request: HttpRequest,
-        order: Order,
+        order: "Order",
         method_key: str,
         amount: Decimal,
         reference: str,
@@ -128,7 +130,7 @@ class Bluefin(PaymentMethod[BluefinPaymentMethodData]):
     def _record_payment(
         self,
         request: HttpRequest,
-        order: Order,
+        order: "Order",
         method_key: str,
         amount: Decimal,
         reference: str,
