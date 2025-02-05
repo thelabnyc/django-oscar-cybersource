@@ -117,7 +117,7 @@ from_first = true
 
 [tool.coverage.run]
 branch = true
-source_pkgs = ["oscarapicheckout"]
+source_pkgs = ["cybersource"]
 
 [tool.coverage.report]
 show_missing = true

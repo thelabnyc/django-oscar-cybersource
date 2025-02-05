@@ -19,6 +19,7 @@ from django.utils.functional import cached_property
 from zeep.client import Factory
 from zeep.transports import Transport
 from zeep.wsse import BinarySignature, MemorySignature
+from zeep.xsd import CompoundValue
 import xmlsec
 import zeep
 import zeep.cache
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 type SoapRequest = dict[str, Any]
-type SoapResponse = Any
+type SoapResponse = CompoundValue
 
 
 class BinaryMemorySignature(BinarySignature):

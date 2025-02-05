@@ -12,8 +12,7 @@ import requests_mock
 
 from .. import actions
 from ..conf import settings
-from ..constants import CyberSourceReplyType, Decision
-from ..models import CyberSourceReply
+from ..constants import Decision
 from ..test import responses
 from . import factories as cs_factories
 
@@ -23,41 +22,6 @@ Order = get_model("order", "Order")
 
 # Do we have the appropriate settings, via env vars, to perform full SOAP integration tests?
 DO_SOAP = settings.MERCHANT_ID and settings.PKCS12_DATA
-
-
-# Mock cybersource.models.CyberSourceReply.log_soap_response with this
-def mock_log_soap_response(order, response, request=None, card_expiry_date=None):
-    response = {
-        "decision": response.decision,
-        "merchantReferenceCode": response.merchantReferenceCode,
-    }
-
-    response["req_reference_number"] = response.get("merchantReferenceCode", "")
-
-    log = CyberSourceReply(
-        user=request.user if request and request.user.is_authenticated else None,
-        order=order,
-        reply_type=CyberSourceReplyType.SA,
-        data=response,
-        auth_avs_code=response.get("auth_avs_code"),
-        auth_code=response.get("auth_code"),
-        auth_response=response.get("auth_response"),
-        auth_trans_ref_no=response.get("auth_trans_ref_no"),
-        decision=response.get("decision"),
-        message=response.get("message"),
-        reason_code=response.get("reason_code"),
-        req_bill_to_address_postal_code=response.get("req_bill_to_address_postal_code"),
-        req_bill_to_forename=response.get("req_bill_to_forename"),
-        req_bill_to_surname=response.get("req_bill_to_surname"),
-        req_card_expiry_date=response.get("req_card_expiry_date"),
-        req_reference_number=response.get("req_reference_number"),
-        req_transaction_type=response.get("req_transaction_type"),
-        req_transaction_uuid=response.get("req_transaction_uuid"),
-        request_token=response.get("request_token"),
-        transaction_id=response.get("transaction_id"),
-    )
-    log.save()
-    return log
 
 
 class BaseCheckoutTest(APITestCase):
@@ -262,9 +226,8 @@ class BaseCheckoutTest(APITestCase):
 class CheckoutIntegrationTest(BaseCheckoutTest):
     """Full Integration Test of Checkout using mocked SOAP integration"""
 
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @requests_mock.mock()
-    def test_checkout_process(self, log_soap_response, rmock):
+    def test_checkout_process(self, rmock):
         """Full checkout process using minimal api calls"""
         product = self.create_product()
 
@@ -296,7 +259,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
 
         responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_ACCEPT)
-        log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data["payment_method_states"]["cybersource"]["required_action"]
         resp = self.do_cs_get_token(action["url"], action["fields"])
@@ -323,10 +285,9 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         self.capture_payment(order_number)
 
     @mock.patch("oscarapicheckout.signals.order_payment_declined.send")
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @requests_mock.mock()
     def test_checkout_process_declined_auth(
-        self, log_soap_response, send_order_payment_declined_signal, rmock
+        self, send_order_payment_declined_signal, rmock
     ):
         """Full checkout process using minimal api calls"""
         product = self.create_product()
@@ -360,7 +321,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
 
         responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_REJECT)
-        log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data["payment_method_states"]["cybersource"]["required_action"]
         resp = self.do_cs_get_token(action["url"], action["fields"])
@@ -382,9 +342,8 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         # Make sure order_payment_declined signal was triggered exactly once
         self.assertEqual(send_order_payment_declined_signal.call_count, 1)
 
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @requests_mock.mock()
-    def test_decision_manager_review_auth(self, log_soap_response, rmock):
+    def test_decision_manager_review_auth(self, rmock):
         product = self.create_product()
 
         resp = self.do_get_basket()
@@ -429,7 +388,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
 
         responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_REVIEW)
-        log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data["payment_method_states"]["cybersource"]["required_action"]
         resp = self.do_cs_get_token(action["url"], action["fields"])
@@ -450,9 +408,8 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
 
         self.check_finished_order(order_number, product.id, status="REVIEW")
 
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @requests_mock.mock()
-    def test_add_product_during_auth(self, log_soap_response, rmock):
+    def test_add_product_during_auth(self, rmock):
         """Test attempting to add a product during the authorize flow"""
         product = self.create_product()
 
@@ -487,7 +444,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
 
         responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_ACCEPT)
-        log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data["payment_method_states"]["cybersource"]["required_action"]
         resp = self.do_cs_get_token(action["url"], action["fields"])
@@ -533,9 +489,8 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
         self.assertEqual(resp.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @requests_mock.mock()
-    def test_free_product(self, log_soap_response, rmock):
+    def test_free_product(self, rmock):
         """Full checkout process using minimal api calls"""
         product = self.create_product(price=D("0.00"))
 
@@ -561,7 +516,6 @@ class CheckoutIntegrationTest(BaseCheckoutTest):
         )
 
         responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_ACCEPT)
-        log_soap_response.side_effect = mock_log_soap_response
 
         action = resp.data["payment_method_states"]["cybersource"]["required_action"]
         resp = self.do_cs_get_token(action["url"], action["fields"])
@@ -959,11 +913,9 @@ class CSReplyViewTest(BaseCheckoutTest):
             self.do_fetch_payment_states().data["order_status"], "Payment Declined"
         )
 
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("oscarapicheckout.signals.order_payment_authorized.send")
-    def test_soap_declined_auth(self, order_payment_authorized, log_soap_response):
+    def test_soap_declined_auth(self, order_payment_authorized):
         """Declined auth should should result in redirect to failure page"""
-        log_soap_response.side_effect = mock_log_soap_response
 
         session = self.client.session
         session.save()
@@ -1026,7 +978,6 @@ class CSReplyViewTest(BaseCheckoutTest):
 
 
 class CybersourceMethodTest(BaseCheckoutTest):
-    @mock.patch("cybersource.models.CyberSourceReply.log_soap_response")
     @mock.patch("cybersource.signals.pre_build_auth_request.send")
     @mock.patch("cybersource.signals.pre_build_get_token_request.send")
     @mock.patch("oscarapicheckout.signals.pre_calculate_total.send")
@@ -1035,10 +986,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
         pre_calculate_total,
         pre_build_get_token_request,
         pre_build_auth_request,
-        log_soap_response,
     ):
-        log_soap_response.side_effect = mock_log_soap_response
-
         product = self.create_product()
 
         resp = self.do_get_basket()

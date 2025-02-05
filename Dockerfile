@@ -9,6 +9,7 @@ RUN make system_deps && \
 
 ADD . .
 ENV POETRY_INSTALLER_NO_BINARY='lxml,xmlsec'
+ENV PIP_NO_BINARY='lxml,xmlsec'
 RUN poetry install
 
 RUN mkdir /tox

@@ -91,24 +91,24 @@ INSTALLED_APPS = [
     "cybersource",
 ]
 
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "handlers": {
-#         "console": {
-#             "class": "logging.StreamHandler",
-#         },
-#     },
-#     "loggers": {
-#         "zeep.transports": {
-#             "level": "DEBUG",
-#         },
-#     },
-#     "root": {
-#         "handlers": ["console"],
-#         "level": "ERROR",
-#     },
-# }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        # "zeep.transports": {
+        #     "level": "DEBUG",
+        # },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "ERROR",
+    },
+}
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
