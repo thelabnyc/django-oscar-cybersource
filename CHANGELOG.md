@@ -1,5 +1,11 @@
 # Changes
 
+## v9.1.4 (2025-02-05)
+
+### Fix
+
+- incorrect SOAP response serialization in CyberSourceReply.log_soap_response
+
 ## v9.1.3 (2025-02-03)
 
 ### Fix
