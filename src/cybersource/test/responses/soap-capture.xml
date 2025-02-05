@@ -12,7 +12,7 @@
             <c:merchantReferenceCode>118031289162</c:merchantReferenceCode>
             <c:requestID>5579568773646201204011</c:requestID>
             <c:decision>ACCEPT</c:decision>
-            <c:reasonCode>200</c:reasonCode>
+            <c:reasonCode>100</c:reasonCode>
             <c:requestToken>foobar</c:requestToken>
             <c:ccCaptureReply>
                 <c:reasonCode>100</c:reasonCode>

@@ -20,10 +20,11 @@ from oscar.models.fields import NullCharField
 from rest_framework.request import Request
 from thelabdb.fields import EncryptedTextField
 import dateutil.parser
-import zeep.helpers
 
 from .conf import settings as cyb_settings
 from .constants import ZERO, CyberSourceReplyType, Decision
+from .cybersoap import SoapResponse
+from .utils import zeepobj_to_dict
 
 if TYPE_CHECKING:
     from oscar.apps.order.models import Order
@@ -200,16 +201,16 @@ class CyberSourceReply(models.Model):
     def log_soap_response(
         cls,
         order: "Order",
-        response: Any,
+        response: SoapResponse,
         request: HttpRequest | None = None,
         card_expiry_date: str | None = None,
     ) -> Self:
-        reply_data = zeep.helpers.serialize_object(response)
+        reply_data = zeepobj_to_dict(response)
         user = request.user if request and request.user.is_authenticated else None
         req_transaction_type = None
-        if "paySubscriptionCreateReply" in response:
+        if getattr(response, "paySubscriptionCreateReply", None):
             req_transaction_type = "create_payment_token"
-        elif "ccCaptureReply" in response:
+        elif getattr(response, "ccCaptureReply", None):
             req_transaction_type = "capture"
         else:
             req_transaction_type = "authorization"
