@@ -2,19 +2,21 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Optional
 
 from django.conf import settings as djsettings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
 from django.dispatch import receiver
 from django.utils.translation import gettext_noop
 from pydantic import Base64Bytes, BaseModel, ConfigDict, HttpUrl
+import pydantic_core
 
 
 class CybersourceSettings(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     # Secure Acceptance
-    PROFILE: Optional[str]
-    ACCESS: Optional[str]
-    SECRET: Optional[str]
+    PROFILE: Optional[str] = None
+    ACCESS: Optional[str] = None
+    SECRET: Optional[str] = None
 
     # SOAP API
     ORG_ID: str
@@ -46,7 +48,10 @@ class CybersourceSettings(BaseModel):
 
 
 def load(raw_settings: Mapping[str, Any]) -> CybersourceSettings:
-    return CybersourceSettings.model_validate(raw_settings)
+    try:
+        return CybersourceSettings.model_validate(raw_settings)
+    except pydantic_core.ValidationError as e:
+        raise ImproperlyConfigured(str(e))
 
 
 def _get_raw_config() -> Mapping[str, Any]:
