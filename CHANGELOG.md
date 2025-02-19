@@ -1,5 +1,16 @@
 # Changes
 
+## v9.1.5 (2025-02-19)
+
+### Fix
+
+- make optional config actually optional
+- **deps**: update dependency phonenumbers to ^8.13.55
+- **deps**: update dependency cryptography to ^44.0.1
+- **deps**: update dependency lxml to ^5.3.1
+- **deps**: update dependency django to ^4.2.19
+- **deps**: update dependency django-stubs-ext to ^5.1.3
+
 ## v9.1.4 (2025-02-05)
 
 ### Fix
