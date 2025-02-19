@@ -2385,4 +2385,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "2efc36f79bd57c5cbe54aa74d9b0167c0d42a8bb338245e9ca710bad605fcfae"
+content-hash = "f1fa6ebfc97cdd6f13c392204f3f039e5b9c3fde961e9e65ab3f311cdabebd71"
