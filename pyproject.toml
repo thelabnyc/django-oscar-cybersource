@@ -17,12 +17,12 @@ include = "cybersource"
 from = "src"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13"
 Django = "^4.2.20"
 django-oscar = "3.2.5"
 django-oscar-api = "3.3.0"
 django-oscar-api-checkout = "^3.6.3"
-thelabdb = "^0.2.0"
+thelabdb = "^0.3.0"
 lxml = "^5.3.1"
 phonenumbers = "^8.13.55"
 python-dateutil = "^2.9.0"
@@ -71,7 +71,7 @@ post_bump_hooks = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 # Strict mode, see mypy --help
