@@ -1,5 +1,14 @@
 # Changes
 
+## v9.1.6 (2025-03-17)
+
+### Fix
+
+- **deps**: update dependency thelabdb to ^0.3.0
+- **deps**: update dependency xmlsec to ^1.3.15
+- **deps**: update dependency django to ^4.2.20
+- **deps**: update dependency cryptography to ^44.0.2
+
 ## v9.1.5 (2025-02-19)
 
 ### Fix
