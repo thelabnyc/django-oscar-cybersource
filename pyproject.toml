@@ -33,7 +33,7 @@ pydantic = "^2.10.6"
 cryptography = "^44.0.2"
 
 [tool.poetry.group.dev.dependencies]
-coverage = "^7.6.12"
+coverage = "^7.7.0"
 flake8 = "^7.1.2"
 psycopg2-binary = "^2.9.10"
 PyYAML = "^6.0.2"
