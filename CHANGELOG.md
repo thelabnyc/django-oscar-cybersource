@@ -1,5 +1,11 @@
 # Changes
 
+## v9.1.7 (2025-03-21)
+
+### Fix
+
+- use NullCharField from thelabdb
+
 ## v9.1.6 (2025-03-17)
 
 ### Fix
