@@ -1221,14 +1221,14 @@ files = [
 
 [[package]]
 name = "phonenumbers"
-version = "8.13.55"
+version = "9.0.1"
 description = "Python version of Google's common library for parsing, formatting, storing and validating international phone numbers."
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "phonenumbers-8.13.55-py2.py3-none-any.whl", hash = "sha256:25feaf46135f0fb1e61b69513dc97c477285ba98a69204bf5a8cf241a844a718"},
-    {file = "phonenumbers-8.13.55.tar.gz", hash = "sha256:57c989dda3eabab1b5a9e3d24438a39ebd032fa0172bf68bfd90ab70b3d5e08b"},
+    {file = "phonenumbers-9.0.1-py2.py3-none-any.whl", hash = "sha256:ea8ec8083d85e5dcba48a6ba633ee68481e60331200f99744ae24a08e5026b13"},
+    {file = "phonenumbers-9.0.1.tar.gz", hash = "sha256:7507bd6228d3b5fc4a3661c28f08157ac12a3386aca50bc6d2e71d91a00ff2be"},
 ]
 
 [[package]]
@@ -2379,4 +2379,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "54efcb522d11f0c983580f60c60b2d5a3f74cb6f2c8164355bc064349144a170"
+content-hash = "60e1fdc6448687c75c6eb5a6403ba2c6bc085a5ac23b42cb5077d94f613f19cf"
