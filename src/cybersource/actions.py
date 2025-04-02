@@ -55,22 +55,20 @@ class SecureAcceptanceAction:
 
     @property
     def signed_field_names(self) -> set[str]:
-        return set(
-            [
-                "access_key",
-                "profile_id",
-                "transaction_uuid",
-                "signed_field_names",
-                "unsigned_field_names",
-                "signed_date_time",
-                "locale",
-                "transaction_type",
-            ]
-        )
+        return {
+            "access_key",
+            "profile_id",
+            "transaction_uuid",
+            "signed_field_names",
+            "unsigned_field_names",
+            "signed_date_time",
+            "locale",
+            "transaction_type",
+        }
 
     @property
     def unsigned_field_names(self) -> set[str]:
-        return set([])
+        return set()
 
     def fields(self) -> dict[str, str]:
         names = self.signed_field_names | self.unsigned_field_names
@@ -79,9 +77,11 @@ class SecureAcceptanceAction:
         data, signed_fields = self.build_request_data()
         fields.update(data)
 
-        signed_fields = signed_fields | set(
-            ["signed_date_time", "signed_field_names", "unsigned_field_names"]
-        )
+        signed_fields = signed_fields | {
+            "signed_date_time",
+            "signed_field_names",
+            "unsigned_field_names",
+        }
         unsigned_fields = set(fields.keys()) - signed_fields
         fields["signed_date_time"] = datetime.utcnow().strftime(self.date_format)
         fields["signed_field_names"] = ",".join(signed_fields)
@@ -114,28 +114,26 @@ class SecureAcceptanceAction:
         return {}
 
     def generate_uuid(self) -> str:
-        return "%s%s" % (int(time.time()), random.randrange(0, 100))
+        return f"{int(time.time())}{random.randrange(0, 100)}"
 
 
 class SecureAcceptanceShippingAddressMixin:
     def _get_shipping_signed_fields(self) -> set[str]:
-        return set(
-            [
-                "ship_to_forename",
-                "ship_to_surname",
-                "ship_to_address_line1",
-                "ship_to_address_line2",
-                "ship_to_address_city",
-                "ship_to_address_state",
-                "ship_to_address_postal_code",
-                "ship_to_address_country",
-                "ship_to_phone",
-                "shipping_method",
-            ]
-        )
+        return {
+            "ship_to_forename",
+            "ship_to_surname",
+            "ship_to_address_line1",
+            "ship_to_address_line2",
+            "ship_to_address_city",
+            "ship_to_address_state",
+            "ship_to_address_postal_code",
+            "ship_to_address_country",
+            "ship_to_phone",
+            "shipping_method",
+        }
 
     def _get_shipping_unsigned_fields(self) -> set[str]:
-        return set([])
+        return set()
 
     def _get_shipping_data(self, order: Order) -> dict[str, str]:
         order_shipping_code = str(order.shipping_code)
@@ -166,27 +164,23 @@ class SecureAcceptanceShippingAddressMixin:
 
 class SecureAcceptanceBillingAddressMixin:
     def _get_billing_signed_fields(self) -> set[str]:
-        return set(
-            [
-                "bill_to_forename",
-                "bill_to_surname",
-                "bill_to_address_line1",
-                "bill_to_address_line2",
-                "bill_to_address_city",
-                "bill_to_address_state",
-                "bill_to_address_postal_code",
-                "bill_to_address_country",
-                "bill_to_email",
-            ]
-        )
+        return {
+            "bill_to_forename",
+            "bill_to_surname",
+            "bill_to_address_line1",
+            "bill_to_address_line2",
+            "bill_to_address_city",
+            "bill_to_address_state",
+            "bill_to_address_postal_code",
+            "bill_to_address_country",
+            "bill_to_email",
+        }
 
     def _get_billing_unsigned_fields(self) -> set[str]:
-        return set(
-            [
-                # Oscar doesn't track phone number for billing addresses. Set this as unsigned to that the client JS can specify it if they want.
-                "bill_to_phone",
-            ]
-        )
+        return {
+            # Oscar doesn't track phone number for billing addresses. Set this as unsigned to that the client JS can specify it if they want.
+            "bill_to_phone",
+        }
 
     def _get_billing_data(self, order: Order) -> dict[str, str]:
         data = {
@@ -242,19 +236,17 @@ class SecureAcceptanceOrderAction(
         fields = super().signed_field_names
         fields = fields | self._get_shipping_signed_fields()
         fields = fields | self._get_billing_signed_fields()
-        fields = fields | set(
-            [
-                "payment_method",
-                "reference_number",
-                "currency",
-                "amount",
-                "line_item_count",
-                "customer_ip_address",
-                "device_fingerprint_id",
-                self.method_key_field_name,
-                self.session_id_field_name,
-            ]
-        )
+        fields = fields | {
+            "payment_method",
+            "reference_number",
+            "currency",
+            "amount",
+            "line_item_count",
+            "customer_ip_address",
+            "device_fingerprint_id",
+            self.method_key_field_name,
+            self.session_id_field_name,
+        }
         return fields
 
     @property
@@ -303,7 +295,7 @@ class SecureAcceptanceOrderAction(
 
         # Extra fields
         for k, v in self.extra_fields.items():
-            data["merchant_defined_data{}".format(k)] = v
+            data[f"merchant_defined_data{k}"] = v
 
         data.update(self.extra_fields)
 
@@ -317,15 +309,13 @@ class CreatePaymentToken(SecureAcceptanceOrderAction):
     @property
     def unsigned_field_names(self) -> set[str]:
         fields = super().unsigned_field_names
-        fields = fields | set(
-            [
-                # There are unsigned as the server should *never* know them. The client JS must fill them in.
-                "card_type",
-                "card_number",
-                "card_expiry_date",
-                "card_cvn",
-            ]
-        )
+        fields = fields | {
+            # There are unsigned as the server should *never* know them. The client JS must fill them in.
+            "card_type",
+            "card_number",
+            "card_expiry_date",
+            "card_cvn",
+        }
         return fields
 
 

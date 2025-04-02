@@ -18,5 +18,5 @@ class Command(BaseCommand):
             try:
                 SecureAcceptanceProfile.objects.get(pk=pk)
             except InvalidToken:
-                self.stdout.write("Removing SecureAcceptanceProfile pk={}".format(pk))
+                self.stdout.write(f"Removing SecureAcceptanceProfile pk={pk}")
                 SecureAcceptanceProfile.objects.filter(pk=pk).delete()
