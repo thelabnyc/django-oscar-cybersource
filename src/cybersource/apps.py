@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from django.urls import path
 from django.utils.translation import gettext_lazy as _
@@ -18,7 +18,7 @@ class CybersourceConfig(OscarConfig):
     namespace = "cybersource"
     default = True
 
-    def get_urls(self) -> List[URLPattern]:
+    def get_urls(self) -> list[URLPattern]:
         from .views import (
             CyberSourceReplyView,
             DecisionManagerNotificationView,

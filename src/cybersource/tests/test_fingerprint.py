@@ -38,10 +38,12 @@ class FingerprintRedirectViewTest(TestCase):
         session["cybersource_fingerprint_session_id"] = "baz"
         session.save()
         url = reverse("cybersource-fingerprint-redirect", args=["flash"])
-        expected = "https://h.online-metrix.net/fp/fp.swf?org_id=%s&session_id=%s%s" % (
-            settings.ORG_ID,
-            settings.MERCHANT_ID,
-            "baz",
+        expected = (
+            "https://h.online-metrix.net/fp/fp.swf?org_id={}&session_id={}{}".format(
+                settings.ORG_ID,
+                settings.MERCHANT_ID,
+                "baz",
+            )
         )
 
         response = self.client.get(url)

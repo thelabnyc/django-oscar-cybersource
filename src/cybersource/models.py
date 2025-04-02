@@ -167,7 +167,7 @@ class CyberSourceReply(models.Model):
     @classmethod
     def log_secure_acceptance_response(
         cls,
-        order: "Order",
+        order: Order,
         request: Request,
     ) -> Self:
         log = cls(
@@ -200,7 +200,7 @@ class CyberSourceReply(models.Model):
     @classmethod
     def log_soap_response(
         cls,
-        order: "Order",
+        order: Order,
         response: SoapResponse,
         request: HttpRequest | None = None,
         card_expiry_date: str | None = None,
@@ -376,7 +376,9 @@ class PaymentToken(models.Model):
 
     @property
     def card_holder(self) -> str:
-        return "%s %s" % (self.log.req_bill_to_forename, self.log.req_bill_to_surname)
+        return "{} {}".format(
+            self.log.req_bill_to_forename, self.log.req_bill_to_surname
+        )
 
     def __str__(self) -> str:
         return "%s" % self.masked_card_number
@@ -415,7 +417,7 @@ class TransactionMixin(AbstractTransaction):
     processed_datetime = models.DateTimeField(default=timezone.now)
 
     # Have to manually type hint reverse accessors
-    captures: QuerySet["AbstractTransaction"]
+    captures: QuerySet[AbstractTransaction]
 
     class Meta(TypedModelMeta):
         abstract = True

@@ -1,5 +1,5 @@
 from collections.abc import Mapping, Sequence
-from typing import Any, Optional
+from typing import Any
 
 from django.conf import settings as djsettings
 from django.core.exceptions import ImproperlyConfigured
@@ -14,9 +14,9 @@ class CybersourceSettings(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     # Secure Acceptance
-    PROFILE: Optional[str] = None
-    ACCESS: Optional[str] = None
-    SECRET: Optional[str] = None
+    PROFILE: str | None = None
+    ACCESS: str | None = None
+    SECRET: str | None = None
 
     # SOAP API
     ORG_ID: str

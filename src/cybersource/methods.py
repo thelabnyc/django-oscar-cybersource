@@ -46,7 +46,7 @@ class Cybersource(PaymentMethod[PaymentMethodData]):
     def _record_payment(
         self,
         request: HttpRequest,
-        order: "Order",
+        order: Order,
         method_key: str,
         amount: Decimal,
         reference: str,
@@ -72,7 +72,7 @@ class Cybersource(PaymentMethod[PaymentMethodData]):
             order=order,
             method_key=method_key,
             amount=amount,
-            server_hostname=request.META.get("HTTP_HOST", ""),
+            server_hostname=request.headers.get("host", ""),
             customer_ip_address=request.META["REMOTE_ADDR"],
             fingerprint_session_id=request.session.get(CHECKOUT_FINGERPRINT_SESSION_ID),
             extra_fields=extra_fields,
@@ -130,7 +130,7 @@ class Bluefin(PaymentMethod[BluefinPaymentMethodData]):
     def _record_payment(
         self,
         request: HttpRequest,
-        order: "Order",
+        order: Order,
         method_key: str,
         amount: Decimal,
         reference: str,

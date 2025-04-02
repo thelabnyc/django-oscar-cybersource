@@ -43,5 +43,5 @@ class SecureAcceptanceSigner:
     ) -> str:
         parts = []
         for field in signed_fields:
-            parts.append("%s=%s" % (field, data.get(field, "")))
+            parts.append("{}={}".format(field, data.get(field, "")))
         return ",".join(parts)

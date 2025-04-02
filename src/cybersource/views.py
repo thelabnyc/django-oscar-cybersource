@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, cast
 import logging
 import uuid
 
@@ -128,7 +128,7 @@ class CyberSourceReplyView(APIView):
         return resp
 
     def is_request_valid(self, request: Request) -> bool:
-        server_hostname = request.META.get("HTTP_HOST", "")
+        server_hostname = request.headers.get("host", "")
         profile = SecureAcceptanceProfile.get_profile(server_hostname)
         return signature.SecureAcceptanceSigner(profile.secret_key).verify_request(
             request
@@ -227,7 +227,7 @@ class DecisionManagerNotificationView(APIView):
             raise SuspiciousOperation("Invalid decision manager key")
 
     @transaction.atomic
-    def _handle_update(self, update: "_Element") -> None:
+    def _handle_update(self, update: _Element) -> None:
         order = self._get_order(update)
         transaction = self._get_transaction(order, update)
 
@@ -246,11 +246,11 @@ class DecisionManagerNotificationView(APIView):
             self.__class__, order=order, transaction=transaction, update=update
         )
 
-    def _get_order(self, update: "_Element") -> Order:
+    def _get_order(self, update: _Element) -> Order:
         order_number = update.attrib["MerchantReferenceNumber"]
         return get_object_or_404(Order, number=order_number)
 
-    def _get_transaction(self, order: Order, update: "_Element") -> Transaction:
+    def _get_transaction(self, order: Order, update: _Element) -> Transaction:
         transaction_id = update.attrib["RequestID"]
         try:
             transaction = (
@@ -265,7 +265,7 @@ class DecisionManagerNotificationView(APIView):
             raise Http404()
         return transaction
 
-    def _save_order_note(self, order: Order, note_elem: "_Element") -> OrderNote:
+    def _save_order_note(self, order: Order, note_elem: _Element) -> OrderNote:
         author = force_str(note_elem.attrib["AddedBy"])
         comment = force_str(note_elem.attrib["Comment"])
         date = dateutil.parser.parse(note_elem.attrib["Date"])
@@ -277,7 +277,7 @@ class DecisionManagerNotificationView(APIView):
         if not note:
             note = OrderNote(order=order, note_type=OrderNote.SYSTEM, message="")
 
-        note.message += "%s %s added comment: %s\n" % (
+        note.message += "{} {} added comment: {}\n".format(
             message_prefix,
             author,
             comment,
@@ -290,7 +290,7 @@ class DecisionManagerNotificationView(APIView):
         self,
         order: Order,
         transaction: Transaction,
-        update: "_Element",
+        update: _Element,
     ) -> None:
         elems = cast(list["_Element"], update.xpath("*[local-name()='NewDecision']"))
         if len(elems) <= 0:
