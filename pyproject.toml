@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "django-oscar-cybersource"
-version = "9.2.0"
+version = "9.2.1"
 description = "Integration between django-oscar and the Cybersource Secure Acceptance."
 authors = ["thelab <thelabdev@thelab.co>"]
 readme = "README.rst"
