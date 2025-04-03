@@ -1,5 +1,22 @@
 # Changes
 
+## v9.2.0 (2025-04-03)
+
+### Feat
+
+- add support for Django 5.0
+
+### Fix
+
+- **deps**: update dependency pydantic to ^2.11.1
+- **deps**: update dependency pydantic to ^2.11.0
+- **deps**: update dependency phonenumbers to ^9.0.2
+- **deps**: update dependency phonenumbers to v9
+
+### Refactor
+
+- add pyupgrade / django-upgrade precommit hooks
+
 ## v9.1.7 (2025-03-21)
 
 ### Fix
