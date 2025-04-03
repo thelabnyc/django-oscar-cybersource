@@ -8,8 +8,8 @@ version = "9.2.0"
 description = "Integration between django-oscar and the Cybersource Secure Acceptance."
 authors = ["thelab <thelabdev@thelab.co>"]
 readme = "README.rst"
-homepage = "https://gitlab.com/thelabnyc/django-oscar-cybersource"
-repository = "https://gitlab.com/thelabnyc/django-oscar-cybersource"
+homepage = "https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource"
+repository = "https://gitlab.com/thelabnyc/django-oscar/django-oscar-cybersource"
 license = "ISC"
 
 [[tool.poetry.packages]]
