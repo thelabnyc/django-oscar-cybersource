@@ -522,14 +522,14 @@ python-ipware = ">=2.0.3"
 
 [[package]]
 name = "django-oscar"
-version = "3.2.5"
+version = "3.2.6"
 description = "A domain-driven e-commerce framework for Django"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "django_oscar-3.2.5-py3-none-any.whl", hash = "sha256:61b7d69ccd07a84012dea1154bf82977b39b6434241512d8345a3cabfb919c1a"},
-    {file = "django_oscar-3.2.5.tar.gz", hash = "sha256:c9d679461d79c21889152641d7d1cdf7a7342a21ca7edc747c55f08afddade06"},
+    {file = "django_oscar-3.2.6-py3-none-any.whl", hash = "sha256:d17ecb1dc311cc47322b8bbc1509d5ed5316271f3dc6f7795d872350b9c8ce21"},
+    {file = "django_oscar-3.2.6.tar.gz", hash = "sha256:55aa0cbe435cda26b0c886b37c51664c2f8984858a5e4a0e393f7827531d7a9e"},
 ]
 
 [package.dependencies]
@@ -538,7 +538,7 @@ django = ">=3.2,<4.3"
 django-extra-views = ">=0.13,<0.15"
 django-haystack = ">=3.0b1"
 django-phonenumber-field = ">=4.0.0,<7.0.0"
-django-tables2 = ">=2.3,<2.4"
+django-tables2 = ">=2.3,<=2.7"
 django-treebeard = ">=4.3.0"
 django-widget-tweaks = ">=1.4.1"
 factory-boy = ">=3.0,<3.3"
@@ -548,7 +548,7 @@ purl = ">=0.7"
 setuptools = ">=51.3.3"
 
 [package.extras]
-docs = ["Sphinx (>=5.0)", "easy-thumbnails (>=2.7,<2.8.6)", "sorl-thumbnail (>=12.9,<12.10)", "sphinx-issues (==3.0.1)", "sphinx-rtd-theme (==1.0.0)", "sphinxcontrib-spelling (==7.5.1)"]
+docs = ["Sphinx (>=5.0)", "easy-thumbnails (>=2.7,<2.8.6)", "sorl-thumbnail (>=12.9,<12.10)", "sphinx-issues (==3.0.1)", "sphinx_rtd_theme (==1.0.0)", "sphinxcontrib-spelling (==7.5.1)"]
 easy-thumbnails = ["easy-thumbnails (>=2.7,<2.8.6)"]
 sorl-thumbnail = ["sorl-thumbnail (>=12.9,<12.10)"]
 test = ["WebTest (>=2.0,<2.1)", "coverage (>=5.4,<5.5)", "django-webtest (>=1.9,<1.10)", "easy-thumbnails (>=2.7,<2.8.6)", "freezegun (>=1.1,<2)", "psycopg2-binary (>=2.8,<2.10)", "pytest-django (>=3.7,<3.9)", "pytest-xdist (>=2.2,<3)", "pytz", "sorl-thumbnail (>=12.9,<12.10)", "tox (>=3.21,<4)", "vdt.versionplugin.wheel"]
@@ -576,19 +576,19 @@ dev = ["black (>=23.1.0)", "coverage", "easy-thumbnails", "pylint", "pylint-djan
 
 [[package]]
 name = "django-oscar-api-checkout"
-version = "3.6.3"
+version = "3.7.0"
 description = "An extension on top of django-oscar-api providing a more flexible checkout API with a pluggable payment methods interface."
 optional = false
 python-versions = "<4.0,>=3.12"
 groups = ["main"]
 files = [
-    {file = "django_oscar_api_checkout-3.6.3-py3-none-any.whl", hash = "sha256:45d7acb335a69b65d4b20f23d26c85272485d5ea78a89bb1b5051223a9f71483"},
-    {file = "django_oscar_api_checkout-3.6.3.tar.gz", hash = "sha256:c55ef8713a26067b5a91354d06636eb2e0d659f894c22c1bd2fc879a96c5d92b"},
+    {file = "django_oscar_api_checkout-3.7.0-py3-none-any.whl", hash = "sha256:8df1787a680210092fad09b316bc6910e25d4f0cda57fd52c88f93ae4a2f3aa5"},
+    {file = "django_oscar_api_checkout-3.7.0.tar.gz", hash = "sha256:f27395880ff8aeb7a78239fcd74147370e9eee451151f0b6592af4610536f439"},
 ]
 
 [package.dependencies]
-Django = ">=4.2.18,<5.0.0"
-django-oscar = "3.2.5"
+Django = ">=4.2"
+django-oscar = ">=3.2.5,<4.1"
 django-oscar-api = "3.3.0"
 drf-recaptcha = ">=4.0.2,<5.0.0"
 
@@ -2394,4 +2394,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "272d78a373495b7bd0501dee9e27a7d72059d54c9289918aa31479a961978957"
+content-hash = "1d5e2371838ba2592f2a5233e6810e2755637c34e452d5ca831d6042cc63f7c3"
