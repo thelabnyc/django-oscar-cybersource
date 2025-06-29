@@ -2,10 +2,9 @@ variables:
   POSTGRES_DB: postgres
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: ""
-  POSTGRES_HOST_AUTH_METHOD: 'trust'
-
-  POETRY_INSTALLER_NO_BINARY: 'lxml,xmlsec'
-  PIP_NO_BINARY: '$POETRY_INSTALLER_NO_BINARY'
+  POSTGRES_HOST_AUTH_METHOD: "trust"
+  UV_NO_BINARY_PACKAGE: "lxml xmlsec"
+  PIP_NO_BINARY: "lxml,xmlsec"
 
 stages:
   - test
@@ -29,8 +28,8 @@ test:
   image: "registry.gitlab.com/thelabnyc/python:${IMAGE}"
   script:
     - make system_deps
-    - pip install tox
-    - tox
+    - uv sync
+    - uv run tox
   coverage: '/^TOTAL.+?(\d+\%)$/'
   parallel:
     matrix:
