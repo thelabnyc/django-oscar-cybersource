@@ -56,9 +56,7 @@ def format_json_for_display(data: Any, width: str = "auto") -> str | SafeString:
         from pygments.lexers import JsonLexer
     except ImportError:
         return json_data
-    prestyles = ("width: {};" "white-space: pre-wrap;" "word-wrap: break-word;").format(
-        width
-    )
+    prestyles = ("width: {};white-space: pre-wrap;word-wrap: break-word;").format(width)
     formatter = HtmlFormatter(style="colorful", prestyles=prestyles)
     response = highlight(json_data, JsonLexer(), formatter)
     style = "<style>" + formatter.get_style_defs() + "</style>"
