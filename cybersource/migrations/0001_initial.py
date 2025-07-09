@@ -4,8 +4,6 @@ from django.db import migrations, models
 import django.contrib.postgres.fields.hstore
 import django.db.models.deletion
 
-import cybersource.models
-
 
 class Migration(migrations.Migration):
     dependencies = [
