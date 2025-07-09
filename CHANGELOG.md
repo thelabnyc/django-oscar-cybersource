@@ -1,5 +1,29 @@
 # Changes
 
+## v9.3.0 (2025-07-09)
+
+### Feat
+
+- test against django 5.2
+
+### Fix
+
+- **deps**: update dependency lxml to v6
+- **deps**: update dependency cryptography to v45
+- update docker image tag format
+- **deps**: update dependency django-oscar to >=4.0,<4.1
+- **deps**: update dependency phonenumbers to ^9.0.3
+- **deps**: update dependency pydantic to ^2.11.3
+- **deps**: update dependency lxml to ^5.3.2
+- **deps**: update dependency thelabdb to >=0.5.0
+- **deps**: update dependency django-oscar-api-checkout to ^3.7.0
+- **deps**: update dependency django-oscar to >=3.2.6,<4.1
+- **deps**: update dependency pydantic to ^2.11.2
+
+### Refactor
+
+- migrate from poetry -> uv
+
 ## v9.2.1 (2025-04-03)
 
 ### Fix
