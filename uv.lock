@@ -407,7 +407,7 @@ dev = [
     { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-rtd-theme", specifier = "==3.0.2" },
     { name = "tox", specifier = "==4.29.0" },
-    { name = "tox-uv", specifier = ">=1.26.1" },
+    { name = "tox-uv", specifier = ">=1.28.0" },
     { name = "types-psycopg2", specifier = ">=2.9.21.20241019,<3" },
     { name = "types-pygments", specifier = ">=2.19.0.20250107,<3" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20241206,<3" },
