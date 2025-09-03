@@ -335,7 +335,7 @@ wheels = [
 
 [[package]]
 name = "django-oscar-cybersource"
-version = "9.3.0"
+version = "9.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -402,7 +402,7 @@ dev = [
     { name = "psycopg2-binary", specifier = "==2.9.10" },
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "requests-mock", specifier = "==1.12.1" },
-    { name = "ruff", specifier = ">=0.11.6" },
+    { name = "ruff", specifier = ">=0.12.11" },
     { name = "sorl-thumbnail", specifier = "==12.11.0" },
     { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-rtd-theme", specifier = "==3.0.2" },
