@@ -1,5 +1,15 @@
 # Changes
 
+## v9.4.0 (2025-09-03)
+
+### Feat
+
+- migrate from black/flake8 to ruff
+
+### Refactor
+
+- migrate black/flake8 -> ruff
+
 ## v9.3.0 (2025-07-09)
 
 ### Feat
