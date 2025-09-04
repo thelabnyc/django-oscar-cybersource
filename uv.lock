@@ -410,7 +410,7 @@ dev = [
     { name = "tox-uv", specifier = ">=1.28.0" },
     { name = "types-psycopg2", specifier = ">=2.9.21.20250809,<3" },
     { name = "types-pygments", specifier = ">=2.19.0.20250809,<3" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20241206,<3" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20250822,<3" },
     { name = "unittest-xml-reporting", specifier = "==3.2.0" },
 ]
 
