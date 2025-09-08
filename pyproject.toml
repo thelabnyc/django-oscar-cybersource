@@ -12,7 +12,7 @@ dependencies = [
     "Django (>=4.2)",
     "django-oscar (>=4.0,<4.1)",
     "django-oscar-api (==3.3.0)",
-    "django-oscar-api-checkout (>=3.7.0,<4)",
+    "django-oscar-api-checkout (>=3.8.0,<4)",
     "thelabdb (>=0.5.1)",
     "lxml (>=6.0.1,<7)",
     "phonenumbers (>=9.0.13,<10)",
