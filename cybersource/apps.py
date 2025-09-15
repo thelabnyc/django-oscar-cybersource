@@ -15,7 +15,7 @@ class CybersourceConfig(OscarConfig):
     name = "cybersource"
     label = "cybersource"
     verbose_name = _("Oscar API-Checkout Cybersource Payment Adapter")
-    namespace = "cybersource"
+    namespace = "cybersource"  # type:ignore[assignment]
     default = True
 
     def get_urls(self) -> list[URLPattern]:
