@@ -1,5 +1,41 @@
 # Changes
 
+## v9.4.1 (2025-11-19)
+
+### Fix
+
+- **deps**: update dependency django-oscar to >=4.1,<4.2
+- **deps**: update dependency xmlsec to >=1.3.17,<2
+- **deps**: update dependency phonenumbers to >=9.0.18,<10
+- **deps**: update dependency pydantic to >=2.12.4,<3
+- **deps**: update dependency phonenumbers to >=9.0.17,<10
+- **deps**: update dependency pydantic to >=2.12.3,<3
+- **deps**: update dependency pydantic to >=2.12.2,<3
+- **deps**: update dependency pydantic to >=2.12.0,<3
+- **deps**: update dependency phonenumbers to >=9.0.16,<10
+- **deps**: update dependency django-stubs-ext to >=5.2.7,<6
+- **deps**: update dependency django-stubs-ext to >=5.2.6,<6
+- **deps**: update dependency pydantic to >=2.11.10,<3
+- **deps**: update dependency phonenumbers to >=9.0.15,<10
+- **deps**: update dependency lxml to >=6.0.2,<7
+- **deps**: update dependency zeep to >=4.3.2,<5
+- **deps**: update dependency phonenumbers to >=9.0.14,<10
+- **deps**: update dependency pydantic to >=2.11.9,<3
+- **deps**: update dependency pydantic to >=2.11.8,<3
+- **deps**: update dependency django-stubs-ext to >=5.2.5,<6
+- **deps**: update dependency django-stubs-ext to >=5.2.4,<6
+- **deps**: update dependency django-oscar-api-checkout to >=3.8.0,<4
+- **deps**: update dependency thelabdb to >=0.5.1
+- **deps**: update dependency cryptography to >=45.0.7,<46
+- **deps**: update dependency xmlsec to >=1.3.16,<2
+- **deps**: update dependency python-dateutil to >=2.9.0.post0,<3
+- **deps**: update dependency pydantic to >=2.11.7,<3
+- **deps**: update dependency lxml to >=6.0.1,<7
+- **deps**: update dependency phonenumbers to >=9.0.13,<10
+- **deps**: update dependency django-stubs-ext to >=5.2.2,<6
+- **deps**: update dependency cryptography to >=45.0.6,<46
+- prevent renovate from pointing all URLs at gitlab
+
 ## v9.4.0 (2025-09-03)
 
 ### Feat
