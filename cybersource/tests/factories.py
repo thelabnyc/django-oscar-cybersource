@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from random import randrange
 import uuid
 
@@ -391,6 +391,6 @@ def sign_reply_data(data):
     data["signature"] = (
         SecureAcceptanceSigner(profile.secret_key).sign(data, fields).decode("utf8")
     )
-    data["signed_date_time"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    data["signed_date_time"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     data["signed_field_names"] = ",".join(fields)
     return data
