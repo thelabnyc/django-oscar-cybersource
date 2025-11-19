@@ -10,7 +10,7 @@ readme = "README.rst"
 license = { text = "ISC" }
 dependencies = [
     "Django (>=4.2)",
-    "django-oscar (>=4.0,<4.1)",
+    "django-oscar (>=4.0,<4.2)",
     "django-oscar-api (==3.3.0)",
     "django-oscar-api-checkout (>=3.8.0,<4)",
     "thelabdb (>=0.5.1)",

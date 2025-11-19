@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, TypedDict
 import logging
@@ -83,7 +82,7 @@ class SecureAcceptanceAction:
             "unsigned_field_names",
         }
         unsigned_fields = set(fields.keys()) - signed_fields
-        fields["signed_date_time"] = datetime.utcnow().strftime(self.date_format)
+        fields["signed_date_time"] = timezone.now().strftime(self.date_format)
         fields["signed_field_names"] = ",".join(signed_fields)
         fields["unsigned_field_names"] = ",".join(unsigned_fields)
 

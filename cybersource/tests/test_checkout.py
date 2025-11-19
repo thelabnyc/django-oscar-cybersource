@@ -120,9 +120,9 @@ class BaseCheckoutTest(APITestCase):
         token_resp_data["auth_cv_result"] = "M"
         token_resp_data["auth_cv_result_raw"] = "M"
         token_resp_data["auth_response"] = "85"
-        token_resp_data["auth_time"] = datetime.datetime.utcnow().strftime(
+        token_resp_data["auth_time"] = datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
-        )
+        )  # type: ignore[attr-defined]
         token_resp_data["decision"] = "ACCEPT"
         token_resp_data["message"] = "Request was processed successfully."
         token_resp_data["payment_token"] = get_random_string(16)
