@@ -1,5 +1,23 @@
 # Changes
 
+## v9.5.0 (2025-12-17)
+
+### Feat
+
+- support Python 3.14
+
+### Fix
+
+- **deps**: update dependency django to >=5.2
+- **deps**: update dependency django to >=4.2.27
+- **deps**: update dependency thelabdb to >=0.6.0
+- **deps**: update dependency phonenumbers to >=9.0.20,<10
+- **deps**: update dependency django-stubs-ext to >=5.2.8,<6
+- **deps**: update dependency cryptography to v46
+- **deps**: update dependency pydantic to >=2.12.5,<3
+- **deps**: update dependency phonenumbers to >=9.0.19,<10
+- **deps**: update dependency django-oscar-api-checkout to >=3.8.1,<4
+
 ## v9.4.1 (2025-11-19)
 
 ### Fix
