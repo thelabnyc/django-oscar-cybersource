@@ -1,5 +1,6 @@
-from cybersource.models import TransactionMixin
 from oscar.apps.payment.abstract_models import AbstractTransaction
+
+from cybersource.models import TransactionMixin
 
 
 class Transaction(TransactionMixin, AbstractTransaction):
