@@ -40,7 +40,7 @@ dev = [
     "psycopg2-binary (==2.9.11)",
     "PyYAML (==6.0.3)",
     "sorl-thumbnail (==12.11.0)",
-    "sphinx-rtd-theme (==3.0.2)",
+    "sphinx-rtd-theme (==3.1.0)",
     "sphinx (==8.2.3)",
     "tox (==4.34.1)",
     "unittest-xml-reporting (==3.2.0)",
