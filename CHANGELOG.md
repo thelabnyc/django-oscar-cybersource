@@ -1,5 +1,23 @@
 # Changes
 
+## v9.5.1 (2026-02-18)
+
+### Fix
+
+- **deps**: update dependency phonenumbers to >=9.0.24,<10
+- **deps**: update dependency cryptography to >=46.0.5,<47
+- **deps**: update dependency thelabdb to >=0.7.0
+- **deps**: update dependency phonenumbers to >=9.0.23,<10
+- **deps**: update dependency cryptography to >=46.0.4,<47
+- **deps**: update dependency django-stubs-ext to >=5.2.9,<6
+- **deps**: update dependency phonenumbers to >=9.0.22,<10
+- **deps**: update dependency phonenumbers to >=9.0.21,<10
+- **deps**: update dependency thelabdb to >=0.6.1
+
+### Perf
+
+- add partial index on CyberSourceReply for data scrub queries
+
 ## v9.5.0 (2025-12-17)
 
 ### Feat

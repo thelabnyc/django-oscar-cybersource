@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-oscar-cybersource"
-version = "9.5.0"
+version = "9.5.1"
 description = "Integration between django-oscar and the Cybersource Secure Acceptance."
 readme = "README.rst"
 license = { text = "ISC" }
