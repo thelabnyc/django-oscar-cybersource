@@ -7,7 +7,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("cybersource", "0009_auto_20190927_0952"),
-        ("order", "0016_order_analytics_tracked"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
