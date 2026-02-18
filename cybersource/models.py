@@ -163,6 +163,13 @@ class CyberSourceReply(models.Model):
         verbose_name = _("CyberSource Reply")
         verbose_name_plural = _("CyberSource Replies")
         ordering = ("date_created",)
+        indexes = [
+            models.Index(
+                fields=["date_created"],
+                name="cybersource_reply_scrub_cands",
+                condition=~Q(data={}),
+            ),
+        ]
 
     @classmethod
     def log_secure_acceptance_response(
