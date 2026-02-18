@@ -1,5 +1,11 @@
 # Changes
 
+## v9.5.2 (2026-02-18)
+
+### Fix
+
+- migration dependency
+
 ## v9.5.1 (2026-02-18)
 
 ### Fix
