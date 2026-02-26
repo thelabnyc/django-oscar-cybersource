@@ -17,8 +17,6 @@ SOAP_AUTH_ACCEPT = (_base / "soap-auth-accept.xml").read_text()
 SOAP_AUTH_REVIEW = (_base / "soap-auth-review.xml").read_text()
 SOAP_AUTH_REJECT = (_base / "soap-auth-reject.xml").read_text()
 
-SOAP_CAPTURE = (_base / "soap-capture.xml").read_text()
-
 
 def mock_soap_transaction_response(rmock: "Mocker", resp_xml: str) -> None:
     # Allow GETs to the WSDL / XSD files to pass through

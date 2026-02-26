@@ -225,34 +225,6 @@ class CyberSourceSoap:
         # Run transaction
         return self._run_transaction(txndata)
 
-    def capture(
-        self,
-        token: str,
-        amount: Decimal,
-        auth_request_id: str,
-    ) -> SoapResponse:
-        """
-        Authorize with a payment token
-        """
-        txndata = self._prep_transaction(
-            amount=amount,
-            ccCaptureService=self.factory.CCCaptureService(
-                run="true",
-                authRequestID=auth_request_id,
-            ),
-            recurringSubscriptionInfo=self.factory.RecurringSubscriptionInfo(
-                subscriptionID=token,
-            ),
-        )
-        # Add extra fields
-        self._trigger_pre_build_hook(
-            txndata=txndata,
-            signal=signals.pre_build_capture_request,
-            token=token,
-        )
-        # Run transaction
-        return self._run_transaction(txndata)
-
     def _prep_transaction(
         self,
         amount: Decimal | str,

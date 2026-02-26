@@ -470,45 +470,6 @@ class RecordDeclinedAuth(ReplyHandlerAction):
         return Declined(req_amount, source_id=source.pk)
 
 
-class RecordCapture(ReplyHandlerAction):
-    def __call__(
-        self,
-        order: Order,
-        capture_resp: SoapResponse,
-        authorization_txn: Transaction,
-        capture_amount: Decimal,
-    ) -> Transaction:
-        try:
-            processed_dt = dateutil.parser.parse(
-                capture_resp.ccCaptureReply.requestDateTime
-            )
-        except AttributeError:
-            processed_dt = timezone.now()
-        source = authorization_txn.source
-        transaction = Transaction()
-        transaction.log = self.reply_log_entry
-        transaction.source = source
-        transaction.token = authorization_txn.token
-        transaction.authorization = authorization_txn
-        transaction.txn_type = Transaction.DEBIT
-        transaction.amount = capture_amount
-        transaction.reference = capture_resp.requestID
-        transaction.status = self.reply_log_entry.get_decision()
-        transaction.request_token = capture_resp.requestToken
-        transaction.processed_datetime = processed_dt
-        transaction.save()
-
-        # If the transaction was successful, increment that amount debited and create a payment event
-        if transaction.status in (Decision.ACCEPT, Decision.REVIEW):
-            source.amount_debited = F("amount_debited") + capture_amount
-            source.save()
-            event = self.make_debit_event(order, capture_amount)
-            for line in order.lines.all():
-                self.make_event_quantity(event, line, line.quantity)
-        # Return the resulting transaction
-        return transaction
-
-
 class SOAPAction:
     def __init__(
         self,
@@ -607,47 +568,3 @@ class AuthorizePayment(SOAPAction):
                 update_session=update_session,
             )
         return state
-
-
-class CapturePayment(SOAPAction):
-    def __call__(
-        self,
-        authorization_txn: Transaction,
-        amount: Decimal,
-    ) -> Transaction:
-        """
-        Given a successful authorization transaction, submit a capture funds request.
-        """
-        # Sanity check that the given transaction matches what we'd expect (and
-        # isn't, for example, from another payment source or a declined status).
-        can_capture, err_reason = authorization_txn.can_be_captured
-        if not can_capture:
-            raise ValueError(err_reason)
-
-        # Check the given amount
-        if amount > authorization_txn.get_remaining_amount_to_capture():
-            raise ValueError(
-                "Capture amount can not be greater than the amount of the source authorization"
-            )
-
-        # Check that the token still exists
-        if authorization_txn.token is None:
-            raise ValueError("Payment token no longer exists")
-
-        # Attempt to capture payment for this authorization
-        order = authorization_txn.source.order
-        capture_resp = self.api.capture(
-            token=authorization_txn.token.token,
-            amount=amount,
-            auth_request_id=authorization_txn.reference,
-        )
-        reply_log_entry = CyberSourceReply.log_soap_response(order, capture_resp)
-
-        # Record a debit transaction and return it
-        transaction = RecordCapture(reply_log_entry, None, None)(
-            order=order,
-            capture_resp=capture_resp,
-            authorization_txn=authorization_txn,
-            capture_amount=amount,
-        )
-        return transaction
