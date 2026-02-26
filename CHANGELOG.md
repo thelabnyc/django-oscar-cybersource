@@ -1,5 +1,17 @@
 # Changes
 
+## v10.0.0 (2026-02-26)
+
+### BREAKING CHANGE
+
+- Removes CapturePayment, RecordCapture action classes,
+CyberSourceSoap.capture() method, pre_build_capture_request signal,
+TransactionMixin.authorization FK, and all capture-related model methods.
+
+### Refactor
+
+- remove capture (debit) functionality
+
 ## v9.5.2 (2026-02-18)
 
 ### Fix
