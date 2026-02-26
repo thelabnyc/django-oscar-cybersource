@@ -79,12 +79,11 @@ docker compose run --rm test bash -c "cd docs && sphinx-build -b html . _build"
   - `RecordPaymentToken`: Saves token after successful creation
   - `GetPaymentToken`: Creates token via SOAP API (Bluefin flow)
   - `AuthorizePayment`: Authorizes payment using token via SOAP
-  - `CapturePayment`: Captures previously authorized payment
 
 **API Clients:**
 - `cybersource/cybersoap.py`: SOAP API wrapper using Zeep
   - Handles PKCS12 certificate authentication
-  - Supports authorization, capture, and token creation operations
+  - Supports authorization and token creation operations
 
 **Views:**
 - `cybersource/views.py`:
@@ -104,8 +103,6 @@ The package supports multiple CyberSource profiles via `SecureAcceptanceProfile.
 
 **Transaction Lifecycle:**
 1. Authorization creates a Transaction with `txn_type=AUTHORISE`
-2. Capture creates a Transaction with `txn_type=DEBIT` and links to authorization via `authorization` FK
-3. `TransactionMixin.get_remaining_amount_to_capture()` tracks partial captures
 
 **Session Resumption:**
 To work around SameSite=Lax cookie restrictions, the encrypted session ID is sent to CyberSource as merchant-defined data and returned in the reply, allowing session resumption after form POST.

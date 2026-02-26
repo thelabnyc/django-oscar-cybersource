@@ -1,18 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Literal, Self, cast
+from typing import TYPE_CHECKING, Any, Self
 import logging
 
 from cryptography.fernet import InvalidToken
 from django.contrib.postgres.fields import HStoreField
 from django.db import models
-from django.db.models import CheckConstraint, Q, QuerySet, Sum
+from django.db.models import Q
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_stubs_ext import StrOrPromise
 from django_stubs_ext.db.models import TypedModelMeta
 from oscar.apps.payment.abstract_models import AbstractTransaction
 from oscar.core.compat import AUTH_USER_MODEL
@@ -22,7 +20,7 @@ from thelabdb.fields import EncryptedTextField
 import dateutil.parser
 
 from .conf import settings as cyb_settings
-from .constants import ZERO, CyberSourceReplyType, Decision
+from .constants import CyberSourceReplyType, Decision
 from .cybersoap import SoapResponse
 from .utils import zeepobj_to_dict
 
@@ -217,8 +215,6 @@ class CyberSourceReply(models.Model):
         req_transaction_type = None
         if getattr(response, "paySubscriptionCreateReply", None):
             req_transaction_type = "create_payment_token"
-        elif getattr(response, "ccCaptureReply", None):
-            req_transaction_type = "capture"
         else:
             req_transaction_type = "authorization"
         baddr = order.billing_address
@@ -406,37 +402,11 @@ class TransactionMixin(AbstractTransaction):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    authorization = models.ForeignKey(
-        "self",
-        related_name="captures",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        limit_choices_to={
-            "txn_type": AbstractTransaction.AUTHORISE,
-        },
-        help_text=_(
-            "For capture (debit) transactions, link to the authorization "
-            "transaction that allowed the capture to take place."
-        ),
-    )
     request_token = models.CharField(max_length=200, null=True, blank=True)
     processed_datetime = models.DateTimeField(default=timezone.now)
 
-    # Have to manually type hint reverse accessors
-    captures: QuerySet[AbstractTransaction]
-
     class Meta(TypedModelMeta):
         abstract = True
-        constraints = [
-            CheckConstraint(
-                check=(
-                    Q(txn_type=AbstractTransaction.DEBIT)
-                    | Q(authorization__isnull=True)
-                ),
-                name="only_captures_have_auths",
-            ),
-        ]
 
     def log_field(self, key: str, default: str = "") -> str:
         if self.log is None:
@@ -446,80 +416,3 @@ class TransactionMixin(AbstractTransaction):
     @property
     def is_pending_review(self) -> bool:
         return self.status == Decision.REVIEW
-
-    @property
-    def is_accepted_authorization(
-        self,
-    ) -> tuple[Literal[True], None] | tuple[Literal[False], StrOrPromise]:
-        """
-        Check if this transaction is an successfully approved Cybersource authorization.
-        Returns a tuple, either ``(True, None)`` or ``(False, "Reason")``.
-        """
-        source_type = self.source.source_type
-        if source_type.name != cyb_settings.SOURCE_TYPE:
-            return False, (
-                _("transaction has source {has}, expected {expected}").format(
-                    has=source_type.name,
-                    expected=cyb_settings.SOURCE_TYPE,
-                )
-            )
-        if self.txn_type != AbstractTransaction.AUTHORISE:
-            return False, (
-                _("transaction has type {has}, expected {expected}").format(
-                    has=self.txn_type,
-                    expected=AbstractTransaction.AUTHORISE,
-                )
-            )
-        if self.status != Decision.ACCEPT:
-            return False, (
-                _("transaction has status {has}, expected {expected}").format(
-                    has=self.status,
-                    expected=Decision.ACCEPT,
-                )
-            )
-        return True, None
-
-    @property
-    def can_be_captured(
-        self,
-    ) -> tuple[Literal[True], None] | tuple[Literal[False], StrOrPromise]:
-        """
-        Check if this transaction can be captured by Cybersource.
-        Returns a tuple, either ``(True, None)`` or ``(False, "Reason")``.
-        """
-        is_good_auth, err_reason = self.is_accepted_authorization
-        if not is_good_auth:
-            return False, cast(StrOrPromise, err_reason)
-        # Need payment token to capture
-        payment_token = self.token
-        if payment_token is None:
-            return False, _("transaction does not have a related payment token")
-        # Check if there's any money left to capture
-        remaining_capture_amount = self.get_remaining_amount_to_capture()
-        if remaining_capture_amount <= 0:
-            return False, _("transaction has already been fully captured")
-        # Looks like we can capture this.
-        return True, None
-
-    def list_successful_captures(self) -> QuerySet[AbstractTransaction]:
-        if not self.is_accepted_authorization:
-            return self.captures.none()
-        return self.captures.filter(
-            txn_type=AbstractTransaction.DEBIT,
-            status=Decision.ACCEPT,
-        )
-
-    def get_total_captured_amount(self) -> Decimal:
-        if not self.is_accepted_authorization:
-            return ZERO
-        data = self.list_successful_captures().aggregate(total_amount=Sum("amount"))
-        if data["total_amount"] is None:
-            return ZERO
-        return data["total_amount"]
-
-    def get_remaining_amount_to_capture(self) -> Decimal:
-        if not self.is_accepted_authorization:
-            return ZERO
-        total_captured = self.get_total_captured_amount()
-        remaining = self.amount - total_captured
-        return remaining
