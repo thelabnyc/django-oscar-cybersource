@@ -466,7 +466,7 @@ dev = [
     { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-rtd-theme", specifier = "==3.1.0" },
     { name = "tox", specifier = "==4.47.0" },
-    { name = "tox-uv", specifier = ">=1.33.0" },
+    { name = "tox-uv", specifier = ">=1.33.1" },
     { name = "types-psycopg2", specifier = ">=2.9.21.20260223,<3" },
     { name = "types-pygments", specifier = ">=2.19.0.20251121,<3" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20260302,<3" },
