@@ -1,5 +1,16 @@
 # Changes
 
+## v10.1.0b0 (2026-03-20)
+
+### Feat
+
+- add django-oscar-stubs for type checking
+
+### Fix
+
+- **deps**: update dependency phonenumbers to >=9.0.26,<10
+- **deps**: update dependency phonenumbers to >=9.0.25,<10
+
 ## v10.0.0 (2026-02-26)
 
 ### BREAKING CHANGE
