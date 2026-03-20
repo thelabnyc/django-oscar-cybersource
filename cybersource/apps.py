@@ -8,17 +8,17 @@ from django.views.decorators.csrf import csrf_exempt
 from oscar.core.application import OscarConfig
 
 if TYPE_CHECKING:
-    from django.urls.resolvers import URLPattern
+    from django.urls.resolvers import URLPattern, URLResolver
 
 
 class CybersourceConfig(OscarConfig):
     name = "cybersource"
     label = "cybersource"
     verbose_name = _("Oscar API-Checkout Cybersource Payment Adapter")
-    namespace = "cybersource"  # type:ignore[assignment]
+    namespace = "cybersource"
     default = True
 
-    def get_urls(self) -> list[URLPattern]:
+    def get_urls(self) -> list[URLPattern | URLResolver]:
         from .views import (
             CyberSourceReplyView,
             DecisionManagerNotificationView,
@@ -29,7 +29,7 @@ class CybersourceConfig(OscarConfig):
         review_notification = csrf_exempt(DecisionManagerNotificationView.as_view())
         fingerprint = FingerprintRedirectView.as_view()
 
-        urlpatterns = [
+        urlpatterns: list[URLPattern | URLResolver] = [
             path("cybersource-reply/", cs_reply, name="cybersource-reply"),
             path(
                 "decision-manager-review-notification/",

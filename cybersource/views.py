@@ -8,13 +8,12 @@ import uuid
 
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
-from django.db.models import QuerySet
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.encoding import force_str
 from django.views import generic
 from lxml import etree
-from oscar.core.loading import get_class, get_model
+from oscar.core.loading import get_model
 from oscarapicheckout import states, utils
 from oscarapicheckout.settings import ORDER_STATUS_PAYMENT_DECLINED
 from rest_framework import status
@@ -32,22 +31,12 @@ from .models import CyberSourceReply, SecureAcceptanceProfile
 from .signals import received_decision_manager_update
 from .utils import decrypt_session_id
 
+Order = get_model("order", "Order")
+OrderNote = get_model("order", "OrderNote")
+Transaction = get_model("payment", "Transaction")
+
 if TYPE_CHECKING:
     from lxml.etree import _Element
-    from oscar.apps.checkout.calculators import OrderTotalCalculator
-    from oscar.apps.checkout.mixins import OrderPlacementMixin
-    from oscar.apps.order.exceptions import InvalidOrderStatus
-    from oscar.apps.order.models import Order, OrderNote
-    from oscar.apps.order.utils import OrderNumberGenerator
-    from oscar.apps.payment.models import Transaction
-else:
-    Order = get_model("order", "Order")
-    OrderNote = get_model("order", "OrderNote")
-    Transaction = get_model("payment", "Transaction")
-    InvalidOrderStatus = get_class("order.exceptions", "InvalidOrderStatus")
-    OrderNumberGenerator = get_class("order.utils", "OrderNumberGenerator")
-    OrderPlacementMixin = get_class("checkout.mixins", "OrderPlacementMixin")
-    OrderTotalCalculator = get_class("checkout.calculators", "OrderTotalCalculator")
 
 logger = logging.getLogger(__name__)
 
@@ -253,13 +242,8 @@ class DecisionManagerNotificationView(APIView):
     def _get_transaction(self, order: Order, update: _Element) -> Transaction:
         transaction_id = update.attrib["RequestID"]
         try:
-            transaction = (
-                cast(
-                    QuerySet[Transaction],
-                    Transaction.objects,  # type:ignore[attr-defined]
-                )
-                .filter(source__order=order)
-                .get(reference=transaction_id)
+            transaction = Transaction.objects.filter(source__order=order).get(
+                reference=transaction_id
             )
         except Transaction.DoesNotExist:
             raise Http404()
