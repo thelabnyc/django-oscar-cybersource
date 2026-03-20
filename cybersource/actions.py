@@ -12,7 +12,8 @@ from django.db.models import F
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from oscar.core.loading import get_class, get_model
+from oscar.apps.order.exceptions import InvalidOrderStatus
+from oscar.core.loading import get_model
 from oscarapicheckout import utils
 from oscarapicheckout.methods import PaymentMethod, PaymentMethodData
 from oscarapicheckout.states import Complete, Declined
@@ -25,20 +26,19 @@ from .cybersoap import CyberSourceSoap, SoapResponse
 from .models import CyberSourceReply, PaymentToken
 from .utils import encrypt_session_id
 
+_Transaction = get_model("payment", "Transaction")
+OrderNote = get_model("order", "OrderNote")
+
 if TYPE_CHECKING:
-    from oscar.apps.order.exceptions import InvalidOrderStatus
-    from oscar.apps.order.models import Order, OrderNote
-    from oscar.apps.payment.models import Transaction as BaseTransaction
+    from oscar.apps.order.models import Order
+    from oscar.apps.payment.models import Transaction as _BaseTransaction
 
     from .models import TransactionMixin
 
-    class Transaction(TransactionMixin, BaseTransaction):
-        pass
+    class Transaction(TransactionMixin, _BaseTransaction): ...
 
 else:
-    Transaction = get_model("payment", "Transaction")
-    OrderNote = get_model("order", "OrderNote")
-    InvalidOrderStatus = get_class("order.exceptions", "InvalidOrderStatus")
+    Transaction = _Transaction
 
 logger = logging.getLogger(__name__)
 
