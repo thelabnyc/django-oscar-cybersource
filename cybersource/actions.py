@@ -31,12 +31,7 @@ OrderNote = get_model("order", "OrderNote")
 
 if TYPE_CHECKING:
     from oscar.apps.order.models import Order
-    from oscar.apps.payment.models import Transaction as _BaseTransaction
-
-    from .models import TransactionMixin
-
-    class Transaction(TransactionMixin, _BaseTransaction): ...
-
+    from oscar.apps.payment.models import Transaction
 else:
     Transaction = _Transaction
 
