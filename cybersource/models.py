@@ -387,7 +387,7 @@ class PaymentToken(models.Model):
         return "%s" % self.masked_card_number
 
 
-class TransactionMixin(AbstractTransaction):
+class TransactionMixin(AbstractTransaction):  # type: ignore[override]  # auto-generated get_next_by/get_previous_by return type mismatch
     log = models.ForeignKey(
         CyberSourceReply,
         related_name="transactions",
