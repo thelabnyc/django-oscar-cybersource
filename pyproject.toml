@@ -53,7 +53,7 @@ dev = [
     "types-pygments (>=2.19.0.20251121,<3)",
     "requests-mock (==1.12.1)",
     "tox-uv>=1.33.4",
-    "django-oscar-stubs>=4.1.0b4",
+    "django-oscar-stubs>=4.1.0b6",
 ]
 
 [tool.hatch.build.targets.wheel]
