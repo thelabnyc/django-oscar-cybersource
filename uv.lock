@@ -487,7 +487,7 @@ dev = [
     { name = "tox-uv", specifier = ">=1.33.4" },
     { name = "types-psycopg2", specifier = ">=2.9.21.20260223,<3" },
     { name = "types-pygments", specifier = ">=2.19.0.20251121,<3" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20260305,<3" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20260323,<3" },
     { name = "unittest-xml-reporting", specifier = "==3.2.0" },
 ]
 
