@@ -14,7 +14,7 @@ dependencies = [
     "django-oscar-api (==3.3.0)",
     "django-oscar-api-checkout (>=3.8.1,<4)",
     "thelabdb (>=0.7.0)",
-    "lxml (>=6.0.3,<7)",
+    "lxml (>=6.0.4,<7)",
     "phonenumbers (>=9.0.27,<10)",
     "python-dateutil (>=2.9.0.post0,<3)",
     "django-stubs-ext (>=5.2.9,<6)",
