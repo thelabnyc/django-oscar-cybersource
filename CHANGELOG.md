@@ -1,12 +1,6 @@
 # Changes
 
-## v10.1.0b1 (2026-03-21)
-
-### Fix
-
-- update django-oscar-stubs
-
-## v10.1.0b0 (2026-03-20)
+## v10.1.0 (2026-05-21)
 
 ### Feat
 
@@ -14,6 +8,22 @@
 
 ### Fix
 
+- **deps**: update dependency phonenumbers to >=9.0.30,<10
+- **deps**: update dependency pydantic to >=2.13.4,<3
+- **deps**: update dependency cryptography to v47
+- **deps**: update dependency phonenumbers to >=9.0.29,<10
+- **deps**: update dependency pydantic to >=2.13.3,<3
+- **deps**: update dependency lxml to >=6.1.0,<7
+- **deps**: update dependency pydantic to >=2.13.2,<3
+- **deps**: update dependency pydantic to >=2.13.1,<3
+- **deps**: update dependency phonenumbers to >=9.0.28,<10
+- **deps**: update dependency pydantic to >=2.13.0,<3
+- **deps**: update dependency lxml to >=6.0.4,<7
+- **deps**: update dependency lxml to >=6.0.3,<7
+- **deps**: update dependency cryptography to >=46.0.7,<47
+- **deps**: update dependency phonenumbers to >=9.0.27,<10
+- **deps**: update dependency cryptography to >=46.0.6,<47
+- update django-oscar-stubs
 - **deps**: update dependency phonenumbers to >=9.0.26,<10
 - **deps**: update dependency phonenumbers to >=9.0.25,<10
 
