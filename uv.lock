@@ -414,7 +414,7 @@ wheels = [
 
 [[package]]
 name = "django-oscar-cybersource"
-version = "10.1.0b1"
+version = "10.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -463,7 +463,7 @@ requires-dist = [
     { name = "django-oscar-api", specifier = "==3.3.0" },
     { name = "django-oscar-api-checkout", specifier = ">=3.8.1,<4" },
     { name = "django-stubs-ext", specifier = ">=5.2.9,<7" },
-    { name = "lxml", specifier = ">=6.1.0,<7" },
+    { name = "lxml", specifier = ">=6.1.1,<7" },
     { name = "phonenumbers", specifier = ">=9.0.30,<10" },
     { name = "pydantic", specifier = ">=2.13.4,<3" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
