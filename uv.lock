@@ -446,7 +446,7 @@ requires-dist = [
     { name = "django-oscar-api-checkout", specifier = ">=3.9.0,<4" },
     { name = "django-stubs-ext", specifier = ">=5.2.9,<7" },
     { name = "lxml", specifier = ">=6.1.1,<7" },
-    { name = "phonenumbers", specifier = ">=9.0.32,<10" },
+    { name = "phonenumbers", specifier = ">=9.0.33,<10" },
     { name = "pydantic", specifier = ">=2.13.4,<3" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
     { name = "thelabdb", specifier = ">=0.8.1" },
