@@ -381,7 +381,7 @@ wheels = [
 
 [[package]]
 name = "django-oscar-api-checkout"
-version = "3.9.0"
+version = "3.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
@@ -389,9 +389,9 @@ dependencies = [
     { name = "django-oscar-api" },
     { name = "drf-recaptcha" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/3a/c6c90d24ec065f91bd7b4997990bcdb9d349f5c84752ce239d14f604cf59/django_oscar_api_checkout-3.9.0.tar.gz", hash = "sha256:bdf260cce1503e22fb16c817844a597f977ec9943a82f60a51c5215caf77ce68", size = 122685, upload-time = "2026-05-21T15:32:35.17Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/51/156af970a630776485492dc57ad469bef8683bed7599f1567d6b857d94f7/django_oscar_api_checkout-3.9.1.tar.gz", hash = "sha256:a747dad88933c2063e52d4c208ddf1a438f2504a401a4cd77296b83dd752fd9d", size = 122118, upload-time = "2026-07-01T16:35:38.17Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/fd/7876df90d34910b8c1f69ae4c440a2baeb0f887c3dd9ed1a8a374bd4cd68/django_oscar_api_checkout-3.9.0-py3-none-any.whl", hash = "sha256:e3d21a6d5cb54beca1a25dcd51efb155c478e39fd99a7b8fe8064e43d4b91765", size = 43779, upload-time = "2026-05-21T15:32:33.804Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/4c/49622da86346b3f2b9a502e4c337c0bdb13581ef3e317d8b29817bdc02a9/django_oscar_api_checkout-3.9.1-py3-none-any.whl", hash = "sha256:872f0051147ce4809e45cbddd239e4e54d8857a1af3ffdc76a0947b44f9d5488", size = 44624, upload-time = "2026-07-01T16:35:36.917Z" },
 ]
 
 [[package]]
@@ -443,7 +443,7 @@ requires-dist = [
     { name = "django", specifier = ">=5.2" },
     { name = "django-oscar", specifier = ">=4.0,<4.2" },
     { name = "django-oscar-api", specifier = "==3.3.0" },
-    { name = "django-oscar-api-checkout", specifier = ">=3.9.0,<4" },
+    { name = "django-oscar-api-checkout", specifier = ">=3.9.1,<4" },
     { name = "django-stubs-ext", specifier = ">=5.2.9,<7" },
     { name = "lxml", specifier = ">=6.1.1,<7" },
     { name = "phonenumbers", specifier = ">=9.0.33,<10" },
