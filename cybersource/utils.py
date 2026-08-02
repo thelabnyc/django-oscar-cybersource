@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, cast
 import json
 
 from django.utils.encoding import force_bytes, force_str
 from django.utils.safestring import mark_safe
+from rest_framework.request import Request
 from thelabdb.fields import EncryptedTextField
 from zeep.xsd import CompoundValue
 import zeep.helpers
@@ -61,6 +63,11 @@ def format_json_for_display(data: Any, width: str = "auto") -> str | SafeString:
     response = highlight(json_data, JsonLexer(), formatter)
     style = "<style>" + formatter.get_style_defs() + "</style>"
     return mark_safe(style + response)
+
+
+def get_request_data(request: Request) -> Mapping[str, Any]:
+    """CyberSource posts form-encoded bodies, which DRF always parses into a mapping."""
+    return cast(Mapping[str, Any], request.data)
 
 
 def encrypt_session_id(session_id: str) -> str:
