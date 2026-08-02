@@ -126,6 +126,10 @@ from_first = true
 [tool.ruff.lint.isort]
 from-first = true
 
+# Migrations are machine-generated and frozen historical records.
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["RUF012", "DTZ001"]
+
 [tool.coverage.run]
 branch = true
 source_pkgs = ["cybersource"]

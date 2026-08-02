@@ -62,7 +62,6 @@ class BinaryMemorySignature(BinarySignature):
 
     def verify(self, envelope: Any) -> None:
         """Disable verification since Cybersource doesn't sign responses"""
-        pass
 
 
 class CyberSourceSoap:
@@ -331,9 +330,7 @@ class CyberSourceSoap:
             response = self.client.service.runTransaction(**txndata)
         except Exception:
             logger.exception(
-                "Failed to run Cybersource SOAP transaction on Order {}".format(
-                    self.order.number
-                )
+                f"Failed to run Cybersource SOAP transaction on Order {self.order.number}"
             )
             response = None
         return response

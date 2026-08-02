@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("../src/"))
 sys.path.insert(0, os.path.abspath("../sandbox/"))
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
-import django  # NOQA
+import django
 
 django.setup()
 
@@ -29,7 +29,7 @@ copyright = "2019, thelabnyc"
 author = "thelabnyc"
 
 # The full version, including alpha/beta/rc tags
-from versiontag import get_version  # NOQA
+from versiontag import get_version
 
 version = get_version(pypi=True)
 # The full version, including alpha/beta/rc tags.

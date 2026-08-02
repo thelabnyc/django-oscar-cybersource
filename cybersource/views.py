@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 import logging
 import uuid
 
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class FingerprintRedirectView(generic.View):
-    url_types = {
+    url_types: ClassVar[dict[str, str]] = {
         "img-1": "%(protocol)s://%(host)s/fp/clear.png?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s&m=1",
         "img-2": "%(protocol)s://%(host)s/fp/clear.png?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s&m=2",
         "flash": "%(protocol)s://%(host)s/fp/fp.swf?org_id=%(org_id)s&session_id=%(merchant_id)s%(session_id)s",
@@ -92,8 +92,8 @@ class CyberSourceReplyView(APIView):
         # To get around that we store the (encrypted) session ID as merchant defined data sent to
         # Cybersource. Cybersource then sends us that value back with their reply, where we decrypt
         # it, and use it to rehydrate the user's real session.
-        session_id_field_name = "req_{}".format(
-            actions.SecureAcceptanceOrderAction.session_id_field_name
+        session_id_field_name = (
+            f"req_{actions.SecureAcceptanceOrderAction.session_id_field_name}"
         )
         encrypted_session_id = request.data.get(session_id_field_name, "")
         session_id = decrypt_session_id(encrypted_session_id)
@@ -131,7 +131,7 @@ class CyberSourceReplyView(APIView):
             actions.CreatePaymentToken.transaction_type: self.record_token,
         }
         if trans_type not in handlers:
-            raise SuspiciousOperation("Couldn't find handler for %s" % trans_type)
+            raise SuspiciousOperation(f"Couldn't find handler for {trans_type}")
         return handlers[trans_type]
 
     def record_token(
@@ -180,9 +180,7 @@ class CyberSourceReplyView(APIView):
         return order
 
     def _get_method_key(self, request: Request) -> str:
-        field_name = "req_{}".format(
-            actions.SecureAcceptanceOrderAction.method_key_field_name
-        )
+        field_name = f"req_{actions.SecureAcceptanceOrderAction.method_key_field_name}"
         return request.data.get(field_name, Cybersource.code)
 
 
@@ -254,18 +252,14 @@ class DecisionManagerNotificationView(APIView):
         comment = force_str(note_elem.attrib["Comment"])
         date = dateutil.parser.parse(note_elem.attrib["Date"])
 
-        message_prefix = "[Decision Manager %s]" % date.strftime("%c")
+        message_prefix = "[Decision Manager {}]".format(date.strftime("%c"))
         note = order.notes.filter(
             note_type=OrderNote.SYSTEM, message__startswith=message_prefix
         ).first()
         if not note:
             note = OrderNote(order=order, note_type=OrderNote.SYSTEM, message="")
 
-        note.message += "{} {} added comment: {}\n".format(
-            message_prefix,
-            author,
-            comment,
-        )
+        note.message += f"{message_prefix} {author} added comment: {comment}\n"
         note.save()
 
         return note
@@ -292,10 +286,7 @@ class DecisionManagerNotificationView(APIView):
         note = OrderNote()
         note.order = order
         note.note_type = OrderNote.SYSTEM
-        note.message = (
-            "[Decision Manager] %s changed decision from %s to %s.\n\nComments: %s"
-            % (reviewer, transaction.status, new_decision, comments)
-        )
+        note.message = f"[Decision Manager] {reviewer} changed decision from {transaction.status} to {new_decision}.\n\nComments: {comments}"
         note.save()
 
         if new_decision != Decision.ACCEPT:

@@ -24,7 +24,7 @@ DO_SOAP = settings.MERCHANT_ID and settings.PKCS12_DATA
 
 
 class BaseCheckoutTest(APITestCase):
-    fixtures = ["cybersource-test.yaml"]
+    fixtures = ("cybersource-test.yaml",)
 
     def create_product(self, price=D("10.00")):
         product = factories.create_product(
@@ -48,7 +48,7 @@ class BaseCheckoutTest(APITestCase):
         url = reverse("api-basket")
         return self.client.get(url)
 
-    def do_checkout(self, basket_id, extra_data={}):
+    def do_checkout(self, basket_id, extra_data=None):
         data = {
             "guest_email": "joe@example.com",
             "basket": reverse("basket-detail", args=[basket_id]),
@@ -78,15 +78,15 @@ class BaseCheckoutTest(APITestCase):
                 }
             },
         }
-        data.update(extra_data)
+        data.update(extra_data or {})
         url = reverse("api-checkout")
         return self.client.post(url, data, format="json")
 
     def do_fetch_payment_states(self):
         return self.client.get(reverse("api-payment"))
 
-    def do_cs_get_token(self, cs_url, fields, extra_fields={}):
-        next_year = datetime.date.today().year + 1
+    def do_cs_get_token(self, cs_url, fields, extra_fields=None):
+        next_year = datetime.datetime.now(tz=datetime.UTC).year + 1
         cs_req_data = {
             "card_type": "001",
             "card_number": "4111111111111111",
@@ -96,7 +96,7 @@ class BaseCheckoutTest(APITestCase):
         for field in fields:
             if not field["editable"] or field["key"] not in cs_req_data:
                 cs_req_data[field["key"]] = field["value"]
-        cs_req_data.update(extra_fields)
+        cs_req_data.update(extra_fields or {})
         cs_resp_data = self._build_cs_get_token_response(cs_req_data)
         url = reverse("cybersource-reply")
         return self.client.post(url, cs_resp_data)
@@ -177,9 +177,9 @@ class BaseCheckoutTest(APITestCase):
             self.assertEqual(note.note_type, "System")
             self.assertEqual(
                 note.message,
-                "Transaction %s is currently under review. "
+                f"Transaction {transactions[0].reference} is currently under review. "
                 "Use Decision Manager to either accept or "
-                "reject the transaction." % transactions[0].reference,
+                "reject the transaction.",
             )
 
 

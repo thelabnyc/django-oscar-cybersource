@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.SET_NULL,
                 related_name="transactions",
                 to="cybersource.CyberSourceReply",
-            ),  # NOQA
+            ),
         ),
         migrations.AlterField(
             model_name="transaction",

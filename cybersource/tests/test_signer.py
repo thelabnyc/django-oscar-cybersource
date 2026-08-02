@@ -6,7 +6,7 @@ from .factories import get_sa_profile
 
 
 class SignerTest(TestCase):
-    fixtures = ["cybersource-test.yaml"]
+    fixtures = ("cybersource-test.yaml",)
 
     def test_sign(self):
         profile = get_sa_profile()

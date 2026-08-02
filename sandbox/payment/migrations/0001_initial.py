@@ -153,7 +153,7 @@ class Migration(migrations.Migration):
                         help_text="This is used within forms to identify this source type",
                         blank=True,
                     ),
-                ),  # NOQA
+                ),
             ],
             options={
                 "verbose_name_plural": "Source Types",

@@ -1,1 +1,1 @@
-from oscar.apps.payment.admin import *  # noqa
+from oscar.apps.payment.admin import *

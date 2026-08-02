@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.SET_NULL,
                         null=True,
                     ),
-                ),  # NOQA
+                ),
             ],
         ),
         migrations.CreateModel(
