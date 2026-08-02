@@ -29,7 +29,7 @@ from .constants import CHECKOUT_FINGERPRINT_SESSION_ID, Decision
 from .methods import Cybersource
 from .models import CyberSourceReply, SecureAcceptanceProfile
 from .signals import received_decision_manager_update
-from .utils import decrypt_session_id
+from .utils import decrypt_session_id, get_request_data
 
 Order = get_model("order", "Order")
 OrderNote = get_model("order", "OrderNote")
@@ -95,7 +95,7 @@ class CyberSourceReplyView(APIView):
         session_id_field_name = (
             f"req_{actions.SecureAcceptanceOrderAction.session_id_field_name}"
         )
-        encrypted_session_id = request.data.get(session_id_field_name, "")
+        encrypted_session_id = get_request_data(request).get(session_id_field_name, "")
         session_id = decrypt_session_id(encrypted_session_id)
         request.session._session_key = session_id
         delattr(request.session, "_session_cache")
@@ -107,7 +107,7 @@ class CyberSourceReplyView(APIView):
         )
 
         # Invoke handler for transaction type
-        trans_type = request.data.get("req_transaction_type", "")
+        trans_type = get_request_data(request).get("req_transaction_type", "")
         handler = self.get_handler_fn(trans_type)
         with transaction.atomic():
             resp = handler(request, log)
@@ -142,8 +142,8 @@ class CyberSourceReplyView(APIView):
         # Fetch the related order
         order = self._get_order(request)
         method_key = self._get_method_key(request)
-        create_token_resp_data = request.data
-        amount = Decimal(request.data.get("req_amount", "0.00"))
+        create_token_resp_data = get_request_data(request)
+        amount = Decimal(create_token_resp_data.get("req_amount", "0.00"))
 
         # Figure out what status the order is in.
         token_decision = reply_log_entry.get_decision()
@@ -174,14 +174,16 @@ class CyberSourceReplyView(APIView):
 
     def _get_order(self, request: Request) -> Order:
         try:
-            order = Order.objects.get(number=request.data.get("req_reference_number"))
+            order = Order.objects.get(
+                number=get_request_data(request).get("req_reference_number")
+            )
         except Order.DoesNotExist:
             raise SuspiciousOperation("Order not found.")
         return order
 
     def _get_method_key(self, request: Request) -> str:
         field_name = f"req_{actions.SecureAcceptanceOrderAction.method_key_field_name}"
-        return request.data.get(field_name, Cybersource.code)
+        return get_request_data(request).get(field_name, Cybersource.code)
 
 
 class DecisionManagerNotificationView(APIView):
@@ -193,7 +195,7 @@ class DecisionManagerNotificationView(APIView):
 
     def post(self, request: Request, format: Any = None) -> Response:
         self._check_auth_token(request)
-        xml = request.data.get("content", "").encode()
+        xml = get_request_data(request).get("content", "").encode()
         root = etree.fromstring(xml)
         # Loop through order updates
         for update in cast(list["_Element"], root.xpath("*[local-name()='Update']")):

@@ -22,7 +22,7 @@ import dateutil.parser
 from .conf import settings as cyb_settings
 from .constants import CyberSourceReplyType, Decision
 from .cybersoap import SoapResponse
-from .utils import zeepobj_to_dict
+from .utils import get_request_data, zeepobj_to_dict
 
 if TYPE_CHECKING:
     from oscar.apps.order.models import Order
@@ -173,29 +173,28 @@ class CyberSourceReply(models.Model):
         order: Order,
         request: Request,
     ) -> Self:
+        data = get_request_data(request)
         log = cls(
             user=request.user if request and request.user.is_authenticated else None,
             order=order,
             data=request.data,
             reply_type=CyberSourceReplyType.SA,
-            auth_avs_code=request.data.get("auth_avs_code"),
-            auth_code=request.data.get("auth_code"),
-            auth_response=request.data.get("auth_response"),
-            auth_trans_ref_no=request.data.get("auth_trans_ref_no"),
-            decision=request.data.get("decision"),
-            message=request.data.get("message"),
-            reason_code=request.data.get("reason_code"),
-            req_bill_to_address_postal_code=request.data.get(
-                "req_bill_to_address_postal_code"
-            ),
-            req_bill_to_forename=request.data.get("req_bill_to_forename"),
-            req_bill_to_surname=request.data.get("req_bill_to_surname"),
-            req_card_expiry_date=request.data.get("req_card_expiry_date"),
-            req_reference_number=request.data.get("req_reference_number"),
-            req_transaction_type=request.data.get("req_transaction_type"),
-            req_transaction_uuid=request.data.get("req_transaction_uuid"),
-            request_token=request.data.get("request_token"),
-            transaction_id=request.data.get("transaction_id"),
+            auth_avs_code=data.get("auth_avs_code"),
+            auth_code=data.get("auth_code"),
+            auth_response=data.get("auth_response"),
+            auth_trans_ref_no=data.get("auth_trans_ref_no"),
+            decision=data.get("decision"),
+            message=data.get("message"),
+            reason_code=data.get("reason_code"),
+            req_bill_to_address_postal_code=data.get("req_bill_to_address_postal_code"),
+            req_bill_to_forename=data.get("req_bill_to_forename"),
+            req_bill_to_surname=data.get("req_bill_to_surname"),
+            req_card_expiry_date=data.get("req_card_expiry_date"),
+            req_reference_number=data.get("req_reference_number"),
+            req_transaction_type=data.get("req_transaction_type"),
+            req_transaction_uuid=data.get("req_transaction_uuid"),
+            request_token=data.get("request_token"),
+            transaction_id=data.get("transaction_id"),
         )
         log.save()
         return log
