@@ -1,7 +1,7 @@
 import os
 
 from django.utils.translation import gettext_lazy as _
-from oscar.defaults import *  # noqa
+from oscar.defaults import *
 import django_stubs_ext
 
 django_stubs_ext.monkeypatch()

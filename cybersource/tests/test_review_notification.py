@@ -87,7 +87,7 @@ class DecisionManagerNotificationViewTest(TestCase):
             number="117037850784", status=settings.ORDER_STATUS_AUTHORIZED
         )
 
-        stype, created = SourceType.objects.get_or_create(name="Test")
+        stype, _created = SourceType.objects.get_or_create(name="Test")
         source = Source.objects.create(
             order=order, source_type=stype, amount_allocated="99.99"
         )
@@ -153,7 +153,7 @@ class DecisionManagerNotificationViewTest(TestCase):
             number="117037850784", status=settings.ORDER_STATUS_AUTHORIZED
         )
 
-        stype, created = SourceType.objects.get_or_create(name="Test")
+        stype, _created = SourceType.objects.get_or_create(name="Test")
         source = Source.objects.create(
             order=order, source_type=stype, amount_allocated="99.99"
         )
@@ -224,7 +224,7 @@ class DecisionManagerNotificationViewTest(TestCase):
             number="117037850784", status=settings.ORDER_STATUS_AUTHORIZED
         )
 
-        stype, created = SourceType.objects.get_or_create(name="Test")
+        stype, _created = SourceType.objects.get_or_create(name="Test")
         source = Source.objects.create(
             order=order, source_type=stype, amount_allocated="99.99"
         )
@@ -283,7 +283,7 @@ class DecisionManagerNotificationViewTest(TestCase):
             number="117037850784", status=settings.ORDER_STATUS_AUTHORIZED
         )
 
-        stype, created = SourceType.objects.get_or_create(name="Test")
+        stype, _created = SourceType.objects.get_or_create(name="Test")
         source = Source.objects.create(
             order=order, source_type=stype, amount_allocated="99.99"
         )

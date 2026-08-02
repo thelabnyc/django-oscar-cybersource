@@ -7,31 +7,31 @@ from .utils import format_json_for_display
 
 @admin.register(models.PaymentToken)
 class PaymentTokenAdmin(admin.ModelAdmin[models.PaymentToken]):
-    list_filter = ["card_type", "log__date_created"]
-    search_fields = ["token", "card_type", "masked_card_number"]
-    fields = ["token", "card_type", "masked_card_number", "log"]
-    list_display = ["token", "card_type", "masked_card_number", "log"]
-    readonly_fields = fields  # type:ignore[assignment]
+    list_filter = ("card_type", "log__date_created")
+    search_fields = ("token", "card_type", "masked_card_number")
+    fields = ("token", "card_type", "masked_card_number", "log")
+    list_display = ("token", "card_type", "masked_card_number", "log")
+    readonly_fields = fields
 
 
 @admin.register(models.CyberSourceReply)
 class CyberSourceReplyAdmin(admin.ModelAdmin[models.CyberSourceReply]):
-    search_fields = [
+    search_fields = (
         "order__number",
         "transaction_id",
         "message",
         "req_bill_to_address_postal_code",
         "req_bill_to_forename",
         "req_bill_to_surname",
-    ]
-    list_filter = [
+    )
+    list_filter = (
         "reply_type",
         "decision",
         "reason_code",
         "date_modified",
         "date_created",
-    ]
-    list_display = [
+    )
+    list_display = (
         "id",
         "transaction_id",
         "req_bill_to_forename",
@@ -44,8 +44,8 @@ class CyberSourceReplyAdmin(admin.ModelAdmin[models.CyberSourceReply]):
         "reason_code",
         "date_created",
         "date_modified",
-    ]
-    fields = [
+    )
+    fields = (
         "user",
         "order",
         "reply_type",
@@ -68,8 +68,8 @@ class CyberSourceReplyAdmin(admin.ModelAdmin[models.CyberSourceReply]):
         "formatted_data",
         "date_modified",
         "date_created",
-    ]
-    readonly_fields = fields  # type:ignore[assignment]
+    )
+    readonly_fields = fields
 
     def formatted_data(self, instance: models.CyberSourceReply) -> str | SafeString:
         return format_json_for_display(instance.data)
@@ -79,5 +79,5 @@ class CyberSourceReplyAdmin(admin.ModelAdmin[models.CyberSourceReply]):
 
 @admin.register(models.SecureAcceptanceProfile)
 class SecureAcceptanceProfileAdmin(admin.ModelAdmin[models.SecureAcceptanceProfile]):
-    list_display = ["id", "hostname", "profile_id", "is_default"]
-    fields = ["hostname", "profile_id", "access_key", "secret_key", "is_default"]
+    list_display = ("id", "hostname", "profile_id", "is_default")
+    fields = ("hostname", "profile_id", "access_key", "secret_key", "is_default")

@@ -49,6 +49,6 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.SET_NULL,
                 blank=True,
                 to="cybersource.PaymentToken",
-            ),  # NOQA
+            ),
         ),
     ]

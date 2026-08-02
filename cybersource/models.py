@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 import logging
 
 from cryptography.fernet import InvalidToken
@@ -88,9 +88,7 @@ class SecureAcceptanceProfile(models.Model):
             profile.is_default = True
             profile.save()
             logger.info(
-                "Created SecureAcceptanceProfile from Django settings: {}".format(
-                    profile
-                )
+                f"Created SecureAcceptanceProfile from Django settings: {profile}"
             )
             return profile
 
@@ -107,7 +105,7 @@ class SecureAcceptanceProfile(models.Model):
     def __str__(self) -> str:
         return _(
             "Secure Acceptance Profile hostname=%(hostname)s, profile_id=%(profile_id)s"
-        ) % dict(hostname=self.hostname, profile_id=self.profile_id)
+        ) % {"hostname": self.hostname, "profile_id": self.profile_id}
 
 
 class CyberSourceReply(models.Model):
@@ -161,7 +159,7 @@ class CyberSourceReply(models.Model):
         verbose_name = _("CyberSource Reply")
         verbose_name_plural = _("CyberSource Replies")
         ordering = ("date_created",)
-        indexes = [
+        indexes: ClassVar = [
             models.Index(
                 fields=["date_created"],
                 name="cybersource_reply_scrub_cands",
@@ -253,7 +251,7 @@ class CyberSourceReply(models.Model):
         return log
 
     def __str__(self) -> str:
-        return _("CyberSource Reply %(created)s") % dict(created=self.date_created)
+        return _("CyberSource Reply %(created)s") % {"created": self.date_created}
 
     @property
     def signed_date_time(self) -> datetime:
@@ -315,7 +313,7 @@ class CyberSourceReply(models.Model):
 
 
 class PaymentToken(models.Model):
-    TYPES = {
+    TYPES: ClassVar[dict[str, str]] = {
         "001": "Visa",
         "002": "MasterCard",
         "003": "Amex",
@@ -379,12 +377,10 @@ class PaymentToken(models.Model):
 
     @property
     def card_holder(self) -> str:
-        return "{} {}".format(
-            self.log.req_bill_to_forename, self.log.req_bill_to_surname
-        )
+        return f"{self.log.req_bill_to_forename} {self.log.req_bill_to_surname}"
 
     def __str__(self) -> str:
-        return "%s" % self.masked_card_number
+        return self.masked_card_number
 
 
 class TransactionMixin(AbstractTransaction):  # type: ignore[override]  # auto-generated get_next_by/get_previous_by return type mismatch

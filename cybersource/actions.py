@@ -66,7 +66,7 @@ class SecureAcceptanceAction:
 
     def fields(self) -> dict[str, str]:
         names = self.signed_field_names | self.unsigned_field_names
-        fields = {name: "" for name in names}
+        fields = dict.fromkeys(names, "")
 
         data, signed_fields = self.build_request_data()
         fields.update(data)
@@ -274,10 +274,10 @@ class SecureAcceptanceOrderAction(
                 if line.unit_price_incl_tax is not None
                 else ""
             )
-            data["item_%s_name" % i] = ptitle
-            data["item_%s_sku" % i] = line.partner_sku
-            data["item_%s_quantity" % i] = str(line.quantity)
-            data["item_%s_unit_price" % i] = unit_price
+            data[f"item_{i}_name"] = ptitle
+            data[f"item_{i}_sku"] = line.partner_sku
+            data[f"item_{i}_quantity"] = str(line.quantity)
+            data[f"item_{i}_unit_price"] = unit_price
             i += 1
         data["line_item_count"] = str(i)
 
@@ -418,7 +418,7 @@ class RecordSuccessfulAuth(ReplyHandlerAction):
         """If an order is under review, add a note explaining why"""
         msg = _(
             "Transaction %(transaction_id)s is currently under review. Use Decision Manager to either accept or reject the transaction."
-        ) % dict(transaction_id=transaction_id)
+        ) % {"transaction_id": transaction_id}
         self.create_order_note(order, msg)
 
 
@@ -514,10 +514,7 @@ class GetPaymentToken(SOAPAction):
         if token is None:
             return None, None
         # Use the token details to update our copy of the card's expiration date.
-        expiry_date = "{month}-{year}".format(
-            month=token_details.paySubscriptionRetrieveReply.cardExpirationMonth,
-            year=token_details.paySubscriptionRetrieveReply.cardExpirationYear,
-        )
+        expiry_date = f"{token_details.paySubscriptionRetrieveReply.cardExpirationMonth}-{token_details.paySubscriptionRetrieveReply.cardExpirationYear}"
         reply_log_entry.req_card_expiry_date = expiry_date
         reply_log_entry.save()
         # Return the token object

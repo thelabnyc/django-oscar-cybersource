@@ -10,9 +10,8 @@ class FingerprintRedirectViewTest(TestCase):
         session["cybersource_fingerprint_session_id"] = "foo"
         session.save()
         url = reverse("cybersource-fingerprint-redirect", args=["img-1"])
-        expected = (
-            "https://h.online-metrix.net/fp/clear.png?org_id=%s&session_id=%s%s&m=1"
-            % (settings.ORG_ID, settings.MERCHANT_ID, "foo")
+        expected = "https://h.online-metrix.net/fp/clear.png?org_id={}&session_id={}{}&m=1".format(
+            settings.ORG_ID, settings.MERCHANT_ID, "foo"
         )
 
         response = self.client.get(url)
@@ -24,9 +23,8 @@ class FingerprintRedirectViewTest(TestCase):
         session["cybersource_fingerprint_session_id"] = "bar"
         session.save()
         url = reverse("cybersource-fingerprint-redirect", args=["img-2"])
-        expected = (
-            "https://h.online-metrix.net/fp/clear.png?org_id=%s&session_id=%s%s&m=2"
-            % (settings.ORG_ID, settings.MERCHANT_ID, "bar")
+        expected = "https://h.online-metrix.net/fp/clear.png?org_id={}&session_id={}{}&m=2".format(
+            settings.ORG_ID, settings.MERCHANT_ID, "bar"
         )
 
         response = self.client.get(url)
@@ -56,8 +54,9 @@ class FingerprintRedirectViewTest(TestCase):
         session.save()
         url = reverse("cybersource-fingerprint-redirect", args=["js"])
         expected = (
-            "https://h.online-metrix.net/fp/check.js?org_id=%s&session_id=%s%s"
-            % (settings.ORG_ID, settings.MERCHANT_ID, "bat")
+            "https://h.online-metrix.net/fp/check.js?org_id={}&session_id={}{}".format(
+                settings.ORG_ID, settings.MERCHANT_ID, "bat"
+            )
         )
 
         response = self.client.get(url)
