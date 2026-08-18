@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="transaction",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("txn_type", "Debit"),
                     ("authorization__isnull", True),
                     _connector="OR",
