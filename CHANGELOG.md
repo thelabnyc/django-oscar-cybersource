@@ -1,5 +1,29 @@
 # Changes
 
+## v10.1.1 (2026-08-18)
+
+### Fix
+
+- use CheckConstraint condition= for Django 6.0+
+- **deps**: update dependency django-oscar-api-checkout to >=3.10.0,<4
+- **deps**: update dependency phonenumbers to >=9.0.37,<10
+- **deps**: update dependency django-oscar to >=4.2,<4.3
+- **deps**: support django-oscar 4.2 (stubs 4.2.0b0, api-checkout 3.10.0)
+- **deps**: update dependency django-oscar to >=4.2,<4.3
+- **deps**: update dependency cryptography to >=50.0.0
+- **deps**: update dependency phonenumbers to >=9.0.36,<10
+- **deps**: update dependency phonenumbers to >=9.0.35,<10
+- **deps**: update dependency phonenumbers to >=9.0.34,<10
+- **deps**: update dependency django-oscar-api-checkout to >=3.9.1,<4
+- **deps**: update dependency phonenumbers to >=9.0.33,<10
+- **deps**: update dependency zeep to >=4.3.3,<5
+- **deps**: update dependency cryptography to >=49.0.0
+- **deps**: update dependency cryptography to >=48.0.1
+- **deps**: update dependency phonenumbers to >=9.0.32,<10
+- **deps**: update dependency phonenumbers to >=9.0.31,<10
+- **deps**: update dependency django-oscar-api-checkout to >=3.9.0,<4
+- **deps**: update dependency lxml to >=6.1.1,<7
+
 ## v10.1.0 (2026-05-21)
 
 ### Feat
