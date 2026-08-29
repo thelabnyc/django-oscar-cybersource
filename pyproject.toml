@@ -47,7 +47,7 @@ dev = [
     "django-stubs (==6.1.0)",
     "mypy (==2.3.1)",
     "types-psycopg2 (>=2.9.21.20260724,<3)",
-    "djangorestframework-stubs (==3.18.0)",
+    "djangorestframework-stubs (==3.18.1)",
     "lxml-stubs (==0.5.1)",
     "types-python-dateutil (>=2.9.0.20260807,<3)",
     "types-pygments (>=2.21.0.20260819,<3)",
