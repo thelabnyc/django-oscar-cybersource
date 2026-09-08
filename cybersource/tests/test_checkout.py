@@ -988,7 +988,9 @@ class CybersourceMethodTest(BaseCheckoutTest):
         data["card_type"] = "001"
         cs_resp_data = self._build_cs_get_token_response(data)
         with requests_mock.mock() as rmock:
-            responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_ACCEPT)
+            responses.mock_soap_transaction_response(
+                rmock, responses.SOAP_AUTH_ACCEPT, amount=D("10.42")
+            )
             # Submit
             resp = self.client.post(reverse("cybersource-reply"), cs_resp_data)
         self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
@@ -1002,7 +1004,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
             resp.data["payment_method_states"]["cybersource"]["status"], "Consumed"
         )
         self.assertEqual(
-            resp.data["payment_method_states"]["cybersource"]["amount"], "10.00"
+            resp.data["payment_method_states"]["cybersource"]["amount"], "10.42"
         )
         self.assertIsNone(
             resp.data["payment_method_states"]["cybersource"]["required_action"]
@@ -1108,7 +1110,9 @@ class CybersourceMethodTest(BaseCheckoutTest):
         data["card_number"] = "4111111111111111"
         data["card_type"] = "001"
 
-        responses.mock_soap_transaction_response(rmock, responses.SOAP_AUTH_ACCEPT)
+        responses.mock_soap_transaction_response(
+            rmock, responses.SOAP_AUTH_ACCEPT, amount=D("10.42")
+        )
 
         cs_resp_data = self._build_cs_get_token_response(data)
         resp = self.client.post(reverse("cybersource-reply"), cs_resp_data)
@@ -1123,7 +1127,7 @@ class CybersourceMethodTest(BaseCheckoutTest):
             resp.data["payment_method_states"]["cybersource"]["status"], "Consumed"
         )
         self.assertEqual(
-            resp.data["payment_method_states"]["cybersource"]["amount"], "10.00"
+            resp.data["payment_method_states"]["cybersource"]["amount"], "10.42"
         )
         self.assertIsNone(
             resp.data["payment_method_states"]["cybersource"]["required_action"]
