@@ -671,7 +671,7 @@ dev = [
     { name = "psycopg2-binary", specifier = "==2.9.13" },
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "requests-mock", specifier = "==1.12.1" },
-    { name = "ruff", specifier = ">=0.17.2" },
+    { name = "ruff", specifier = ">=0.17.3" },
     { name = "sorl-thumbnail", specifier = "==13.4.0" },
     { name = "sphinx", specifier = "==9.2.0" },
     { name = "sphinx-rtd-theme", specifier = "==3.1.0" },
