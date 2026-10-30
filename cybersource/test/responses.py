@@ -23,7 +23,7 @@ _REPLY_AMOUNT_RE = re.compile(r"(<c:amount>)[^<]*(</c:amount>)")
 
 
 def mock_soap_transaction_response(
-    rmock: "Mocker",
+    rmock: Mocker,
     resp_xml: str,
     amount: Decimal | None = None,
 ) -> None:

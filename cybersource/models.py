@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 import logging
@@ -256,7 +254,7 @@ class CyberSourceReply(models.Model):
     def signed_date_time(self) -> datetime:
         try:
             return dateutil.parser.parse(self.data["signed_date_time"])
-        except (AttributeError, ValueError, KeyError):
+        except AttributeError, ValueError, KeyError:
             return self.date_created
 
     def get_decision(self) -> Decision:
