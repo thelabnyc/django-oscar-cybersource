@@ -1,5 +1,34 @@
 # Changes
 
+## v10.2.0 (2026-10-30)
+
+### Feat
+
+- support Django 6.0 and 6.1
+- support Python 3.15 and drop Python 3.13
+
+### Fix
+
+- **deps**: update dependency phonenumbers to >=9.0.42,<10
+- **deps**: update dependency pydantic to >=2.14.1,<3
+- **deps**: update dependency pydantic to >=2.14.0,<3
+- **deps**: update dependency phonenumbers to >=9.0.41,<10
+- **deps**: update dependency cryptography to >=50.0.2
+- **deps**: update dependency django-oscar to >=4.2.1,<4.3
+- **deps**: update dependency phonenumbers to >=9.0.40,<10
+- **deps**: update dependency django-oscar-api-checkout to >=3.10.1,<4
+- **deps**: update dependency phonenumbers to >=9.0.39,<10
+- **deps**: update dependency lxml to >=6.1.3,<7
+- **deps**: update dependency thelabdb to >=0.8.3
+- **deps**: update dependency pydantic to >=2.13.5,<3
+- **deps**: update dependency phonenumbers to >=9.0.38,<10
+- **deps**: update dependency cryptography to >=50.0.1
+- **deps**: update dependency lxml to >=6.1.2,<7
+
+### Refactor
+
+- adopt Python 3.14 syntax
+
 ## v10.1.1 (2026-08-18)
 
 ### Fix
